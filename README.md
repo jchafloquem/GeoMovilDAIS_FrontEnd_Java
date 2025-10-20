@@ -8,10 +8,9 @@ Aplicacion Móvil de la Sub Direccion de Monitoreo
 - Integración con X, Y, Z
 
 ## 🧰 Tecnologías utilizadas
-- Angular 19
-- Tailwind CSS
-- ArcGIS API for JavaScript 4.32
-- PrimeNG 19
+- Ionic 7.2.1
+- Leaflet 1.9.4
+- Capacitor 7.4.3
 
 ## ⚙️ Instalación
 ```bash
