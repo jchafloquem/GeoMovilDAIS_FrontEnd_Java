@@ -263,6 +263,8 @@ export class MapaPage implements OnDestroy {
         }
       }).addTo(map);
       map.fitBounds(this.peruLayer.getBounds());
+      // Establecemos el zoom mínimo al que se ajusta el mapa para ver todo el país.
+      map.setMinZoom(map.getZoom());
     });
 
     this.map = map;
