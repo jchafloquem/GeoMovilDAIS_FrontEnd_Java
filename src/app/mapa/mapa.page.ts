@@ -1,5 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
-import { IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
@@ -29,7 +29,7 @@ const iconDefault = L.icon({
   templateUrl: './mapa.page.html',
   styleUrls: ['./mapa.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, HttpClientModule]
+  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule]
 })
 
 export class MapaPage implements OnDestroy {
@@ -62,12 +62,18 @@ export class MapaPage implements OnDestroy {
 
   public activeLayer: 'satellite' | 'streets' = 'satellite';
   public isDrawingPolygon = false;
+  public showInitialSpinner = true;
 
   constructor(private http: HttpClient) {
     addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline });
   }
 
   ionViewDidEnter() {
+    // Muestra un spinner inicial durante 5 segundos por estética
+    setTimeout(() => {
+      this.showInitialSpinner = false;
+    }, 5000);
+
     if (!this.map) {
       // Usamos un timeout para asegurarnos de que el DOM de Ionic esté 100% listo.
       // Aumentamos ligeramente el tiempo para dar margen al renderizado del FAB

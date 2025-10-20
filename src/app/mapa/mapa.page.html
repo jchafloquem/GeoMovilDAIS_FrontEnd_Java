@@ -10,12 +10,17 @@
 </ion-header>
 <ion-content>
   <div id="map"></div>
+  <!-- Spinner de carga inicial -->
+  <div class="initial-spinner-container" *ngIf="showInitialSpinner">
+    <ion-spinner name="bubbles" color="light"></ion-spinner>
+  </div>
+
   <!-- Spinner de carga -->
   <ion-loading
     [isOpen]="isLoading"
     message="Obteniendo Geolocalización..."
     cssClass="custom-loading"
-    spinner="crescent"
+    spinner="bubbles"
     translucent="true"
     backdropDismiss="false">
   </ion-loading>

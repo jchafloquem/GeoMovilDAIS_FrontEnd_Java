@@ -14,5 +14,9 @@ export const routes: Routes = [
     redirectTo: 'mapa',
     pathMatch: 'full',
   },
+  {
+    path: 'registerdata',
+    loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
+  },
 
 ];
