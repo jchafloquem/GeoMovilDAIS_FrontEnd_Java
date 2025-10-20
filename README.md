@@ -18,4 +18,4 @@ Aplicacion Móvil de la Sub Direccion de Monitoreo
 git clone https://github.com/usuario/repositorio.git
 cd repositorio
 npm install
-ng serve
+ionic serve
