@@ -10,4 +10,83 @@
 </ion-header>
 <ion-content>
   <div id="map"></div>
+  <!-- Spinner de carga -->
+  <ion-loading
+    [isOpen]="isLoading"
+    message="Obteniendo Geolocalización..."
+    cssClass="custom-loading"
+    spinner="crescent"
+    translucent="true"
+    backdropDismiss="false">
+  </ion-loading>
+  <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="top">
+    <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'">
+      <ion-icon name="image-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="top">
+    <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'">
+      <ion-icon name="layers-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <div class="gps-panel">
+    <!-- fila Latitud / Longitud -->
+    <div class="row">
+      <div class="cell">
+        <span class="label">Latitud</span>
+        <span class="value">{{ gpsData.lat | number:'1.4-4' }}</span>
+      </div>
+      <div class="cell">
+        <span class="label">Longitud</span>
+        <span class="value">{{ gpsData.lng | number:'1.4-4' }}</span>
+      </div>
+    </div>
+    <!-- fila Altitud / Velocidad -->
+    <div class="row">
+      <div class="cell">
+        <span class="label">Altitud</span>
+        <span class="value">{{ gpsData.alt | number:'1.4-4' }}</span>
+      </div>
+      <div class="cell">
+        <span class="label">Velocidad</span>
+        <span class="value">{{ gpsData.vel | number:'1.4-4' }}</span>
+      </div>
+    </div>
+    <!-- fila Horizontal / Vertical -->
+    <div class="row">
+      <div class="cell">
+        <span class="label">Pres. Horizontal</span>
+        <span class="value">{{ gpsData.accH | number:'1.4-4' }}</span>
+      </div>
+      <div class="cell">
+        <span class="label">Pres. Vertical</span>
+        <span class="value">{{ gpsData.accV | number:'1.4-4' }}</span>
+      </div>
+    </div>
+  </div>
+  <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="zoomIn()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="zoomOut()">
+      <ion-icon name="remove-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="clearLocation()">
+      <ion-icon name="trash-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="zoomToPeru()">
+      <ion-icon name="globe-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="findAndCenterUser()">
+      <ion-icon name="locate"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>

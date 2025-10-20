@@ -3,9 +3,9 @@
 Aplicacion Móvil de la Sub Direccion de Monitoreo
 
 ## 🚀 Características principales
-- Funcionalidad 1
-- Funcionalidad 2
-- Integración con X, Y, Z
+- Cargar de mapas de Imagen Satelital
+- Geolocalizacion de GPS
+
 
 ## 🧰 Tecnologías utilizadas
 - Ionic 7.2.1

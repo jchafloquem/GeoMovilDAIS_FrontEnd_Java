@@ -52,3 +52,192 @@ ion-title {
   justify-content: center;
   gap: 8px;
 }
+.zoom-extend-btn-wrapper {
+  top: calc(var(--ion-safe-area-top, 0px) + 10px);
+  right: 15px;
+  margin-inline-end: 0;
+  z-index: 1000;
+  overflow: visible;
+
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --background: #3880ff; /* Azul de Ionic */
+    --color: white;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.zoom-in-btn-wrapper,
+.zoom-out-btn-wrapper {
+  right: 15px;
+  margin-inline-end: 0;
+  z-index: 1000;
+  overflow: visible;
+
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --background: #0D9BD7;
+    --color: white;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.zoom-in-btn-wrapper {
+  top: calc(var(--ion-safe-area-top, 0px) + 60px);
+}
+
+.zoom-out-btn-wrapper {
+  top: calc(var(--ion-safe-area-top, 0px) + 110px);
+}
+
+.locate-btn-wrapper {
+  /* Estilos de posicionamiento para el contenedor ion-fab */
+  bottom: 200px;
+  right: 15px;
+  /* Anulamos el margen por defecto de Ionic para un posicionamiento preciso */
+  margin-inline-end: 0;
+  z-index: 1000; /* Asegura que esté sobre el mapa */
+  overflow: visible;
+
+  /* Estilos de apariencia para el botón interno */
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --background: #0D9BD7;
+    --color: white;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.gps-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 8px;
+  right: 8px;
+  /* Efecto de desenfoque para el fondo */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 2000;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden; /* Para que los bordes redondeados se apliquen a las filas */
+}
+
+/* línea vertical central */
+.gps-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateX(-0.5px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* filas de pares label/value */
+.gps-panel .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columnas de celdas */
+  gap: 16px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  min-height: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Colores de fondo para las filas, estilo hoja de cálculo */
+.gps-panel .row:nth-child(odd) {
+  background-color: rgba(13, 155, 215, 0.7); /* #0D9BD7 con transparencia */
+}
+
+.gps-panel .row:nth-child(even) {
+  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
+}
+
+.gps-panel .row:last-child {
+  border-bottom: none;
+}
+
+/* cada par label/value */
+.gps-panel .cell {
+  display: flex;
+  justify-content: space-between; /* label a la izquierda, value a la derecha */
+  align-items: center;            /* centra verticalmente */
+}
+
+/* etiquetas */
+.gps-panel .label {
+  font-weight: 600;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+/* valores */
+.gps-panel .value {
+  font-family: Arial, Helvetica, sans-serif;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Estilos para el ion-loading personalizado */
+/* Usamos ::ng-deep para que los estilos se apliquen al componente ion-loading,
+   que se renderiza fuera del DOM de esta página. */
+::ng-deep .custom-loading .loading-wrapper {
+  border-radius: 16px;
+}
+
+.clear-btn-wrapper {
+  bottom: 150px;
+  right: 15px;
+  margin-inline-end: 0;
+  z-index: 1000;
+  overflow: visible;
+
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --background: #d11a2a; /* rojo */
+    --color: white;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.satellite-layer-btn-wrapper,
+.streets-layer-btn-wrapper {
+  top: calc(var(--ion-safe-area-top, 0px) + 10px);
+  z-index: 1000;
+  overflow: visible;
+
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --background: white;
+    --color: #333;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease-in-out;
+
+    &.active-layer {
+      --background: #3880ff; /* Azul primario de Ionic */
+      --color: white;
+    }
+  }
+}
+
+.satellite-layer-btn-wrapper {
+  left: 50%;
+  transform: translateX(calc(-100% - 4px)); /* Mueve a la izquierda del centro */
+}
+.streets-layer-btn-wrapper {
+  left: 50%;
+  transform: translateX(4px); /* Mueve a la derecha del centro */
+}
