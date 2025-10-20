@@ -10,13 +10,14 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/mapa.page').then( m => m.MapaPage)
   },
   {
+    path: 'mapa/registerdata',
+    loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
+  },
+  {
     path: '',
     redirectTo: 'mapa',
     pathMatch: 'full',
   },
-  {
-    path: 'registerdata',
-    loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
-  },
+
 
 ];

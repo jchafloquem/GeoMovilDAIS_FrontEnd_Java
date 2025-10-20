@@ -1,9 +1,9 @@
 import { Component, OnDestroy } from '@angular/core';
-import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner } from '@ionic/angular/standalone';
+import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
@@ -65,8 +65,13 @@ export class MapaPage implements OnDestroy {
   public isDrawingPolygon = false;
   public showInitialSpinner = true;
 
-  constructor(private http: HttpClient, private alertController: AlertController) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline });
+  constructor(
+    private http: HttpClient,
+    private alertController: AlertController,
+    private navCtrl: NavController,
+    private toastController: ToastController
+  ) {
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline });
   }
 
   ionViewDidEnter() {
@@ -266,11 +271,13 @@ export class MapaPage implements OnDestroy {
     }
 
     const pointToAdd = this.crosshairMarker.getLatLng();
+    let segmentDistance = 0;
 
     // Calcular y acumular la distancia del nuevo segmento
     if (this.polygonVertices.length > 0) {
       const lastVertex = this.polygonVertices[this.polygonVertices.length - 1];
-      this.fixedPathDistance += lastVertex.distanceTo(pointToAdd);
+      segmentDistance = lastVertex.distanceTo(pointToAdd);
+      this.fixedPathDistance += segmentDistance;
     }
 
     // 1. Añadir el vértice a la lista
@@ -279,12 +286,20 @@ export class MapaPage implements OnDestroy {
     // 2. Actualizar la polilínea que une los vértices
     this.walkingPolyline?.setLatLngs(this.polygonVertices);
 
-    // 3. Añadir un marcador visual en el vértice
+    // 3. Añadir un marcador visual en el vértice con una etiqueta
+    const pointNumber = this.polygonVertices.length;
+    const tooltipContent = `Punto: ${pointNumber}<br>Dist: ${segmentDistance.toFixed(1)} m`;
+
     L.circleMarker(pointToAdd, {
         color: '#ff0000',
         radius: 5,
         weight: 2,
         fillOpacity: 0.8
+    }).bindTooltip(tooltipContent, {
+      permanent: true,
+      direction: 'right',
+      offset: [10, 0],
+      className: 'vertex-tooltip'
     }).addTo(this.vertexMarkers);
   }
 
@@ -393,9 +408,9 @@ export class MapaPage implements OnDestroy {
         this.gpsData.lat = lastKnownPosition.lat;
         this.gpsData.lng = lastKnownPosition.lng;
       }
-      this.presentModal(polygon.toGeoJSON());
+      this.navigateToRegisterData(polygon.toGeoJSON());
     } else {
-      console.log('Dibujo cancelado: se necesitan al menos 3 puntos para un polígono.');
+      this.presentToast('Dibujo cancelado: se necesitan al menos 3 puntos.', 'warning');
     }
 
     // 3. Limpiar elementos temporales del mapa
@@ -411,9 +426,23 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = []; // Resetear para la próxima vez
   }
 
-  presentModal(geoJSON: any) {
-    console.log('Polygon created. Opening modal with data:', geoJSON);
-    // Aquí implementarías la lógica para mostrar tu modal
+  navigateToRegisterData(geoJSON: any) {
+    console.log('Polígono creado, navegando a la página de registro con:', geoJSON);
+    this.navCtrl.navigateForward('/mapa/registerdata', {
+      state: {
+        geojson: geoJSON
+      }
+    });
+  }
+
+  async presentToast(message: string, color: 'success' | 'warning' | 'danger') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2500,
+      color,
+      position: 'top'
+    });
+    toast.present();
   }
 
   /**
