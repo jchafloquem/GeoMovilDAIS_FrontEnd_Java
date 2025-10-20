@@ -69,14 +69,19 @@
       </div>
     </div>
   </div>
-  <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+  <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
     <ion-fab-button (click)="zoomIn()">
       <ion-icon name="add-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-  <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+  <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
     <ion-fab-button (click)="zoomOut()">
       <ion-icon name="remove-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab class="download-map-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+    <ion-fab-button (click)="startDownloadProcess()" color="tertiary">
+      <ion-icon name="download-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
   <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
@@ -84,7 +89,7 @@
       <ion-icon name="trash-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-  <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+  <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
     <ion-fab-button (click)="zoomToPeru()">
       <ion-icon name="globe-outline"></ion-icon>
     </ion-fab-button>

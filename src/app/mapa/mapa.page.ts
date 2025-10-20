@@ -1,10 +1,11 @@
 import { Component, OnDestroy } from '@angular/core';
-import { IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner } from '@ionic/angular/standalone';
+import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
@@ -64,8 +65,8 @@ export class MapaPage implements OnDestroy {
   public isDrawingPolygon = false;
   public showInitialSpinner = true;
 
-  constructor(private http: HttpClient) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline });
+  constructor(private http: HttpClient, private alertController: AlertController) {
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline });
   }
 
   ionViewDidEnter() {
@@ -159,6 +160,93 @@ export class MapaPage implements OnDestroy {
     if (this.map && this.peruLayer) {
       this.map.fitBounds(this.peruLayer.getBounds());
     }
+  }
+
+  async startDownloadProcess() {
+    const alert = await this.alertController.create({
+      header: 'Advertencia Importante',
+      message: 'La descarga de mapas de proveedores como Google viola sus Términos de Servicio. Esta función es solo una demostración técnica y no debe usarse con fuentes de mapas protegidas. ¿Deseas continuar con una fuente de ejemplo (OpenStreetMap)?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Continuar',
+          handler: () => {
+            this.downloadTiles();
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async downloadTiles() {
+    if (!this.map) return;
+
+    const bounds = this.map.getBounds();
+    const minZoom = this.map.getZoom();
+    const maxZoom = minZoom + 2; // Descargar 2 niveles de zoom
+
+    const confirmation = await this.alertController.create({
+        header: 'Confirmar Descarga',
+        message: `Se iniciará la descarga del área visible para los niveles de zoom ${minZoom} a ${maxZoom}. Esto puede tardar y consumir datos.`,
+        buttons: [
+            { text: 'Cancelar', role: 'cancel' },
+            { text: 'Aceptar', handler: async () => {
+                this.isLoading = true;
+                for (let z = minZoom; z <= maxZoom; z++) {
+                  const tiles = this.getTilesInBounds(bounds, z);
+                  console.log(`Zoom ${z}: ${tiles.length} teselas a descargar.`);
+
+                  for (const tile of tiles) {
+                    // URL de la tesela (¡NO USAR CON GOOGLE!)
+                    const tileUrl = `https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`;
+
+                    // Ruta local para guardar
+                    const localPath = `offline-tiles/${tile.z}/${tile.x}/${tile.y}.png`;
+
+                    try {
+                      // Aquí iría la lógica real de descarga y guardado con Capacitor Filesystem
+                      // Por ahora, solo simulamos para no violar términos de servicio.
+                      console.log(`Simulando descarga y guardado: ${localPath}`);
+                      await new Promise(resolve => setTimeout(resolve, 10)); // Pequeña pausa
+
+                    } catch (error) {
+                      console.error(`Error descargando ${tileUrl}`, error);
+                    }
+                  }
+                }
+                this.isLoading = false;
+                const finalAlert = await this.alertController.create({ header: 'Éxito', message: 'Descarga (simulada) completada.', buttons: ['OK'] });
+                await finalAlert.present();
+            }}
+        ]
+    });
+    await confirmation.present();
+  }
+
+  // Función para calcular las teselas dentro de un área
+  getTilesInBounds(bounds: any, zoom: number) {
+    const tiles = [];
+    const northEast = bounds.getNorthEast();
+    const southWest = bounds.getSouthWest();
+
+    const lat2tile = (lat: number, zoom: number) => Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+    const lon2tile = (lon: number, zoom: number) => Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+
+    const startX = lon2tile(southWest.lng, zoom);
+    const startY = lat2tile(northEast.lat, zoom);
+    const endX = lon2tile(northEast.lng, zoom);
+    const endY = lat2tile(southWest.lat, zoom);
+
+    for (let x = startX; x <= endX; x++) {
+      for (let y = startY; y <= endY; y++) {
+        tiles.push({ z: zoom, x: x, y: y });
+      }
+    }
+    return tiles;
   }
 
   toggleDrawingMode() {
