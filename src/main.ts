@@ -5,6 +5,11 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 
+/* Librerías de Leaflet */
+import 'leaflet'; // Importa Leaflet primero
+import 'leaflet-draw'; // Luego Leaflet Draw
+
+
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },

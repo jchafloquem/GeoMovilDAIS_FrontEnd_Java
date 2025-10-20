@@ -84,6 +84,14 @@
       <ion-icon name="globe-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+  <!-- Botón para iniciar/detener el dibujo caminando -->
+  <div class="draw-walk-btn-wrapper" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon">
+    <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
+  </div>
+  <!-- Botón para añadir un vértice mientras se dibuja -->
+  <div *ngIf="isDrawingPolygon" class="add-point-btn-wrapper" (click)="addPolygonPoint()">
+    <ion-icon name="add-circle-outline"></ion-icon>
+  </div>
   <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="findAndCenterUser()">
       <ion-icon name="locate"></ion-icon>
