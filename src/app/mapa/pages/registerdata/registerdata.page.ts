@@ -24,7 +24,7 @@ import {
   IonIcon,
   AlertController
 } from '@ionic/angular/standalone';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -52,45 +52,66 @@ export class RegisterdataPage implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private toastController: ToastController,
     private navCtrl: NavController,
     private alertController: AlertController,
     private zone: NgZone // Inyectar NgZone
   ) {
     addIcons({ camera, closeCircle });
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state;
-    if (state) {
-      // Ejecutamos la lógica de inicialización dentro de la zona de Angular
-      // para asegurar que los cambios en las propiedades del componente
-      // sean detectados y la vista se actualice correctamente en el dispositivo.
-      this.zone.run(async () => {
-        this.geojson = state['geojson'];
-        this.editKey = state['key'] || null; // Capturamos la clave si existe
-
-        if (this.editKey && this.geojson?.properties) {
-          console.log('Modo edición detectado. Clave:', this.editKey);
-          console.log('GeoJSON recibido para edición:', this.geojson);
-          console.log('Propiedades del GeoJSON:', this.geojson.properties);
-
-          this.formData.name = this.geojson.properties.name || '';
-          this.formData.description = this.geojson.properties.description || '';
-          console.log('Formulario pre-llenado: Nombre=', this.formData.name, 'Descripción=', this.formData.description);
-
-          if (this.geojson.properties.photos && Array.isArray(this.geojson.properties.photos)) {
-            this.savedPhotoUris = this.geojson.properties.photos;
-            await this.loadPhotosForDisplay(); // Usar await aquí
-          }
-        } else {
-          console.log('Modo creación de nuevo polígono.');
-        }
-      });
-    }
   }
 
   ngOnInit() {
   }
 
+  ionViewWillEnter() {
+    this.initializeFromRoute();
+  }
+
+  private async initializeFromRoute() {
+    // 1. Reseteamos el estado para asegurar una página limpia en cada visita.
+    this.geojson = null;
+    this.editKey = null;
+    this.photosForDisplay = [];
+    this.savedPhotoUris = [];
+    this.formData = { name: '', description: '' };
+
+    // 2. Determinamos si estamos en modo EDICIÓN (vía URL) o CREACIÓN (vía state).
+    const keyFromUrl = this.route.snapshot.paramMap.get('key');
+
+    if (keyFromUrl) {
+      // MODO EDICIÓN: Cargamos los datos desde Preferences usando la clave de la URL.
+      this.editKey = keyFromUrl;
+      console.log('Modo edición por URL. Clave:', this.editKey);
+
+      const { value } = await Preferences.get({ key: this.editKey });
+      if (value) {
+        this.geojson = JSON.parse(value);
+        if (this.geojson?.properties) {
+          this.formData.name = this.geojson.properties.name || '';
+          this.formData.description = this.geojson.properties.description || '';
+          if (this.geojson.properties.photos && Array.isArray(this.geojson.properties.photos)) {
+            this.savedPhotoUris = this.geojson.properties.photos;
+            await this.loadPhotosForDisplay();
+          }
+        }
+      } else {
+        console.error('No se encontró el polígono para la clave:', this.editKey);
+        const toast = await this.toastController.create({ message: 'Error: No se pudo cargar el polígono para editar.', duration: 3000, color: 'danger' });
+        await toast.present();
+        this.navCtrl.navigateBack('/mapa');
+      }
+    } else {
+      // MODO CREACIÓN: Obtenemos el GeoJSON de la navegación.
+      const state = history.state;
+      if (state && state.geojson) {
+        this.geojson = state.geojson;
+        console.log('Modo creación de nuevo polígono.');
+      } else {
+        console.warn('Página de registro abierta sin GeoJSON para crear o clave para editar.');
+      }
+    }
+  }
   private async loadPhotosForDisplay() {
     this.photosForDisplay = [];
     console.log('Iniciando carga de fotos para display. savedPhotoUris:', this.savedPhotoUris);
@@ -288,7 +309,8 @@ export class RegisterdataPage implements OnInit {
             y -= lineHeight;
           }
 
-          // 5. Devolver la imagen procesada
+          // 5. Devolver la imagen procesada como un data URL completo.
+          // El plugin Filesystem debería ser capaz de manejarlo directamente.
           resolve(canvas.toDataURL('image/jpeg', 0.9));
 
         } catch (e) {

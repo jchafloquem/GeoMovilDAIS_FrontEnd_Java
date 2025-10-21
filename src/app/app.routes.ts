@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/mapa.page').then( m => m.MapaPage)
   },
   {
+    path: 'mapa/registerdata/:key',
+    loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
+  },
+  {
     path: 'mapa/registerdata',
     loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
   },

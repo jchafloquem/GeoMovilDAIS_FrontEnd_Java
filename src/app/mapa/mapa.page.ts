@@ -3,7 +3,7 @@ import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, 
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
@@ -64,6 +64,7 @@ export class MapaPage implements OnDestroy {
 
   public activeLayer: 'satellite' | 'streets' = 'satellite';
   public isDrawingPolygon = false;
+  public isEditingMode = false;
   public showInitialSpinner = true;
 
   constructor(
@@ -73,7 +74,7 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline });
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline });
   }
 
   ionViewDidEnter() {
@@ -434,6 +435,21 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = []; // Resetear para la próxima vez
   }
 
+  toggleEditMode() {
+    this.isEditingMode = !this.isEditingMode;
+
+    // Recargar los polígonos para aplicar los nuevos listeners de eventos y estilos
+    if (this.drawnItems) {
+      this.drawnItems.clearLayers();
+      this.loadSavedPolygons();
+    }
+
+    this.presentToast(
+      this.isEditingMode ? 'Modo Edición Activado: Toca un polígono para editarlo.' : 'Modo Edición Desactivado.',
+      this.isEditingMode ? 'primary' : 'medium'
+    );
+  }
+
   navigateToRegisterData(geoJSON: any) {
     console.log('Polígono creado, navegando a la página de registro con:', geoJSON);
     this.navCtrl.navigateForward('/mapa/registerdata', {
@@ -443,22 +459,13 @@ export class MapaPage implements OnDestroy {
     });
   }
 
-  private async editPolygonInfo(key: string) {
+  private editPolygonInfo(key: string) {
     if (!key) return;
-    const { value } = await Preferences.get({ key });
-    if (value) {
-      const geojson = JSON.parse(value);
-      // Ejecutamos la navegación dentro de la zona de Angular para garantizar
-      // que la detección de cambios se active correctamente, especialmente en móvil.
-      this.zone.run(() => {
-        this.navCtrl.navigateForward('/mapa/registerdata', {
-          state: {
-            geojson: geojson,
-            key: key // Pasamos la clave para saber que estamos editando
-          }
-        });
-      });
-    }
+    // Navegamos a la ruta de edición, pasando la clave como parámetro en la URL.
+    // La página de registro se encargará de cargar los datos usando esta clave.
+    this.zone.run(() => {
+      this.navCtrl.navigateForward(`/mapa/registerdata/${key}`);
+    });
   }
 
   private async loadSavedPolygons() {
@@ -476,43 +483,36 @@ export class MapaPage implements OnDestroy {
           const geojson = JSON.parse(value);
 
           const polygonLayer = L.geoJSON(geojson, {
-            style: {
-              color: '#3388ff', // Color azul para polígonos guardados
-              weight: 3,
-              opacity: 0.7,
-              fillColor: '#3388ff',
-              fillOpacity: 0.2
+            style: (feature: any) => {
+              return {
+                color: this.isEditingMode ? '#ffc409' : '#3388ff', // Amarillo para editar, azul normal
+                weight: 3,
+                opacity: 0.7,
+                fillColor: this.isEditingMode ? '#ffc409' : '#3388ff',
+                fillOpacity: this.isEditingMode ? 0.4 : 0.2
+              };
             },
             onEachFeature: (feature: any, layer: any) => {
-              // La forma robusta: construir el popup con las utilidades de Leaflet
-              if (feature.properties) {
-                // 1. Crear el contenedor principal del popup
-                const popupContainer = L.DomUtil.create('div', 'custom-popup-class');
+              if (this.isEditingMode) {
+                // MODO EDICIÓN: El clic en el polígono navega directamente a la edición.
+                const name = feature.properties?.name || 'Polígono sin nombre';
+                layer.bindTooltip(`Tocar para editar: <strong>${name}</strong>`, { permanent: false, sticky: true });
 
-                // 2. Añadir el contenido (nombre, descripción, fecha)
-                popupContainer.innerHTML = `
-                  <strong>${feature.properties.name || 'Polígono sin nombre'}</strong>
-                  <p style="margin: 5px 0;">${feature.properties.description || 'Sin descripción.'}</p>
-                  <small>Creado: ${new Date(feature.properties.createdAt).toLocaleString()}</small>
-                `;
-
-                // 3. Crear el contenedor y el botón de "Editar"
-                const buttonContainer = L.DomUtil.create('div', '', popupContainer);
-                buttonContainer.style.textAlign = 'right';
-                buttonContainer.style.marginTop = '10px';
-
-                const editButton = L.DomUtil.create('button', '', buttonContainer);
-                editButton.innerText = 'Editar';
-                // Añadimos una clase para poder darle estilos si queremos
-                editButton.classList.add('popup-edit-button');
-
-                // 4. Adjuntar el evento de clic de forma segura con L.DomEvent
-                L.DomEvent.on(editButton, 'click', (ev: MouseEvent) => {
-                  L.DomEvent.stop(ev); // Previene que el clic se propague al mapa
+                layer.on('click', (e: any) => {
+                  L.DomEvent.stop(e);
                   this.editPolygonInfo(key);
                 });
 
-                layer.bindPopup(popupContainer);
+              } else {
+                // MODO NORMAL: Muestra un popup con información, sin botón de editar.
+                if (feature.properties) {
+                  const popupContent = `
+                    <strong>${feature.properties.name || 'Polígono sin nombre'}</strong>
+                    <p style="margin: 5px 0;">${feature.properties.description || 'Sin descripción.'}</p>
+                    <small>Creado: ${new Date(feature.properties.createdAt).toLocaleString()}</small>
+                  `;
+                  layer.bindPopup(popupContent);
+                }
               }
             }
           });
@@ -524,7 +524,7 @@ export class MapaPage implements OnDestroy {
     }
   }
 
-  async presentToast(message: string, color: 'success' | 'warning' | 'danger') {
+  async presentToast(message: string, color: 'success' | 'warning' | 'danger' | 'primary' | 'medium') {
     const toast = await this.toastController.create({
       message,
       duration: 2500,

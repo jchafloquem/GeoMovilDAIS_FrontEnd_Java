@@ -84,6 +84,12 @@
       <ion-icon name="download-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+  <!-- BOTÓN PARA ACTIVAR/DESACTIVAR MODO EDICIÓN -->
+  <ion-fab class="edit-mode-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+    <ion-fab-button (click)="toggleEditMode()" [color]="isEditingMode ? 'warning' : 'light'">
+      <ion-icon name="create-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
   <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="clearLocation()">
       <ion-icon name="trash-outline"></ion-icon>

@@ -332,15 +332,16 @@ ion-title {
   border-radius: 4px;
   box-shadow: none;
 }
+.edit-mode-btn-wrapper {
+  top: calc(var(--ion-safe-area-top, 0px) + 210px); /* Debajo de download */
+  right: 15px;
+  margin-inline-end: 0;
+  z-index: 1000;
+  overflow: visible;
 
-/* Estilo para el botón de editar dentro del popup de Leaflet */
-::ng-deep .popup-edit-button {
-  background-color: #3880ff; /* Azul primario de Ionic */
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: bold;
+  ion-fab-button {
+    width: 40px;
+    height: 40px;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
 }
