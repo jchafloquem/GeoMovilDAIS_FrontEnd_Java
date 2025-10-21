@@ -22,7 +22,8 @@ import {
   IonCol,
   IonImg,
   IonIcon,
-  AlertController
+  AlertController,
+  LoadingController
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
@@ -37,7 +38,7 @@ import { Capacitor } from '@capacitor/core';
   templateUrl: './registerdata.page.html',
   styleUrls: ['./registerdata.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonGrid, IonRow, IonCol, IonImg, IonIcon]
+  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonGrid, IonRow, IonCol, IonImg, IonIcon, ]
 })
 export class RegisterdataPage implements OnInit {
 
@@ -56,6 +57,7 @@ export class RegisterdataPage implements OnInit {
     private toastController: ToastController,
     private navCtrl: NavController,
     private alertController: AlertController,
+    private loadingController: LoadingController,
     private zone: NgZone // Inyectar NgZone
   ) {
     addIcons({ camera, closeCircle });
@@ -131,8 +133,26 @@ export class RegisterdataPage implements OnInit {
       return;
     }
 
+    // 1. Solicitar permisos de cámara y galería antes de continuar.
+    // Esto es crucial para que el guardado en directorios públicos funcione en Android.
+    const permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
+    if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
+      const toast = await this.toastController.create({
+        message: 'Se necesitan permisos de cámara y galería para usar esta función.',
+        duration: 3000,
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    const loading = await this.loadingController.create({
+      message: 'Procesando foto...',
+    });
+    await loading.present();
+
     try {
-      // 1. Tomar la foto
+      // 2. Tomar la foto
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -142,7 +162,7 @@ export class RegisterdataPage implements OnInit {
 
       if (!image.base64String) return;
 
-      // 2. Obtener coordenadas y fecha/hora para la marca de agua
+      // 3. Obtener coordenadas y fecha/hora para la marca de agua
       const geoOptions = {
         enableHighAccuracy: true,
         timeout: 10000, // 10 segundos de tiempo de espera
@@ -164,18 +184,47 @@ export class RegisterdataPage implements OnInit {
         `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
       ];
 
-      // 3. Añadir la marca de agua a la imagen
+      // 4. Añadir la marca de agua a la imagen
       const imageWithOverlayBase64 = await this.addTextOverlayToImage(`data:image/jpeg;base64,${image.base64String}`, textLines);
 
-      // 4. Guardar la nueva imagen en el sistema de archivos del dispositivo
       const fileName = `photo_${new Date().getTime()}.jpeg`;
+
+      // 5. Guardar la nueva imagen en el almacenamiento PRIVADO de la app (para uso interno)
       const savedFile = await Filesystem.writeFile({
         path: fileName,
         data: imageWithOverlayBase64,
-        directory: Directory.Data // Almacenamiento privado de la app
+        directory: Directory.Data
       });
 
-      // 5. Añadir a las listas para la UI y para guardar en el GeoJSON
+      // 6. Guardar una copia en el almacenamiento PÚBLICO para que sea visible en la galería.
+      try {
+        // Usamos Directory.Documents, que es el directorio público correcto y compatible
+        // con las restricciones de "Scoped Storage" de Android moderno.
+        // La carpeta 'GeoDAIS' se creará aquí si no existe.
+        await Filesystem.writeFile({
+          path: `GeoDAIS/${fileName}`,
+          data: imageWithOverlayBase64,
+          directory: Directory.Documents,
+          recursive: true // Esencial para crear la carpeta GeoDAIS
+        });
+        const toast = await this.toastController.create({
+          message: 'Copia de la foto guardada en la galería (Álbum GeoDAIS).',
+          duration: 3000,
+          color: 'success'
+        });
+        await toast.present();
+      } catch (publicSaveError: any) {
+        const errorMessage = publicSaveError.message || JSON.stringify(publicSaveError);
+        console.error('Error al guardar en almacenamiento público:', errorMessage);
+        const toast = await this.toastController.create({
+          message: `No se pudo guardar la copia pública. Error: ${errorMessage}`,
+          duration: 5000,
+          color: 'danger'
+        });
+        await toast.present();
+      }
+
+      // 7. Añadir la URI del archivo PRIVADO a nuestras listas para la UI.
       this.savedPhotoUris.push(savedFile.uri);
       this.photosForDisplay.push(Capacitor.convertFileSrc(savedFile.uri));
 
@@ -189,6 +238,8 @@ export class RegisterdataPage implements OnInit {
         color: 'danger'
       });
       await toast.present();
+    } finally {
+      await loading.dismiss();
     }
   }
 

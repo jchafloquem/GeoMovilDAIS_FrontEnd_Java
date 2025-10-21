@@ -345,3 +345,11 @@ ion-title {
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 }
+
+/* Estilos para el toast de múltiples líneas */
+/* Usamos ::ng-deep para que los estilos se apliquen al componente ion-toast,
+   que se renderiza fuera del DOM de esta página. */
+::ng-deep .multiline-toast .toast-message {
+  white-space: pre-line; /* Respeta los saltos de línea (\n) */
+  text-align: center;    /* Centra el texto, útil para toasts en el medio */
+}

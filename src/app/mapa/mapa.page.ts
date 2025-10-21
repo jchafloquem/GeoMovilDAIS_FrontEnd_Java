@@ -445,8 +445,9 @@ export class MapaPage implements OnDestroy {
     }
 
     this.presentToast(
-      this.isEditingMode ? 'Modo Edición Activado: Toca un polígono para editarlo.' : 'Modo Edición Desactivado.',
-      this.isEditingMode ? 'primary' : 'medium'
+      this.isEditingMode ? 'Modo Edición Activado. Toca un polígono para editarlo.' : 'Modo Edición Desactivado.',
+      this.isEditingMode ? 'primary' : 'medium',
+      'middle'
     );
   }
 
@@ -524,12 +525,17 @@ export class MapaPage implements OnDestroy {
     }
   }
 
-  async presentToast(message: string, color: 'success' | 'warning' | 'danger' | 'primary' | 'medium') {
+  async presentToast(
+    message: string,
+    color: 'success' | 'warning' | 'danger' | 'primary' | 'medium',
+    position: 'top' | 'bottom' | 'middle' = 'top'
+  ) {
     const toast = await this.toastController.create({
       message,
       duration: 2500,
       color,
-      position: 'top'
+      position,
+      cssClass: 'multiline-toast' // Clase para permitir múltiples líneas
     });
     toast.present();
   }
