@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/mapa"></ion-back-button>
     </ion-buttons>
-    <ion-title>Registrar Datos</ion-title>
+    <ion-title>{{ editKey ? 'Editar Información' : 'Registrar Datos' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -21,8 +21,24 @@
       </ion-item>
     </ion-list>
 
-    <ion-button type="submit" expand="block" class="ion-margin-top">
-      Guardar Polígono
+    <ion-button (click)="takePicture()" [disabled]="photosForDisplay.length >= 6" color="secondary" expand="block" class="ion-margin-top">
+      <ion-icon slot="start" name="camera"></ion-icon>
+      Añadir Foto ({{ photosForDisplay.length }} / 6)
+    </ion-button>
+
+    <ion-grid *ngIf="photosForDisplay.length > 0" class="ion-margin-top">
+      <ion-row>
+        <ion-col size="4" *ngFor="let photo of photosForDisplay; let i = index" class="photo-thumbnail-container">
+          <ion-img [src]="photo"></ion-img>
+          <ion-button class="delete-photo-btn" (click)="deletePhoto(i)" fill="clear" color="danger">
+            <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <ion-button type="submit" expand="block" class="ion-margin-top" [disabled]="!formData.name">
+      {{ editKey ? 'Actualizar Información' : 'Guardar Polígono' }}
     </ion-button>
   </form>
 

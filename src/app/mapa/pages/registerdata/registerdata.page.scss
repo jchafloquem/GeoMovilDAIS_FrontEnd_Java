@@ -1,0 +1,30 @@
+.photo-thumbnail-container {
+  position: relative;
+  padding: 2px;
+
+  ion-img {
+    border: 1px solid var(--ion-color-medium);
+    border-radius: 4px;
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+  }
+
+  .delete-photo-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    height: 28px;
+    width: 28px;
+
+    ion-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 0 2px rgba(0,0,0,0.7));
+    }
+  }
+}
+

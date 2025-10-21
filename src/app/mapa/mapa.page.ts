@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, NgZone, OnDestroy } from '@angular/core';
 import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { addIcons } from 'ionicons';
 import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Preferences } from '@capacitor/preferences';
 
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
@@ -69,7 +70,8 @@ export class MapaPage implements OnDestroy {
     private http: HttpClient,
     private alertController: AlertController,
     private navCtrl: NavController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private zone: NgZone
   ) {
     addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline });
   }
@@ -87,6 +89,12 @@ export class MapaPage implements OnDestroy {
     } else {
       setTimeout(() => {
         this.map?.invalidateSize();
+        // Al volver a la página, limpiamos los polígonos existentes y recargamos los guardados
+        // para reflejar cualquier cambio (ej. un nuevo polígono guardado).
+        if (this.drawnItems) {
+          this.drawnItems.clearLayers();
+        }
+        this.loadSavedPolygons();
       }, 200);
     }
   }
@@ -435,6 +443,87 @@ export class MapaPage implements OnDestroy {
     });
   }
 
+  private async editPolygonInfo(key: string) {
+    if (!key) return;
+    const { value } = await Preferences.get({ key });
+    if (value) {
+      const geojson = JSON.parse(value);
+      // Ejecutamos la navegación dentro de la zona de Angular para garantizar
+      // que la detección de cambios se active correctamente, especialmente en móvil.
+      this.zone.run(() => {
+        this.navCtrl.navigateForward('/mapa/registerdata', {
+          state: {
+            geojson: geojson,
+            key: key // Pasamos la clave para saber que estamos editando
+          }
+        });
+      });
+    }
+  }
+
+  private async loadSavedPolygons() {
+    if (!this.drawnItems) return;
+
+    // 1. Obtener todas las claves de Preferences
+    const { keys } = await Preferences.keys();
+    const polygonKeys = keys.filter(key => key.startsWith('polygon_'));
+
+    // 2. Iterar sobre cada clave, obtener el GeoJSON y añadirlo al mapa
+    for (const key of polygonKeys) {
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        try {
+          const geojson = JSON.parse(value);
+
+          const polygonLayer = L.geoJSON(geojson, {
+            style: {
+              color: '#3388ff', // Color azul para polígonos guardados
+              weight: 3,
+              opacity: 0.7,
+              fillColor: '#3388ff',
+              fillOpacity: 0.2
+            },
+            onEachFeature: (feature: any, layer: any) => {
+              // La forma robusta: construir el popup con las utilidades de Leaflet
+              if (feature.properties) {
+                // 1. Crear el contenedor principal del popup
+                const popupContainer = L.DomUtil.create('div', 'custom-popup-class');
+
+                // 2. Añadir el contenido (nombre, descripción, fecha)
+                popupContainer.innerHTML = `
+                  <strong>${feature.properties.name || 'Polígono sin nombre'}</strong>
+                  <p style="margin: 5px 0;">${feature.properties.description || 'Sin descripción.'}</p>
+                  <small>Creado: ${new Date(feature.properties.createdAt).toLocaleString()}</small>
+                `;
+
+                // 3. Crear el contenedor y el botón de "Editar"
+                const buttonContainer = L.DomUtil.create('div', '', popupContainer);
+                buttonContainer.style.textAlign = 'right';
+                buttonContainer.style.marginTop = '10px';
+
+                const editButton = L.DomUtil.create('button', '', buttonContainer);
+                editButton.innerText = 'Editar';
+                // Añadimos una clase para poder darle estilos si queremos
+                editButton.classList.add('popup-edit-button');
+
+                // 4. Adjuntar el evento de clic de forma segura con L.DomEvent
+                L.DomEvent.on(editButton, 'click', (ev: MouseEvent) => {
+                  L.DomEvent.stop(ev); // Previene que el clic se propague al mapa
+                  this.editPolygonInfo(key);
+                });
+
+                layer.bindPopup(popupContainer);
+              }
+            }
+          });
+          this.drawnItems.addLayer(polygonLayer);
+        } catch (e) {
+          console.error(`Error al procesar el polígono guardado (key: ${key})`, e);
+        }
+      }
+    }
+  }
+
   async presentToast(message: string, color: 'success' | 'warning' | 'danger') {
     const toast = await this.toastController.create({
       message,
@@ -607,5 +696,8 @@ export class MapaPage implements OnDestroy {
 
     // Iniciamos el seguimiento continuo de la ubicación del usuario.
     this.startLocationWatch();
+
+    // Cargamos los polígonos guardados en el dispositivo
+    this.loadSavedPolygons();
   }
 }
