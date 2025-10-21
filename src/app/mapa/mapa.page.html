@@ -80,10 +80,11 @@
     </ion-fab-button>
   </ion-fab>
   <ion-fab class="download-map-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="startDownloadProcess()" color="tertiary">
+    <ion-fab-button (click)="startDownloadProcess()">
       <ion-icon name="download-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
   <!-- BOTÓN PARA ACTIVAR/DESACTIVAR MODO EDICIÓN -->
   <ion-fab class="edit-mode-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
     <ion-fab-button (click)="toggleEditMode()" [color]="isEditingMode ? 'warning' : 'light'">

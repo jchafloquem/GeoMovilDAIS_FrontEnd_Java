@@ -485,10 +485,10 @@ export class MapaPage implements OnDestroy {
           const polygonLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
               return {
-                color: this.isEditingMode ? '#ffc409' : '#3388ff', // Amarillo para editar, azul normal
+                color: this.isEditingMode ? '#ffc409' : '#0D9BD7', // Amarillo para editar, azul normal
                 weight: 3,
                 opacity: 0.7,
-                fillColor: this.isEditingMode ? '#ffc409' : '#3388ff',
+                fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
                 fillOpacity: this.isEditingMode ? 0.4 : 0.2
               };
             },

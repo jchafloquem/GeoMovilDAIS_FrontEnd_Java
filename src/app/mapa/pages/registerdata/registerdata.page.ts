@@ -273,13 +273,28 @@ export class RegisterdataPage implements OnInit {
             return reject(new Error('No se pudo obtener el contexto 2D del canvas.'));
           }
 
-          // 1. Dibuja la imagen original
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0, img.width, img.height);
+          // 1. Redimensionar la imagen para evitar problemas de memoria y rendimiento.
+          const MAX_DIMENSION = 1920; // Límite para la dimensión más grande (ancho o alto)
+          let targetWidth = img.width;
+          let targetHeight = img.height;
 
-          // 2. Configuración de estilo profesional
-          const fontSize = Math.max(28, Math.floor(Math.min(img.width, img.height) / 35));
+          if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+            if (targetWidth > targetHeight) { // Imagen horizontal
+              targetHeight = Math.round(targetHeight * (MAX_DIMENSION / targetWidth));
+              targetWidth = MAX_DIMENSION;
+            } else { // Imagen vertical o cuadrada
+              targetWidth = Math.round(targetWidth * (MAX_DIMENSION / targetHeight));
+              targetHeight = MAX_DIMENSION;
+            }
+          }
+
+          // 2. Dibuja la imagen redimensionada en el canvas
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          // 3. Configuración de estilo profesional, basado en las nuevas dimensiones
+          const fontSize = Math.max(28, Math.floor(Math.min(targetWidth, targetHeight) / 35));
           const padding = fontSize * 0.7;
           const lineHeight = fontSize * 1.25;
 
@@ -287,7 +302,7 @@ export class RegisterdataPage implements OnInit {
           ctx.textBaseline = 'bottom';
           ctx.textAlign = 'left';
 
-          // 3. Dibuja un fondo semitransparente para el texto
+          // 4. Dibuja un fondo semitransparente para el texto
           const textWidth = Math.max(...textLines.map(line => ctx.measureText(line).width));
           const bgHeight = (lineHeight * textLines.length) + padding;
           const bgWidth = textWidth + (padding * 2);
@@ -297,7 +312,7 @@ export class RegisterdataPage implements OnInit {
           ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
           ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
 
-          // 4. Dibuja el texto (blanco con sombra)
+          // 5. Dibuja el texto (blanco con sombra)
           ctx.fillStyle = 'white';
           ctx.shadowColor = 'black';
           ctx.shadowBlur = 5;
@@ -309,7 +324,7 @@ export class RegisterdataPage implements OnInit {
             y -= lineHeight;
           }
 
-          // 5. Devolver la imagen procesada como un data URL completo.
+          // 6. Devolver la imagen procesada como un data URL completo.
           // El plugin Filesystem debería ser capaz de manejarlo directamente.
           resolve(canvas.toDataURL('image/jpeg', 0.9));
 

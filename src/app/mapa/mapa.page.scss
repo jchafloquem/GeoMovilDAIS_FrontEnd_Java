@@ -62,7 +62,7 @@ ion-title {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #3880ff; /* Azul de Ionic */
+    --background: #0D9BD7; /* Azul de Ionic */
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
@@ -161,7 +161,7 @@ ion-title {
 }
 
 .gps-panel .row:nth-child(even) {
-  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
+  background-color: rgba(13, 155, 215, 0.7); /* #0D9BD7 con transparencia */
 }
 
 .gps-panel .row:last-child {
@@ -227,7 +227,7 @@ ion-title {
     transition: all 0.2s ease-in-out;
 
     &.active-layer {
-      --background: #3880ff; /* Azul primario de Ionic */
+      --background: #0D9BD7; /* Azul primario de Ionic */
       --color: white;
     }
   }
@@ -261,7 +261,7 @@ ion-title {
 
 .draw-walk-btn-wrapper {
   bottom: 250px;
-  background: #2dd36f; /* success */
+  background: #0D9BD7; /* success */
   &.active {
     background: #eb445a; /* danger */
   }
@@ -269,7 +269,7 @@ ion-title {
 
 .add-point-btn-wrapper {
   bottom: 300px;
-  background: #3880ff; /* primary */
+  background: #0D9BD7; /* primary */
 }
 
 .crosshair-icon {
@@ -318,13 +318,13 @@ ion-title {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #6a64ff; /* tertiary */
+    --background: #0D9BD7;
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 }
 ::ng-deep .vertex-tooltip {
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: #0D9BD7;
   border: 1px solid #fff;
   color: #fff;
   font-weight: bold;
