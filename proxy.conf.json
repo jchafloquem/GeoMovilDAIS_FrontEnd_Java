@@ -1,0 +1,12 @@
+{
+  "/api-reniec": {
+    "target": "https://api.decolecta.com",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api-reniec": ""
+    },
+    "logLevel": "debug"
+  }
+}
+

@@ -3,5 +3,13 @@
   "integrations": {
     "capacitor": {}
   },
-  "type": "angular-standalone"
+  "type": "angular-standalone",
+  "proxies": [
+    {
+      "path": "/v1",
+      "proxyUrl": "https://api.decolecta.com/v1",
+      "secure": false,
+      "changeOrigin": true
+    }
+  ]
 }

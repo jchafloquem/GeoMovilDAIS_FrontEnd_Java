@@ -2,7 +2,7 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
-import { camera, closeCircle } from 'ionicons/icons';
+import { camera, closeCircle, search } from 'ionicons/icons';
 import {
   IonContent,
   IonHeader,
@@ -30,7 +30,8 @@ import { Preferences } from '@capacitor/preferences';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
+import { environment } from '../../../../environments/environment';
 
 
 @Component({
@@ -38,7 +39,7 @@ import { Capacitor } from '@capacitor/core';
   templateUrl: './registerdata.page.html',
   styleUrls: ['./registerdata.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonGrid, IonRow, IonCol, IonImg, IonIcon, ]
+  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonGrid, IonRow, IonCol, IonImg, IonIcon]
 })
 export class RegisterdataPage implements OnInit {
 
@@ -47,8 +48,10 @@ export class RegisterdataPage implements OnInit {
   public photosForDisplay: string[] = [];
   private savedPhotoUris: string[] = [];
   public formData = {
-    name: '',
-    description: ''
+    dni: '',
+    nombres: '',
+    apellido_paterno: '',
+    apellido_materno: '',
   };
 
   constructor(
@@ -60,7 +63,7 @@ export class RegisterdataPage implements OnInit {
     private loadingController: LoadingController,
     private zone: NgZone // Inyectar NgZone
   ) {
-    addIcons({ camera, closeCircle });
+    addIcons({ camera, closeCircle, search });
   }
 
   ngOnInit() {
@@ -76,7 +79,7 @@ export class RegisterdataPage implements OnInit {
     this.editKey = null;
     this.photosForDisplay = [];
     this.savedPhotoUris = [];
-    this.formData = { name: '', description: '' };
+    this.formData = { dni: '', nombres: '', apellido_paterno: '', apellido_materno: '' };
 
     // 2. Determinamos si estamos en modo EDICIÓN (vía URL) o CREACIÓN (vía state).
     const keyFromUrl = this.route.snapshot.paramMap.get('key');
@@ -90,8 +93,19 @@ export class RegisterdataPage implements OnInit {
       if (value) {
         this.geojson = JSON.parse(value);
         if (this.geojson?.properties) {
-          this.formData.name = this.geojson.properties.name || '';
-          this.formData.description = this.geojson.properties.description || '';
+          // Cargar datos del formulario
+          this.formData.dni = this.geojson.properties.dni || '';
+          this.formData.nombres = this.geojson.properties.nombres || '';
+          this.formData.apellido_paterno = this.geojson.properties.apellido_paterno || '';
+          this.formData.apellido_materno = this.geojson.properties.apellido_materno || '';
+
+          // Fallback para datos antiguos que solo tienen la propiedad 'name'
+          if (!this.formData.nombres && this.geojson.properties.name) {
+            // Colocamos el nombre completo en el campo de nombres como fallback.
+            // El usuario puede volver a consultar el DNI para separarlos.
+            this.formData.nombres = this.geojson.properties.name;
+          }
+
           if (this.geojson.properties.photos && Array.isArray(this.geojson.properties.photos)) {
             this.savedPhotoUris = this.geojson.properties.photos;
             await this.loadPhotosForDisplay();
@@ -99,7 +113,11 @@ export class RegisterdataPage implements OnInit {
         }
       } else {
         console.error('No se encontró el polígono para la clave:', this.editKey);
-        const toast = await this.toastController.create({ message: 'Error: No se pudo cargar el polígono para editar.', duration: 3000, color: 'danger' });
+        const toast = await this.toastController.create({
+          message: 'Error: No se pudo cargar el polígono para editar.',
+          duration: 3000,
+          color: 'danger'
+        });
         await toast.present();
         this.navCtrl.navigateBack('/mapa');
       }
@@ -114,6 +132,7 @@ export class RegisterdataPage implements OnInit {
       }
     }
   }
+
   private async loadPhotosForDisplay() {
     this.photosForDisplay = [];
     console.log('Iniciando carga de fotos para display. savedPhotoUris:', this.savedPhotoUris);
@@ -124,6 +143,66 @@ export class RegisterdataPage implements OnInit {
       console.log('Foto convertida para display:', convertedUri);
     }
     console.log('Fotos cargadas para display:', this.photosForDisplay);
+  }
+
+  async searchDni() {
+    if (!this.formData.dni || this.formData.dni.length !== 8) {
+      const toast = await this.toastController.create({
+        message: 'Por favor, ingrese un DNI válido de 8 dígitos.',
+        duration: 2000,
+        color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    const loading = await this.loadingController.create({
+      message: 'Buscando DNI...',
+    });
+    await loading.present();
+
+    try {
+      // NOTA DE SEGURIDAD: El token no debería estar aquí en una app de producción.
+      // Considera moverlo a variables de entorno para mayor seguridad.
+      const token = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
+      // Usamos el plugin nativo de Cordova para evitar problemas de CORS en el dispositivo.
+      const url = `${environment.apiUrl}/reniec/dni?numero=${this.formData.dni}`
+      console.log('URL generada:', url);
+
+      const response: HttpResponse = await CapacitorHttp.get({
+        url,
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = response.data;
+      if (data && data.first_name) {
+        this.formData.nombres = this.toTitleCase(data.first_name || '');
+        this.formData.apellido_paterno = this.toTitleCase(data.first_last_name || '');
+        this.formData.apellido_materno = this.toTitleCase(data.second_last_name || '');
+        const toast = await this.toastController.create({
+          message: 'Nombre completado.',
+          duration: 2000,
+          color: 'success'
+        });
+        await toast.present();
+      } else {
+        const message = data.message || 'DNI no encontrado o respuesta inesperada.';
+        const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
+        await toast.present();
+      }
+    } catch (err: any) {
+      console.error('Error al buscar DNI:', err);
+      let errorMessage = 'Error al consultar el DNI. Verifique su conexión.';
+      if (err.message) {
+        errorMessage = err.message;
+      }
+      const toast = await this.toastController.create({ message: errorMessage, duration: 4000, color: 'danger' });
+      await toast.present();
+    } finally {
+      // Esto asegura que el loading se cierre siempre.
+      await loading.dismiss();
+    }
   }
 
   async takePicture() {
@@ -279,10 +358,14 @@ export class RegisterdataPage implements OnInit {
     const key = isEditing ? this.editKey! : `polygon_${new Date().getTime()}`;
 
     // Añadimos los datos del formulario a las propiedades del GeoJSON
+    const fullName = `${this.formData.nombres} ${this.formData.apellido_paterno} ${this.formData.apellido_materno}`.trim();
     const newProperties: any = {
       ...this.geojson.properties, // Mantiene propiedades existentes si las hubiera
-      name: this.formData.name,
-      description: this.formData.description,
+      name: fullName, // Guardamos el nombre completo para compatibilidad y visualización rápida
+      dni: this.formData.dni,
+      nombres: this.formData.nombres,
+      apellido_paterno: this.formData.apellido_paterno,
+      apellido_materno: this.formData.apellido_materno,
       photos: this.savedPhotoUris // Guardamos las URIs de las fotos
     };
 
@@ -390,5 +473,10 @@ export class RegisterdataPage implements OnInit {
 
       img.src = base64ImageData;
     });
+  }
+
+  private toTitleCase(str: string): string {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b(\w)/g, s => s.toUpperCase());
   }
 }
