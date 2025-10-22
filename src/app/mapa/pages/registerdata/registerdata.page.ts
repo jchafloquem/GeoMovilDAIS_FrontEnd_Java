@@ -483,7 +483,11 @@ export class RegisterdataPage implements OnInit {
     }
 
     const isEditing = !!this.editKey;
-    const key = isEditing ? this.editKey! : `polygon_${new Date().getTime()}`;
+    // Determina el tipo de geometría para generar la clave correcta
+    const geometryType = this.geojson.geometry.type.toLowerCase(); // 'point' or 'polygon'
+    const keyPrefix = geometryType === 'point' ? 'point' : 'polygon';
+
+    const key = isEditing ? this.editKey! : `${keyPrefix}_${new Date().getTime()}`;
 
     // Añadimos los datos del formulario a las propiedades del GeoJSON
     const fullName = `${this.formData.nombres} ${this.formData.apellido_paterno} ${this.formData.apellido_materno}`.trim();
@@ -518,8 +522,11 @@ export class RegisterdataPage implements OnInit {
       key: key,
       value: JSON.stringify(this.geojson)
     });
+    const toastMessage = isEditing
+      ? 'Información actualizada con éxito'
+      : 'Registro guardado con éxito';
     const toast = await this.toastController.create({
-      message: isEditing ? 'Información actualizada con éxito' : 'Polígono guardado con éxito',
+      message: toastMessage,
       duration: 2000,
       color: 'success'
     });
@@ -630,8 +637,34 @@ export class RegisterdataPage implements OnInit {
       return;
     }
 
-    // Handle both Polygon and MultiPolygon
     const geometryType = this.geojson.geometry.type;
+
+    // --- INICIO: Lógica para Puntos ---
+    if (geometryType === 'Point') {
+      const coords = this.geojson.geometry.coordinates;
+      if (!coords || coords.length < 2) {
+        return;
+      }
+
+      const lon = coords[0];
+      const lat = coords[1];
+      const alt = coords[2]; // The 'z' coordinate (x, y, z)
+
+      this.formData.centroide = `Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)}`;
+
+      if (alt !== undefined && typeof alt === 'number') {
+        this.formData.altitud = `${alt.toFixed(2)} msnm`;
+      } else {
+        this.formData.altitud = 'No disponible';
+      }
+
+      this.formData.area = 'N/A (Punto)';
+      this.formData.perimetro = 'N/A (Punto)';
+      return; // Termina el cálculo para Puntos
+    }
+    // --- FIN: Lógica para Puntos ---
+
+    // Handle both Polygon and MultiPolygon
     let coords = [];
 
     if (geometryType === 'Polygon') {

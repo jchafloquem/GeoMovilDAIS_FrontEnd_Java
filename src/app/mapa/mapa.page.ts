@@ -3,7 +3,7 @@ import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, 
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
@@ -19,6 +19,16 @@ const iconDefault = L.icon({
   iconRetinaUrl,
   iconUrl,
   shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+
+const iconYellow = L.icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -74,7 +84,7 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline });
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add });
   }
 
   ionViewDidEnter() {
@@ -95,7 +105,7 @@ export class MapaPage implements OnDestroy {
         if (this.drawnItems) {
           this.drawnItems.clearLayers();
         }
-        this.loadSavedPolygons();
+        this.loadSavedGeometries();
       }, 200);
     }
   }
@@ -435,13 +445,38 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = []; // Resetear para la próxima vez
   }
 
+  async addPointAtCurrentLocation() {
+    if (this.isDrawingPolygon) {
+      this.presentToast('Termine de dibujar el polígono antes de añadir un punto.', 'warning');
+      return;
+    }
+
+    if (!this.gpsData.lat) {
+      this.presentToast('Ubicación GPS no disponible. Intente centrar el mapa primero.', 'warning');
+      return;
+    }
+
+    // Create a GeoJSON Point feature
+    const pointGeoJSON = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Point',
+        coordinates: [this.gpsData.lng, this.gpsData.lat, this.gpsData.alt] // lon, lat, alt
+      }
+    };
+
+    console.log('Punto creado, navegando a la página de registro con:', pointGeoJSON);
+    this.navigateToRegisterData(pointGeoJSON);
+  }
+
   toggleEditMode() {
     this.isEditingMode = !this.isEditingMode;
 
     // Recargar los polígonos para aplicar los nuevos listeners de eventos y estilos
     if (this.drawnItems) {
       this.drawnItems.clearLayers();
-      this.loadSavedPolygons();
+      this.loadSavedGeometries();
     }
 
     this.presentToast(
@@ -469,57 +504,68 @@ export class MapaPage implements OnDestroy {
     });
   }
 
-  private async loadSavedPolygons() {
+  private async loadSavedGeometries() {
     if (!this.drawnItems) return;
 
     // 1. Obtener todas las claves de Preferences
     const { keys } = await Preferences.keys();
-    const polygonKeys = keys.filter(key => key.startsWith('polygon_'));
+    const geometryKeys = keys.filter(key => key.startsWith('polygon_') || key.startsWith('point_'));
 
     // 2. Iterar sobre cada clave, obtener el GeoJSON y añadirlo al mapa
-    for (const key of polygonKeys) {
+    for (const key of geometryKeys) {
       const { value } = await Preferences.get({ key });
       if (value) {
         try {
           const geojson = JSON.parse(value);
 
-          const polygonLayer = L.geoJSON(geojson, {
+          const geometryLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
-              return {
-                color: this.isEditingMode ? '#ffc409' : '#0D9BD7', // Amarillo para editar, azul normal
-                weight: 3,
-                opacity: 0.7,
-                fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
-                fillOpacity: this.isEditingMode ? 0.4 : 0.2
-              };
+              if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
+                return {
+                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7', // Amarillo para editar, azul normal
+                  weight: 3,
+                  opacity: 0.7,
+                  fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
+                  fillOpacity: this.isEditingMode ? 0.4 : 0.2
+                };
+              }
+              return {}; // Estilo por defecto para otros tipos (como puntos)
+            },
+            pointToLayer: (_feature: any, latlng: any) => {
+              // Si estamos en modo edición, usamos el ícono amarillo para los puntos.
+              if (this.isEditingMode) {
+                return L.marker(latlng, { icon: iconYellow });
+              }
+              // Si no, usamos el ícono azul por defecto.
+              return L.marker(latlng);
             },
             onEachFeature: (feature: any, layer: any) => {
+              const name = feature.properties?.name || (feature.geometry.type === 'Point' ? 'Punto sin nombre' : 'Polígono sin nombre');
+
               if (this.isEditingMode) {
                 // MODO EDICIÓN: El clic en el polígono navega directamente a la edición.
-                const name = feature.properties?.name || 'Polígono sin nombre';
                 layer.bindTooltip(`Tocar para editar: <strong>${name}</strong>`, { permanent: false, sticky: true });
 
                 layer.on('click', (e: any) => {
                   L.DomEvent.stop(e);
                   this.editPolygonInfo(key);
                 });
-
               } else {
                 // MODO NORMAL: Muestra un popup con información, sin botón de editar.
                 if (feature.properties) {
                   const popupContent = `
-                    <strong>${feature.properties.name || 'Polígono sin nombre'}</strong>
-                    <p style="margin: 5px 0;">${feature.properties.description || 'Sin descripción.'}</p>
-                    <small>Creado: ${new Date(feature.properties.createdAt).toLocaleString()}</small>
+                    <strong>${name}</strong>
+                    <p style="margin: 5px 0;">DNI: ${feature.properties.dni || 'No registrado'}</p>
+                    <small>Creado: ${feature.properties.createdAt ? new Date(feature.properties.createdAt).toLocaleString() : 'N/A'}</small>
                   `;
                   layer.bindPopup(popupContent);
                 }
               }
             }
           });
-          this.drawnItems.addLayer(polygonLayer);
+          this.drawnItems.addLayer(geometryLayer);
         } catch (e) {
-          console.error(`Error al procesar el polígono guardado (key: ${key})`, e);
+          console.error(`Error al procesar la geometría guardada (key: ${key})`, e);
         }
       }
     }
@@ -704,6 +750,6 @@ export class MapaPage implements OnDestroy {
     this.startLocationWatch();
 
     // Cargamos los polígonos guardados en el dispositivo
-    this.loadSavedPolygons();
+    this.loadSavedGeometries();
   }
 }

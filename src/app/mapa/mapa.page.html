@@ -101,17 +101,24 @@
       <ion-icon name="globe-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-  <!-- Botón para iniciar/detener el dibujo caminando -->
-  <div class="draw-walk-btn-wrapper" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon">
-    <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
-  </div>
-  <!-- Botón para añadir un vértice mientras se dibuja -->
-  <div *ngIf="isDrawingPolygon" class="add-point-btn-wrapper" (click)="addPolygonPoint()">
-    <ion-icon name="add-circle-outline"></ion-icon>
-  </div>
+
   <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="findAndCenterUser()">
       <ion-icon name="locate"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
+  <!-- Botones de acción (estilo manual) -->
+  <!-- Botón para añadir un vértice mientras se dibuja -->
+  <div *ngIf="isDrawingPolygon" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir Vértice">
+    <ion-icon name="add-circle-outline"></ion-icon>
+  </div>
+  <!-- Botón para iniciar/detener el dibujo caminando -->
+  <div class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" title="Dibujar Polígono Caminando">
+    <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
+  </div>
+  <!-- Botón para añadir un punto en la ubicación actual (se oculta durante el dibujo) -->
+  <div *ngIf="!isDrawingPolygon" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir Punto en mi Ubicación">
+    <ion-icon name="location-outline"></ion-icon>
+  </div>
 </ion-content>

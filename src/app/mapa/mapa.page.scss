@@ -242,36 +242,6 @@ ion-title {
   transform: translateX(4px); /* Mueve a la derecha del centro */
 }
 
-.draw-walk-btn-wrapper,
-.add-point-btn-wrapper {
-  position: absolute;
-  right: 15px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 1000;
-  color: white;
-  font-size: 24px;
-}
-
-.draw-walk-btn-wrapper {
-  bottom: 250px;
-  background: #0D9BD7; /* success */
-  &.active {
-    background: #eb445a; /* danger */
-  }
-}
-
-.add-point-btn-wrapper {
-  bottom: 300px;
-  background: #0D9BD7; /* primary */
-}
-
 .crosshair-icon {
   color: #ff0000;
   font-weight: bold;
@@ -352,4 +322,42 @@ ion-title {
 ::ng-deep .multiline-toast .toast-message {
   white-space: pre-line; /* Respeta los saltos de línea (\n) */
   text-align: center;    /* Centra el texto, útil para toasts en el medio */
+}
+
+/* Estilos para los botones de acción personalizados (dibujar, punto, etc.) */
+.action-btn {
+  position: absolute;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 1000;
+  color: white;
+  font-size: 24px;
+  transition: background-color 0.3s ease;
+}
+
+.draw-walk-btn {
+  bottom: 250px; // Posición base
+  background-color: #0D9BD7; // Restaurado a tu color azul
+  &.active {
+    background-color: #eb445a; // Color danger (rojo)
+  }
+}
+
+.add-point-btn {
+  // Se posiciona encima del botón de dibujar polígono, en el mismo lugar que el botón de "añadir vértice"
+  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  background-color: #0D9BD7; // Restaurado a tu color azul
+}
+
+.add-vertex-btn {
+  // Aparece encima del botón de detener cuando se está dibujando
+  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  background-color: #0D9BD7; // Restaurado a tu color azul
 }
