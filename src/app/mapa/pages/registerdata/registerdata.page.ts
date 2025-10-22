@@ -30,9 +30,29 @@ import { Preferences } from '@capacitor/preferences';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
-import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
-import { environment } from '../../../../environments/environment';
-import {  } from 'ionicons/icons'
+import { Capacitor } from '@capacitor/core'; // Eliminamos HttpResponse ya que no se usa directamente aquí para llamadas API
+import { ApiService, MidagriProductor, ReniecResponse } from 'src/app/services/api.service';
+
+// Interfaz para las propiedades del GeoJSON, asegura un tipado fuerte.
+interface GeoJsonProperties {
+  name: string;
+  dni: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  txt_codigoautogenerado: string;
+  fec_registro: string;
+  txt_actagraria: string;
+  num_superficie: string;
+  txt_regtenencia: string;
+  txt_sexo: string;
+  txt_departamento: string;
+  txt_provincia: string;
+  txt_distrito: string;
+  photos: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 
 
@@ -72,7 +92,8 @@ export class RegisterdataPage implements OnInit {
     private navCtrl: NavController,
     private alertController: AlertController,
     private loadingController: LoadingController,
-    private zone: NgZone // Inyectar NgZone
+    private zone: NgZone, // Inyectar NgZone
+    private apiService: ApiService // Inyectar el nuevo ApiService
   ) {
     addIcons({arrowBackCircleOutline,mapOutline,search,camera,closeCircle});
   }
@@ -207,53 +228,38 @@ export class RegisterdataPage implements OnInit {
 
       // 2. Consultar RENIEC
       try {
-        const token = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
-        const url = `${environment.apiUrl}/reniec/dni?numero=${this.formData.dni}`;
-        console.log('Consultando RENIEC:', url);
-        const response: HttpResponse = await CapacitorHttp.get({
-          url,
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = response.data;
-        if (data && data.first_name) {
-          this.formData.nombres = this.toTitleCase(data.first_name || '');
-          this.formData.apellido_paterno = this.toTitleCase(data.first_last_name || '');
-          this.formData.apellido_materno = this.toTitleCase(data.second_last_name || '');
+        // Usamos el servicio para obtener los datos de RENIEC
+        const reniecData: ReniecResponse | null = await this.apiService.getReniecData(this.formData.dni);
+        if (reniecData) {
+          this.formData.nombres = (reniecData.first_name || '').toUpperCase();
+          this.formData.apellido_paterno = (reniecData.first_last_name || '').toUpperCase();
+          this.formData.apellido_materno = (reniecData.second_last_name || '').toUpperCase();
           reniecSuccess = true;
+          console.log('RENIEC: Datos encontrados y cargados correctamente.');
         }
-      } catch (err) {
-        console.error('Error al consultar RENIEC (se continuará con MIDAGRI):', err);
+      } catch (err: any) {
+        console.error('Error al consultar RENIEC (se continuará con MIDAGRI):', err.message || err);
       }
 
       // 3. Consultar MIDAGRI (se ejecuta siempre, sin importar el resultado de RENIEC)
       try {
-        const midagriUrl = `https://gateway.midagri.gob.pe/sisppa/api/services/app/Consulta/GetDatosProductor?codDocumento=1&Documento=${this.formData.dni}`;
-        console.log('Consultando MIDAGRI:', midagriUrl);
-        const midagriResponse: HttpResponse = await CapacitorHttp.get({ url: midagriUrl });
-        const midagriData = midagriResponse.data;
-
-        console.log('Respuesta completa de MIDAGRI:', midagriResponse);
-        console.log('Datos de MIDAGRI (midagriData):', midagriData);
-
-        let productor: any = null;
-
-        // La API de MIDAGRI a veces devuelve un objeto (si encuentra 1 resultado)
-        // y otras un array (si encuentra 0 o varios). Hay que manejar ambos casos.
-        if (midagriData && midagriData.result) {
-          if (Array.isArray(midagriData.result) && midagriData.result.length > 0) {
-            // Caso 1: 'result' es un array con datos. Tomamos el primero.
-            productor = midagriData.result[0];
-            console.log('MIDAGRI: "result" es un array con datos. Usando el primer elemento.');
-          } else if (!Array.isArray(midagriData.result) && typeof midagriData.result === 'object' && midagriData.result !== null) {
-            // Caso 2: 'result' es un objeto. Lo usamos directamente.
-            productor = midagriData.result;
-            console.log('MIDAGRI: "result" es un objeto. Usándolo directamente.');
-          }
-        }
+        // Usamos el servicio para obtener los datos de MIDAGRI
+        const productor: MidagriProductor | null = await this.apiService.getMidagriData(this.formData.dni);
 
         if (productor) {
           this.formData.txt_codigoautogenerado = productor.txt_codigoautogenerado || '';
-          this.formData.fec_registro = productor.fec_registro || '';
+          // Formatear la fecha de registro a dd/mm/aaaa
+          if (productor.fec_registro) {
+            const date = new Date(productor.fec_registro);
+            if (!isNaN(date.getTime())) {
+              const day = String(date.getDate()).padStart(2, '0');
+              const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+              const year = date.getFullYear();
+              this.formData.fec_registro = `${day}/${month}/${year}`;
+            } else {
+              this.formData.fec_registro = productor.fec_registro; // Fallback si la fecha no es válida
+            }
+          }
           this.formData.txt_actagraria = productor.txt_actagraria || '';
           this.formData.num_superficie = productor.num_superficie || '';
           this.formData.txt_regtenencia = productor.txt_regtenencia || '';
@@ -266,8 +272,8 @@ export class RegisterdataPage implements OnInit {
         } else {
           console.log('MIDAGRI: No se encontraron datos válidos en la respuesta.');
         }
-      } catch (midagriError: any) {
-        console.error('Error al consultar MIDAGRI (excepción):', midagriError.message || midagriError);
+      } catch (midagriError: any) { // Capturamos errores lanzados por el servicio
+        console.error('Error al consultar MIDAGRI (excepción):', midagriError.message || midagriError); // Registramos el mensaje de error específico del servicio
       }
 
       // 4. Determinar el mensaje final basado en los resultados
@@ -459,9 +465,9 @@ export class RegisterdataPage implements OnInit {
 
     // Añadimos los datos del formulario a las propiedades del GeoJSON
     const fullName = `${this.formData.nombres} ${this.formData.apellido_paterno} ${this.formData.apellido_materno}`.trim();
-    const newProperties: any = {
+    const newProperties: GeoJsonProperties = {
       ...this.geojson.properties, // Mantiene propiedades existentes si las hubiera
-      name: fullName, // Guardamos el nombre completo para compatibilidad y visualización rápida
+      name: fullName,
       dni: this.formData.dni,
       nombres: this.formData.nombres,
       apellido_paterno: this.formData.apellido_paterno,
@@ -582,11 +588,6 @@ export class RegisterdataPage implements OnInit {
 
       img.src = base64ImageData;
     });
-  }
-
-  private toTitleCase(str: string): string {
-    if (!str) return '';
-    return str.toLowerCase().replace(/\b(\w)/g, s => s.toUpperCase());
   }
 
   private fillMidagriWithNoData(clearOnly: boolean = false) {
