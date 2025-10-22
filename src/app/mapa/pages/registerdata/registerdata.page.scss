@@ -60,3 +60,76 @@ ion-title {
     }
   }
 }
+
+// Estilos para las tarjetas para darles un respiro
+ion-card {
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  ion-card-header {
+    background-color: #0DA642;
+    color: white;
+  }
+}
+
+// Contenedor para cada slide del carrusel
+.slide-container {
+  position: relative;
+  width: 100%;
+  height: 180px; // Altura de las fotos en el carrusel
+}
+
+// Estilo de la imagen dentro del carrusel
+.slide-container ion-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px; // Esquinas redondeadas para un look moderno
+  border: 1px solid var(--ion-color-medium-shade);
+}
+
+// El botón de eliminar se posiciona sobre la imagen
+.delete-photo-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  height: 32px;
+  width: 32px;
+  z-index: 10; // Asegura que esté por encima de la imagen
+
+  ion-icon {
+    font-size: 28px;
+    // Sombra para que el ícono resalte sobre cualquier fondo
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
+  }
+}
+
+// Elimina el padding por defecto de los items dentro de una lista sin líneas
+ion-list[lines="none"] ion-item {
+  --inner-padding-end: 0;
+  --padding-start: 0;
+}
+
+// Estilos específicos para la tarjeta de fotos
+.photo-card {
+  ion-card-header {
+    background-color: #0D9BD7; // Color azul solicitado
+  }
+
+  ion-card-content {
+    // Añade separación entre el título y el carrusel de fotos
+    padding-top: 16px;
+  }
+}
+
+// Estilos para los botones principales
+.main-action-button {
+  --background: #0D9BD7;
+  --background-hover: #0b84b8;
+  --background-activated: #0a73a1;
+  --background-focused: #0b84b8;
+}

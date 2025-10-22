@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
@@ -17,13 +17,15 @@ import {
   IonInput,
   ToastController,
   NavController,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonImg,
   IonIcon,
   AlertController,
-  LoadingController
+  LoadingController,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonCardContent,
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
@@ -32,6 +34,8 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core'; // Eliminamos HttpResponse ya que no se usa directamente aquí para llamadas API
 import { ApiService, MidagriProductor, ReniecResponse } from 'src/app/services/api.service';
+import { register } from 'swiper/element/bundle';
+import * as L from 'leaflet';
 
 // Interfaz para las propiedades del GeoJSON, asegura un tipado fuerte.
 interface GeoJsonProperties {
@@ -61,7 +65,8 @@ interface GeoJsonProperties {
   templateUrl: './registerdata.page.html',
   styleUrls: ['./registerdata.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonGrid, IonRow, IonCol, IonImg, IonIcon]
+  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonImg, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class RegisterdataPage implements OnInit {
 
@@ -69,6 +74,12 @@ export class RegisterdataPage implements OnInit {
   public editKey: string | null = null;
   public photosForDisplay: string[] = [];
   private savedPhotoUris: string[] = [];
+  // Opciones para el carrusel de fotos
+  public slideOpts = {
+    slidesPerView: 1.5,
+    spaceBetween: 10,
+    centeredSlides: true,
+  };
   public formData = {
     dni: '',
     nombres: '',
@@ -83,6 +94,10 @@ export class RegisterdataPage implements OnInit {
     txt_departamento: '',
     txt_provincia: '',
     txt_distrito: '',
+    perimetro: '',
+    area: '',
+    altitud: '',
+    centroide: '',
   };
 
   constructor(
@@ -96,6 +111,7 @@ export class RegisterdataPage implements OnInit {
     private apiService: ApiService // Inyectar el nuevo ApiService
   ) {
     addIcons({arrowBackCircleOutline,mapOutline,search,camera,closeCircle});
+    register();
   }
 
   ngOnInit() {
@@ -125,6 +141,10 @@ export class RegisterdataPage implements OnInit {
       txt_departamento: '',
       txt_provincia: '',
       txt_distrito: '',
+      perimetro: '',
+      area: '',
+      altitud: '',
+      centroide: '',
     };
 
     // 2. Determinamos si estamos en modo EDICIÓN (vía URL) o CREACIÓN (vía state).
@@ -138,6 +158,7 @@ export class RegisterdataPage implements OnInit {
       const { value } = await Preferences.get({ key: this.editKey });
       if (value) {
         this.geojson = JSON.parse(value);
+        this.calculatePolygonData(); // Calculate data from GeoJSON
         if (this.geojson?.properties) {
           // Cargar datos del formulario
           this.formData.dni = this.geojson.properties.dni || '';
@@ -181,6 +202,7 @@ export class RegisterdataPage implements OnInit {
       const state = history.state;
       if (state && state.geojson) {
         this.geojson = state.geojson;
+        this.calculatePolygonData(); // Calculate data from GeoJSON
         console.log('Modo creación de nuevo polígono.');
       } else {
         console.warn('Página de registro abierta sin GeoJSON para crear o clave para editar.');
@@ -601,5 +623,64 @@ export class RegisterdataPage implements OnInit {
     this.formData.txt_departamento = value;
     this.formData.txt_provincia = value;
     this.formData.txt_distrito = value;
+  }
+
+  private calculatePolygonData() {
+    if (!this.geojson || !this.geojson.geometry || !this.geojson.geometry.coordinates) {
+      return;
+    }
+
+    // Handle both Polygon and MultiPolygon
+    const geometryType = this.geojson.geometry.type;
+    let coords = [];
+
+    if (geometryType === 'Polygon') {
+      coords = this.geojson.geometry.coordinates[0];
+    } else if (geometryType === 'MultiPolygon') {
+      // For MultiPolygon, let's take the first polygon for simplicity
+      coords = this.geojson.geometry.coordinates[0][0];
+    }
+
+    if (!coords || coords.length < 3) {
+      return;
+    }
+
+    const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
+
+    // 1. Area
+    const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+    const areaHa = areaM2 / 10000;
+    this.formData.area = `${areaHa.toFixed(4)} ha`;
+
+    // 2. Perimetro
+    let perimeter = 0;
+    for (let i = 0; i < latlngs.length - 1; i++) {
+      perimeter += latlngs[i].distanceTo(latlngs[i + 1]);
+    }
+    // Add distance from last to first point to close the polygon
+    if (latlngs.length > 0 && latlngs[0].distanceTo(latlngs[latlngs.length - 1]) > 1) {
+      perimeter += latlngs[latlngs.length - 1].distanceTo(latlngs[0]);
+    }
+    this.formData.perimetro = `${perimeter.toFixed(2)} m`;
+
+    // 3. Centroide
+    const polygonForCentroid = L.polygon(latlngs);
+    const center = polygonForCentroid.getBounds().getCenter();
+    this.formData.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
+
+    // 4. Altitud
+    // Check if coordinates have altitude data (a third value in the array [lon, lat, alt])
+    const altitudes = coords
+      .map((c: any[]) => c[2]) // Get the third element (altitude)
+      .filter((alt: number | undefined) => alt !== undefined && typeof alt === 'number'); // Filter out undefined or non-numeric values
+
+    if (altitudes.length > 0) {
+      const sum = altitudes.reduce((a: number, b: number) => a + b, 0);
+      const avgAltitude = sum / altitudes.length;
+      this.formData.altitud = `${avgAltitude.toFixed(2)} msnm`;
+    } else {
+      // Fallback if no altitude data is present in the GeoJSON coordinates
+      this.formData.altitud = 'No disponible';
+    }
   }
 }
