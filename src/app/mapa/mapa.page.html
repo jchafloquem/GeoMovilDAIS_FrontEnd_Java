@@ -1,128 +1,164 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start"></ion-buttons>
-    <ion-title>
-      <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
-      GeoDAIS Móvil
-    </ion-title>
-    <ion-buttons slot="end"></ion-buttons>
-  </ion-toolbar>
-</ion-header>
-<ion-content>
-  <div id="map"></div>
-  <!-- Spinner de carga inicial -->
-  <div class="initial-spinner-container" *ngIf="showInitialSpinner">
-    <ion-spinner name="bubbles" color="light"></ion-spinner>
-  </div>
+<ion-menu contentId="main-content-map" type="overlay">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Menú de Opciones</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-item button [routerLink]="['/mapa/list']">
+        <ion-icon name="list-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Ver Registros Guardados</ion-label>
+      </ion-item>
+      <ion-item button (click)="toggleEditMode()">
+        <ion-icon name="create-outline" slot="start" [color]="isEditingMode ? 'warning' : 'medium'"></ion-icon>
+        <ion-label>{{ isEditingMode ? 'Desactivar Edición' : 'Activar Edición' }}</ion-label>
+      </ion-item>
+      <ion-item button (click)="startDownloadProcess()">
+        <ion-icon name="download-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>Descargar Mapa (Demo)</ion-label>
+      </ion-item>
+      <ion-item button (click)="zoomToPeru()">
+        <ion-icon name="globe-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>Ver todo el país</ion-label>
+      </ion-item>
+      <ion-item button (click)="clearLocation()">
+        <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
+        <ion-label>Limpiar Marcador GPS</ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-menu>
 
-  <!-- Spinner de carga -->
-  <ion-loading
-    [isOpen]="isLoading"
-    message="Obteniendo Geolocalización..."
-    cssClass="custom-loading"
-    spinner="bubbles"
-    translucent="true"
-    backdropDismiss="false">
-  </ion-loading>
-  <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="top">
-    <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'">
-      <ion-icon name="image-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="top">
-    <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'">
-      <ion-icon name="layers-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <div class="gps-panel">
-    <!-- fila Latitud / Longitud -->
-    <div class="row">
-      <div class="cell">
-        <span class="label">Latitud</span>
-        <span class="value">{{ gpsData.lat | number:'1.4-4' }}</span>
+<div class="ion-page" id="main-content-map">
+  <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button></ion-menu-button>
+      </ion-buttons>
+      <ion-title>
+        <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+        GeoDAIS Móvil
+      </ion-title>
+      <ion-buttons slot="end"></ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <div id="map"></div>
+    <!-- Spinner de carga inicial -->
+    <div class="initial-spinner-container" *ngIf="showInitialSpinner">
+      <ion-spinner name="bubbles" color="light"></ion-spinner>
+    </div>
+
+    <!-- Spinner de carga -->
+    <ion-loading
+      [isOpen]="isLoading"
+      message="Obteniendo Geolocalización..."
+      cssClass="custom-loading"
+      spinner="bubbles"
+      translucent="true"
+      backdropDismiss="false">
+    </ion-loading>
+    <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="top">
+      <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'">
+        <ion-icon name="image-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="top">
+      <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'">
+        <ion-icon name="layers-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <div class="gps-panel">
+      <!-- fila Latitud / Longitud -->
+      <div class="row">
+        <div class="cell">
+          <span class="label">Latitud</span>
+          <span class="value">{{ gpsData.lat | number:'1.4-4' }}</span>
+        </div>
+        <div class="cell">
+          <span class="label">Longitud</span>
+          <span class="value">{{ gpsData.lng | number:'1.4-4' }}</span>
+        </div>
       </div>
-      <div class="cell">
-        <span class="label">Longitud</span>
-        <span class="value">{{ gpsData.lng | number:'1.4-4' }}</span>
+      <!-- fila Altitud / Velocidad -->
+      <div class="row">
+        <div class="cell">
+          <span class="label">Altitud</span>
+          <span class="value">{{ gpsData.alt | number:'1.4-4' }}</span>
+        </div>
+        <div class="cell">
+          <span class="label">Velocidad</span>
+          <span class="value">{{ gpsData.vel | number:'1.4-4' }}</span>
+        </div>
+      </div>
+      <!-- fila Horizontal / Vertical -->
+      <div class="row">
+        <div class="cell">
+          <span class="label">Pres. Horizontal</span>
+          <span class="value">{{ gpsData.accH | number:'1.4-4' }}</span>
+        </div>
+        <div class="cell">
+          <span class="label">Pres. Vertical</span>
+          <span class="value">{{ gpsData.accV | number:'1.4-4' }}</span>
+        </div>
       </div>
     </div>
-    <!-- fila Altitud / Velocidad -->
-    <div class="row">
-      <div class="cell">
-        <span class="label">Altitud</span>
-        <span class="value">{{ gpsData.alt | number:'1.4-4' }}</span>
-      </div>
-      <div class="cell">
-        <span class="label">Velocidad</span>
-        <span class="value">{{ gpsData.vel | number:'1.4-4' }}</span>
-      </div>
+    <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+      <ion-fab-button (click)="zoomIn()">
+        <ion-icon name="add-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+      <ion-fab-button (click)="zoomOut()">
+        <ion-icon name="remove-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <ion-fab class="download-map-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+      <ion-fab-button (click)="startDownloadProcess()">
+        <ion-icon name="download-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <!-- BOTÓN PARA ACTIVAR/DESACTIVAR MODO EDICIÓN -->
+    <ion-fab class="edit-mode-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+      <ion-fab-button (click)="toggleEditMode()" [color]="isEditingMode ? 'warning' : 'light'">
+        <ion-icon name="create-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button (click)="clearLocation()">
+        <ion-icon name="trash-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
+      <ion-fab-button (click)="zoomToPeru()">
+        <ion-icon name="globe-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button (click)="findAndCenterUser()">
+        <ion-icon name="locate"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <!-- Botones de acción (estilo manual) -->
+    <!-- Botón para añadir un vértice mientras se dibuja -->
+    <div *ngIf="isDrawingPolygon || isDrawingLine" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir Vértice">
+      <ion-icon name="add-circle-outline"></ion-icon>
     </div>
-    <!-- fila Horizontal / Vertical -->
-    <div class="row">
-      <div class="cell">
-        <span class="label">Pres. Horizontal</span>
-        <span class="value">{{ gpsData.accH | number:'1.4-4' }}</span>
-      </div>
-      <div class="cell">
-        <span class="label">Pres. Vertical</span>
-        <span class="value">{{ gpsData.accV | number:'1.4-4' }}</span>
-      </div>
+    <!-- Botón para iniciar/detener el dibujo de LÍNEA -->
+    <div *ngIf="!isDrawingPolygon" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" title="Dibujar Línea Caminando">
+      <ion-icon [name]="isDrawingLine ? 'stop-circle-outline' : 'analytics-outline'"></ion-icon>
     </div>
-  </div>
-  <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="zoomIn()">
-      <ion-icon name="add-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="zoomOut()">
-      <ion-icon name="remove-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <ion-fab class="download-map-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="startDownloadProcess()">
-      <ion-icon name="download-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
-  <!-- BOTÓN PARA ACTIVAR/DESACTIVAR MODO EDICIÓN -->
-  <ion-fab class="edit-mode-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="toggleEditMode()" [color]="isEditingMode ? 'warning' : 'light'">
-      <ion-icon name="create-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button (click)="clearLocation()">
-      <ion-icon name="trash-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-  <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-    <ion-fab-button (click)="zoomToPeru()">
-      <ion-icon name="globe-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
-  <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button (click)="findAndCenterUser()">
-      <ion-icon name="locate"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
-  <!-- Botones de acción (estilo manual) -->
-  <!-- Botón para añadir un vértice mientras se dibuja -->
-  <div *ngIf="isDrawingPolygon || isDrawingLine" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir Vértice">
-    <ion-icon name="add-circle-outline"></ion-icon>
-  </div>
-  <!-- Botón para iniciar/detener el dibujo de LÍNEA -->
-  <div *ngIf="!isDrawingPolygon" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" title="Dibujar Línea Caminando">
-    <ion-icon [name]="isDrawingLine ? 'stop-circle-outline' : 'analytics-outline'"></ion-icon>
-  </div>
-  <!-- Botón para iniciar/detener el dibujo de POLÍGONO -->
-  <div *ngIf="!isDrawingLine" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" title="Dibujar Polígono Caminando">
-    <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
-  </div>
-  <!-- Botón para añadir un PUNTO en la ubicación actual (se oculta durante el dibujo) -->
-  <div *ngIf="!isDrawingPolygon && !isDrawingLine" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir Punto en mi Ubicación">
-    <ion-icon name="location-outline"></ion-icon>
-  </div>
-</ion-content>
+    <!-- Botón para iniciar/detener el dibujo de POLÍGONO -->
+    <div *ngIf="!isDrawingLine" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" title="Dibujar Polígono Caminando">
+      <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
+    </div>
+    <!-- Botón para añadir un PUNTO en la ubicación actual (se oculta durante el dibujo) -->
+    <div *ngIf="!isDrawingPolygon && !isDrawingLine" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir Punto en mi Ubicación">
+      <ion-icon name="location-outline"></ion-icon>
+    </div>
+  </ion-content>
+</div>

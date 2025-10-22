@@ -18,10 +18,12 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/pages/registerdata/registerdata.page').then( m => m.RegisterdataPage)
   },
   {
+    path: 'mapa/list',
+    loadComponent: () => import('./mapa/pages/list/list.page').then( m => m.ListPage)
+  },
+  {
     path: '',
     redirectTo: 'mapa',
     pathMatch: 'full',
   },
-
-
 ];

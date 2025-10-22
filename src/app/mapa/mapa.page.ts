@@ -1,12 +1,13 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
-import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController, IonMenu, IonMenuButton, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
+import { RouterLink } from '@angular/router';
 
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
@@ -41,7 +42,7 @@ const iconYellow = L.icon({
   templateUrl: './mapa.page.html',
   styleUrls: ['./mapa.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule]
+  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, RouterLink]
 })
 
 export class MapaPage implements OnDestroy {
@@ -85,7 +86,7 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline });
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline });
   }
 
   ionViewDidEnter() {

@@ -1,0 +1,148 @@
+// Remueve el padding por defecto para un look más limpio con las tarjetas
+ion-header {
+  // Hacemos el contenedor del header transparente para que el margen
+  // de la barra de herramientas sea visible, especialmente en iOS.
+  background: transparent;
+  // Evita que el header transparente bloquee interacciones con el mapa.
+  pointer-events: none;
+}
+ion-toolbar {
+  // La barra de herramientas sí debe ser interactiva.
+  pointer-events: auto;
+  --background: #0D9BD7;
+  margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
+  --padding-top: 35px;
+  --padding-start: 5px;
+  --padding-end: 5px;
+  --padding-bottom: 5px;
+}
+ion-title {
+  // Con los ion-buttons en su sitio, el título se centra automáticamente.
+  // Solo necesitamos centrar su contenido interno (icono y texto).
+  position: static;
+  padding: 0;
+
+  // Estilos de fuente
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  // Centramos el título y el icono
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+ion-content {
+  --padding-bottom: 8px;
+}
+
+ion-list[inset] {
+  margin: 0;
+}
+
+.list-card {
+  margin: 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative; // Para posicionar el botón de "más opciones"
+
+  // Remueve el padding interno de la tarjeta para que el item la llene
+  --inner-padding-start: 0;
+  --inner-padding-end: 0;
+  --inner-padding-top: 0;
+  --inner-padding-bottom: 0;
+}
+
+.card-item {
+  --padding-start: 12px;
+  --padding-end: 48px; // Espacio para el botón de "más opciones"
+  --inner-padding-end: 0;
+  --min-height: 90px;
+  align-items: center;
+}
+
+ion-thumbnail {
+  --size: 70px;
+  --border-radius: 8px;
+  margin-inline-end: 12px;
+
+  ion-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.no-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ion-color-light-tint);
+  border: 1px dashed var(--ion-color-medium-shade);
+  border-radius: var(--border-radius);
+
+  ion-icon {
+    font-size: 32px;
+    color: var(--ion-color-medium-shade);
+  }
+}
+
+ion-label {
+  h2 {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+    white-space: normal;
+  }
+  p {
+    margin: 2px 0;
+  }
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+  color: var(--ion-color-medium-shade);
+
+  .type-icon {
+    margin-inline-end: 6px;
+    font-size: 1.1em;
+  }
+}
+
+.date-note {
+  font-size: 0.8em;
+  color: var(--ion-color-medium);
+}
+
+.more-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 10;
+  --color: var(--ion-color-medium-shade);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  color: var(--ion-color-medium);
+  padding: 16px;
+
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: var(--ion-color-medium-tint);
+  }
+
+  p {
+    margin: 4px 0;
+  }
+}
