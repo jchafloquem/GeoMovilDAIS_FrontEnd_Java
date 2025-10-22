@@ -2,7 +2,7 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
-import { camera, closeCircle, search } from 'ionicons/icons';
+import { camera, closeCircle, search, mapOutline, arrowBackCircleOutline } from 'ionicons/icons';
 import {
   IonContent,
   IonHeader,
@@ -32,6 +32,8 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
 import { environment } from '../../../../environments/environment';
+import {  } from 'ionicons/icons'
+
 
 
 @Component({
@@ -63,7 +65,7 @@ export class RegisterdataPage implements OnInit {
     private loadingController: LoadingController,
     private zone: NgZone // Inyectar NgZone
   ) {
-    addIcons({ camera, closeCircle, search });
+    addIcons({arrowBackCircleOutline,mapOutline,search,camera,closeCircle});
   }
 
   ngOnInit() {

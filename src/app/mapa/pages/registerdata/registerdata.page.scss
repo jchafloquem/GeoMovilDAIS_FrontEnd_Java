@@ -1,3 +1,36 @@
+ion-header {
+  // Hacemos el contenedor del header transparente para que el margen
+  // de la barra de herramientas sea visible, especialmente en iOS.
+  background: transparent;
+  // Evita que el header transparente bloquee interacciones con el mapa.
+  pointer-events: none;
+}
+ion-toolbar {
+  // La barra de herramientas sí debe ser interactiva.
+  pointer-events: auto;
+  --background: #0D9BD7;
+  margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
+  --padding-top: 35px;
+  --padding-start: 5px;
+  --padding-end: 5px;
+  --padding-bottom: 5px;
+}
+ion-title {
+  // Con los ion-buttons en su sitio, el título se centra automáticamente.
+  // Solo necesitamos centrar su contenido interno (icono y texto).
+  position: static;
+  padding: 0;
+
+  // Estilos de fuente
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  // Centramos el título y el icono
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
 .photo-thumbnail-container {
   position: relative;
   padding: 2px;
@@ -27,4 +60,3 @@
     }
   }
 }
-
