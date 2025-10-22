@@ -83,17 +83,20 @@
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">
-          <ion-item *ngIf="geojson.geometry.type !== 'Point'">
+          <ion-item *ngIf="geojson.geometry.type === 'Polygon' || geojson.geometry.type === 'MultiPolygon'">
             <ion-input label="Perímetro" label-placement="floating" type="text" name="perimetro" [(ngModel)]="formData.perimetro" [readonly]="true"></ion-input>
           </ion-item>
-          <ion-item *ngIf="geojson.geometry.type !== 'Point'">
+          <ion-item *ngIf="geojson.geometry.type.includes('LineString')">
+            <ion-input label="Longitud" label-placement="floating" type="text" name="perimetro" [(ngModel)]="formData.perimetro" [readonly]="true"></ion-input>
+          </ion-item>
+          <ion-item *ngIf="geojson.geometry.type === 'Polygon' || geojson.geometry.type === 'MultiPolygon'">
             <ion-input label="Área" label-placement="floating" type="text" name="area" [(ngModel)]="formData.area" [readonly]="true"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input [label]="geojson.geometry.type === 'Point' ? 'Altitud' : 'Altitud Promedio'" label-placement="floating" type="text" name="altitud" [(ngModel)]="formData.altitud" [readonly]="true"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input [label]="geojson.geometry.type === 'Point' ? 'Coordenadas del Punto' : 'Coordenada Centroide'" label-placement="floating" type="text" name="centroide" [(ngModel)]="formData.centroide" [readonly]="true"></ion-input>
+            <ion-input [label]="geojson.geometry.type === 'Point' ? 'Coordenadas del Punto' : (geojson.geometry.type.includes('LineString') ? 'Punto Central' : 'Coordenada Centroide')" label-placement="floating" type="text" name="centroide" [(ngModel)]="formData.centroide" [readonly]="true"></ion-input>
           </ion-item>
         </ion-list>
       </ion-card-content>

@@ -3,7 +3,7 @@ import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, 
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
@@ -76,6 +76,7 @@ export class MapaPage implements OnDestroy {
   public isDrawingPolygon = false;
   public isEditingMode = false;
   public showInitialSpinner = true;
+  public isDrawingLine = false;
 
   constructor(
     private http: HttpClient,
@@ -84,7 +85,7 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add });
+    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline });
   }
 
   ionViewDidEnter() {
@@ -274,12 +275,29 @@ export class MapaPage implements OnDestroy {
   }
 
   toggleDrawingMode() {
+    if (this.isDrawingLine) {
+      this.presentToast('Finalice el dibujo de la línea primero.', 'warning');
+      return;
+    }
     this.isDrawingPolygon = !this.isDrawingPolygon;
 
     if (this.isDrawingPolygon) {
       this.startDrawingByWalking();
     } else {
       this.stopDrawingByWalking();
+    }
+  }
+
+  toggleLineDrawing() {
+    if (this.isDrawingPolygon) {
+      this.presentToast('Finalice el dibujo del polígono primero.', 'warning');
+      return;
+    }
+    this.isDrawingLine = !this.isDrawingLine;
+    if (this.isDrawingLine) {
+      this.startDrawingByWalking(); // Reutilizamos la misma lógica de inicio
+    } else {
+      this.stopDrawingLine();
     }
   }
 
@@ -445,8 +463,38 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = []; // Resetear para la próxima vez
   }
 
+  private stopDrawingLine() {
+    // 1. Detener seguimiento de ubicación
+    if (this.watchId) {
+      Geolocation.clearWatch({ id: this.watchId });
+      this.watchId = null;
+    }
+
+    // 2. Convertir a línea si es válido (al menos 2 puntos)
+    if (this.polygonVertices.length > 1) {
+      const line = L.polyline(this.polygonVertices, { color: '#ff0000', weight: 3 });
+      this.drawnItems.addLayer(line);
+
+      // Actualizar las coordenadas GPS con la última posición conocida antes de abrir el modal
+      if (this.crosshairMarker) {
+        const lastKnownPosition = this.crosshairMarker.getLatLng();
+        this.gpsData.lat = lastKnownPosition.lat;
+        this.gpsData.lng = lastKnownPosition.lng;
+      }
+      this.navigateToRegisterData(line.toGeoJSON());
+    } else {
+      this.presentToast('Dibujo cancelado: se necesitan al menos 2 puntos para una línea.', 'warning');
+    }
+
+    // 3. Limpiar elementos temporales del mapa
+    if (this.walkingPolyline) { this.map.removeLayer(this.walkingPolyline); this.walkingPolyline = null; }
+    if (this.crosshairMarker) { this.map.removeLayer(this.crosshairMarker); this.crosshairMarker = null; }
+    this.vertexMarkers.clearLayers();
+    this.polygonVertices = [];
+  }
+
   async addPointAtCurrentLocation() {
-    if (this.isDrawingPolygon) {
+    if (this.isDrawingPolygon || this.isDrawingLine) {
       this.presentToast('Termine de dibujar el polígono antes de añadir un punto.', 'warning');
       return;
     }
@@ -495,7 +543,7 @@ export class MapaPage implements OnDestroy {
     });
   }
 
-  private editPolygonInfo(key: string) {
+  private editGeometryInfo(key: string) {
     if (!key) return;
     // Navegamos a la ruta de edición, pasando la clave como parámetro en la URL.
     // La página de registro se encargará de cargar los datos usando esta clave.
@@ -509,7 +557,7 @@ export class MapaPage implements OnDestroy {
 
     // 1. Obtener todas las claves de Preferences
     const { keys } = await Preferences.keys();
-    const geometryKeys = keys.filter(key => key.startsWith('polygon_') || key.startsWith('point_'));
+    const geometryKeys = keys.filter(key => key.startsWith('polygon_') || key.startsWith('point_') || key.startsWith('linestring_'));
 
     // 2. Iterar sobre cada clave, obtener el GeoJSON y añadirlo al mapa
     for (const key of geometryKeys) {
@@ -520,13 +568,23 @@ export class MapaPage implements OnDestroy {
 
           const geometryLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
-              if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
+              const isPolygon = feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon';
+              const isLine = feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+
+              if (isPolygon) {
                 return {
                   color: this.isEditingMode ? '#ffc409' : '#0D9BD7', // Amarillo para editar, azul normal
                   weight: 3,
                   opacity: 0.7,
                   fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
                   fillOpacity: this.isEditingMode ? 0.4 : 0.2
+                };
+              }
+              if (isLine) {
+                return {
+                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7',
+                  weight: 3,
+                  opacity: 0.7
                 };
               }
               return {}; // Estilo por defecto para otros tipos (como puntos)
@@ -548,7 +606,7 @@ export class MapaPage implements OnDestroy {
 
                 layer.on('click', (e: any) => {
                   L.DomEvent.stop(e);
-                  this.editPolygonInfo(key);
+                  this.editGeometryInfo(key);
                 });
               } else {
                 // MODO NORMAL: Muestra un popup con información, sin botón de editar.

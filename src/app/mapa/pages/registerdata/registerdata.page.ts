@@ -158,7 +158,7 @@ export class RegisterdataPage implements OnInit {
       const { value } = await Preferences.get({ key: this.editKey });
       if (value) {
         this.geojson = JSON.parse(value);
-        this.calculatePolygonData(); // Calculate data from GeoJSON
+        this.calculateGeometryData(); // Calculate data from GeoJSON
         if (this.geojson?.properties) {
           // Cargar datos del formulario
           this.formData.dni = this.geojson.properties.dni || '';
@@ -202,7 +202,7 @@ export class RegisterdataPage implements OnInit {
       const state = history.state;
       if (state && state.geojson) {
         this.geojson = state.geojson;
-        this.calculatePolygonData(); // Calculate data from GeoJSON
+        this.calculateGeometryData(); // Calculate data from GeoJSON
         console.log('Modo creación de nuevo polígono.');
       } else {
         console.warn('Página de registro abierta sin GeoJSON para crear o clave para editar.');
@@ -484,8 +484,13 @@ export class RegisterdataPage implements OnInit {
 
     const isEditing = !!this.editKey;
     // Determina el tipo de geometría para generar la clave correcta
-    const geometryType = this.geojson.geometry.type.toLowerCase(); // 'point' or 'polygon'
-    const keyPrefix = geometryType === 'point' ? 'point' : 'polygon';
+    const geometryType = this.geojson.geometry.type.toLowerCase();
+    let keyPrefix = 'polygon'; // Default
+    if (geometryType.includes('point')) {
+      keyPrefix = 'point';
+    } else if (geometryType.includes('linestring')) {
+      keyPrefix = 'linestring';
+    }
 
     const key = isEditing ? this.editKey! : `${keyPrefix}_${new Date().getTime()}`;
 
@@ -632,7 +637,7 @@ export class RegisterdataPage implements OnInit {
     this.formData.txt_distrito = value;
   }
 
-  private calculatePolygonData() {
+  private calculateGeometryData() {
     if (!this.geojson || !this.geojson.geometry || !this.geojson.geometry.coordinates) {
       return;
     }
@@ -661,6 +666,35 @@ export class RegisterdataPage implements OnInit {
       this.formData.area = 'N/A (Punto)';
       this.formData.perimetro = 'N/A (Punto)';
       return; // Termina el cálculo para Puntos
+    }
+    // --- FIN: Lógica para Puntos ---
+
+    // --- INICIO: Lógica para Líneas ---
+    if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
+      const coords = geometryType === 'LineString' ? this.geojson.geometry.coordinates : this.geojson.geometry.coordinates[0];
+      if (!coords || coords.length < 2) {
+        return;
+      }
+      const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
+
+      // 1. Longitud (usaremos el campo 'perimetro')
+      let length = 0;
+      for (let i = 0; i < latlngs.length - 1; i++) {
+        length += latlngs[i].distanceTo(latlngs[i + 1]);
+      }
+      this.formData.perimetro = `${length.toFixed(2)} m`;
+
+      // 2. Área no aplica
+      this.formData.area = 'N/A (Línea)';
+
+      // 3. Punto Central
+      const lineForCenter = L.polyline(latlngs);
+      const center = lineForCenter.getBounds().getCenter();
+      this.formData.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
+
+      // 4. Altitud (igual que polígono)
+      this.calculateAverageAltitude(coords);
+      return; // Termina el cálculo para Líneas
     }
     // --- FIN: Lógica para Puntos ---
 
@@ -701,14 +735,18 @@ export class RegisterdataPage implements OnInit {
     const center = polygonForCentroid.getBounds().getCenter();
     this.formData.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
 
-    // 4. Altitud
+    // 4. Altitud Promedio
+    this.calculateAverageAltitude(coords);
+  }
+
+  private calculateAverageAltitude(coords: any[]) {
     // Check if coordinates have altitude data (a third value in the array [lon, lat, alt])
     const altitudes = coords
       .map((c: any[]) => c[2]) // Get the third element (altitude)
       .filter((alt: number | undefined) => alt !== undefined && typeof alt === 'number'); // Filter out undefined or non-numeric values
 
     if (altitudes.length > 0) {
-      const sum = altitudes.reduce((a: number, b: number) => a + b, 0);
+      const sum = altitudes.reduce((a, b) => a + b, 0);
       const avgAltitude = sum / altitudes.length;
       this.formData.altitud = `${avgAltitude.toFixed(2)} msnm`;
     } else {

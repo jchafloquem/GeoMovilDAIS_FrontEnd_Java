@@ -350,14 +350,22 @@ ion-title {
   }
 }
 
+.draw-line-btn {
+  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  background-color: #0D9BD7; // Restaurado a tu color azul
+  &.active {
+    background-color: #eb445a; // Color danger (rojo)
+  }
+}
+
 .add-point-btn {
   // Se posiciona encima del botón de dibujar polígono, en el mismo lugar que el botón de "añadir vértice"
-  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  bottom: 350px; // 300px (línea) + 40px + 10px
   background-color: #0D9BD7; // Restaurado a tu color azul
 }
 
 .add-vertex-btn {
   // Aparece encima del botón de detener cuando se está dibujando
-  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  bottom: 350px; // Posición más alta para no solapar con ningún botón de "stop"
   background-color: #0D9BD7; // Restaurado a tu color azul
 }
