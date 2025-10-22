@@ -167,6 +167,8 @@ export class RegisterdataPage implements OnInit {
       const token = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
       // Usamos el plugin nativo de Cordova para evitar problemas de CORS en el dispositivo.
       const url = `${environment.apiUrl}/reniec/dni?numero=${this.formData.dni}`
+
+
       console.log('URL generada:', url);
 
       const response: HttpResponse = await CapacitorHttp.get({

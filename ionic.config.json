@@ -7,7 +7,7 @@
   "proxies": [
     {
       "path": "/v1",
-      "proxyUrl": "https://api.decolecta.com/v1",
+      "proxyUrl": "https://api.decolecta.com",
       "secure": false,
       "changeOrigin": true
     }

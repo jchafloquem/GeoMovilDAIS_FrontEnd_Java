@@ -4,9 +4,13 @@ const config: CapacitorConfig = {
   appId: 'io.ionic.starter',
   appName: 'GeoMovilDAIS',
   webDir: 'www',
+  plugins:{
+    CapacitorHttp:{
+      enabled:true
+    }
+  },
   server: {
     androidScheme: 'https',
-    // --- AÑADE ESTA SECCIÓN ---
     allowNavigation: [
       "api.decolecta.com"
     ]
