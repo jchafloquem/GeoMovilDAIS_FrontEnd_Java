@@ -42,6 +42,51 @@
         <ion-input type="text" [(ngModel)]="formData.apellido_materno" name="apellido_materno" required [readonly]="true"></ion-input>
       </ion-item>
 
+      <!-- Datos de MIDAGRI -->
+      <ion-item>
+        <ion-label position="floating">Código Autogenerado</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_codigoautogenerado" name="txt_codigoautogenerado" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Fecha de Registro</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.fec_registro" name="fec_registro" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Actividad Agraria</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_actagraria" name="txt_actagraria" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Superficie</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.num_superficie" name="num_superficie" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Régimen de Tenencia</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_regtenencia" name="txt_regtenencia" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Sexo</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_sexo" name="txt_sexo" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Departamento</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_departamento" name="txt_departamento" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Provincia</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_provincia" name="txt_provincia" [readonly]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Distrito</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.txt_distrito" name="txt_distrito" [readonly]="true"></ion-input>
+      </ion-item>
     </ion-list>
 
     <ion-button (click)="takePicture()" [disabled]="photosForDisplay.length >= 6" color="secondary" expand="block" class="ion-margin-top">

@@ -54,6 +54,15 @@ export class RegisterdataPage implements OnInit {
     nombres: '',
     apellido_paterno: '',
     apellido_materno: '',
+    txt_codigoautogenerado: '',
+    fec_registro: '',
+    txt_actagraria: '',
+    num_superficie: '',
+    txt_regtenencia: '',
+    txt_sexo: '',
+    txt_departamento: '',
+    txt_provincia: '',
+    txt_distrito: '',
   };
 
   constructor(
@@ -81,7 +90,21 @@ export class RegisterdataPage implements OnInit {
     this.editKey = null;
     this.photosForDisplay = [];
     this.savedPhotoUris = [];
-    this.formData = { dni: '', nombres: '', apellido_paterno: '', apellido_materno: '' };
+    this.formData = {
+      dni: '',
+      nombres: '',
+      apellido_paterno: '',
+      apellido_materno: '',
+      txt_codigoautogenerado: '',
+      fec_registro: '',
+      txt_actagraria: '',
+      num_superficie: '',
+      txt_regtenencia: '',
+      txt_sexo: '',
+      txt_departamento: '',
+      txt_provincia: '',
+      txt_distrito: '',
+    };
 
     // 2. Determinamos si estamos en modo EDICIÓN (vía URL) o CREACIÓN (vía state).
     const keyFromUrl = this.route.snapshot.paramMap.get('key');
@@ -100,6 +123,15 @@ export class RegisterdataPage implements OnInit {
           this.formData.nombres = this.geojson.properties.nombres || '';
           this.formData.apellido_paterno = this.geojson.properties.apellido_paterno || '';
           this.formData.apellido_materno = this.geojson.properties.apellido_materno || '';
+          this.formData.txt_codigoautogenerado = this.geojson.properties.txt_codigoautogenerado || '';
+          this.formData.fec_registro = this.geojson.properties.fec_registro || '';
+          this.formData.txt_actagraria = this.geojson.properties.txt_actagraria || '';
+          this.formData.num_superficie = this.geojson.properties.num_superficie || '';
+          this.formData.txt_regtenencia = this.geojson.properties.txt_regtenencia || '';
+          this.formData.txt_sexo = this.geojson.properties.txt_sexo || '';
+          this.formData.txt_departamento = this.geojson.properties.txt_departamento || '';
+          this.formData.txt_provincia = this.geojson.properties.txt_provincia || '';
+          this.formData.txt_distrito = this.geojson.properties.txt_distrito || '';
 
           // Fallback para datos antiguos que solo tienen la propiedad 'name'
           if (!this.formData.nombres && this.geojson.properties.name) {
@@ -164,45 +196,109 @@ export class RegisterdataPage implements OnInit {
     await loading.present();
 
     try {
-      // NOTA DE SEGURIDAD: El token no debería estar aquí en una app de producción.
-      // Considera moverlo a variables de entorno para mayor seguridad.
-      const token = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
-      // Usamos el plugin nativo de Cordova para evitar problemas de CORS en el dispositivo.
-      const url = `${environment.apiUrl}/reniec/dni?numero=${this.formData.dni}`
+      // 1. Limpiar datos previos antes de una nueva búsqueda.
+      this.formData.nombres = '';
+      this.formData.apellido_paterno = '';
+      this.formData.apellido_materno = '';
+      this.fillMidagriWithNoData(true); // Limpiar campos de Midagri
 
+      let reniecSuccess = false;
+      let midagriSuccess = false;
 
-      console.log('URL generada:', url);
-
-      const response: HttpResponse = await CapacitorHttp.get({
-        url,
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = response.data;
-      if (data && data.first_name) {
-        this.formData.nombres = this.toTitleCase(data.first_name || '');
-        this.formData.apellido_paterno = this.toTitleCase(data.first_last_name || '');
-        this.formData.apellido_materno = this.toTitleCase(data.second_last_name || '');
-        const toast = await this.toastController.create({
-          message: 'Nombre completado.',
-          duration: 2000,
-          color: 'success'
+      // 2. Consultar RENIEC
+      try {
+        const token = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
+        const url = `${environment.apiUrl}/reniec/dni?numero=${this.formData.dni}`;
+        console.log('Consultando RENIEC:', url);
+        const response: HttpResponse = await CapacitorHttp.get({
+          url,
+          headers: { Authorization: `Bearer ${token}` }
         });
-        await toast.present();
+        const data = response.data;
+        if (data && data.first_name) {
+          this.formData.nombres = this.toTitleCase(data.first_name || '');
+          this.formData.apellido_paterno = this.toTitleCase(data.first_last_name || '');
+          this.formData.apellido_materno = this.toTitleCase(data.second_last_name || '');
+          reniecSuccess = true;
+        }
+      } catch (err) {
+        console.error('Error al consultar RENIEC (se continuará con MIDAGRI):', err);
+      }
+
+      // 3. Consultar MIDAGRI (se ejecuta siempre, sin importar el resultado de RENIEC)
+      try {
+        const midagriUrl = `https://gateway.midagri.gob.pe/sisppa/api/services/app/Consulta/GetDatosProductor?codDocumento=1&Documento=${this.formData.dni}`;
+        console.log('Consultando MIDAGRI:', midagriUrl);
+        const midagriResponse: HttpResponse = await CapacitorHttp.get({ url: midagriUrl });
+        const midagriData = midagriResponse.data;
+
+        console.log('Respuesta completa de MIDAGRI:', midagriResponse);
+        console.log('Datos de MIDAGRI (midagriData):', midagriData);
+
+        let productor: any = null;
+
+        // La API de MIDAGRI a veces devuelve un objeto (si encuentra 1 resultado)
+        // y otras un array (si encuentra 0 o varios). Hay que manejar ambos casos.
+        if (midagriData && midagriData.result) {
+          if (Array.isArray(midagriData.result) && midagriData.result.length > 0) {
+            // Caso 1: 'result' es un array con datos. Tomamos el primero.
+            productor = midagriData.result[0];
+            console.log('MIDAGRI: "result" es un array con datos. Usando el primer elemento.');
+          } else if (!Array.isArray(midagriData.result) && typeof midagriData.result === 'object' && midagriData.result !== null) {
+            // Caso 2: 'result' es un objeto. Lo usamos directamente.
+            productor = midagriData.result;
+            console.log('MIDAGRI: "result" es un objeto. Usándolo directamente.');
+          }
+        }
+
+        if (productor) {
+          this.formData.txt_codigoautogenerado = productor.txt_codigoautogenerado || '';
+          this.formData.fec_registro = productor.fec_registro || '';
+          this.formData.txt_actagraria = productor.txt_actagraria || '';
+          this.formData.num_superficie = productor.num_superficie || '';
+          this.formData.txt_regtenencia = productor.txt_regtenencia || '';
+          this.formData.txt_sexo = productor.txt_sexo || '';
+          this.formData.txt_departamento = productor.txt_departamento || '';
+          this.formData.txt_provincia = productor.txt_provincia || '';
+          this.formData.txt_distrito = productor.txt_distrito || '';
+          midagriSuccess = true;
+          console.log('MIDAGRI: Datos encontrados y cargados correctamente.');
+        } else {
+          console.log('MIDAGRI: No se encontraron datos válidos en la respuesta.');
+        }
+      } catch (midagriError: any) {
+        console.error('Error al consultar MIDAGRI (excepción):', midagriError.message || midagriError);
+      }
+
+      // 4. Determinar el mensaje final basado en los resultados
+      let toastMessage = '';
+      let toastColor = 'danger';
+
+      if (reniecSuccess && midagriSuccess) {
+        toastMessage = 'Datos de RENIEC y MIDAGRI cargados.';
+        toastColor = 'success';
+      } else if (reniecSuccess) {
+        toastMessage = 'Datos de RENIEC cargados. No se encontraron en MIDAGRI.';
+        toastColor = 'warning';
+        this.fillMidagriWithNoData(); // Rellenar con "Sin datos"
+      } else if (midagriSuccess) {
+        toastMessage = 'Datos de MIDAGRI cargados. No se encontraron en RENIEC.';
+        toastColor = 'warning';
+        this.formData.nombres = 'Sin datos';
+        this.formData.apellido_paterno = 'Sin datos';
+        this.formData.apellido_materno = 'Sin datos';
       } else {
-        const message = data.message || 'DNI no encontrado o respuesta inesperada.';
-        const toast = await this.toastController.create({ message, duration: 3000, color: 'danger' });
-        await toast.present();
+        toastMessage = 'DNI no encontrado en ninguna de las fuentes.';
+        toastColor = 'danger';
       }
-    } catch (err: any) {
-      console.error('Error al buscar DNI:', err);
-      let errorMessage = 'Error al consultar el DNI. Verifique su conexión.';
-      if (err.message) {
-        errorMessage = err.message;
-      }
-      const toast = await this.toastController.create({ message: errorMessage, duration: 4000, color: 'danger' });
+
+      const toast = await this.toastController.create({
+        message: toastMessage,
+        duration: 3000,
+        color: toastColor
+      });
       await toast.present();
+
     } finally {
       // Esto asegura que el loading se cierre siempre.
       await loading.dismiss();
@@ -370,6 +466,15 @@ export class RegisterdataPage implements OnInit {
       nombres: this.formData.nombres,
       apellido_paterno: this.formData.apellido_paterno,
       apellido_materno: this.formData.apellido_materno,
+      txt_codigoautogenerado: this.formData.txt_codigoautogenerado,
+      fec_registro: this.formData.fec_registro,
+      txt_actagraria: this.formData.txt_actagraria,
+      num_superficie: this.formData.num_superficie,
+      txt_regtenencia: this.formData.txt_regtenencia,
+      txt_sexo: this.formData.txt_sexo,
+      txt_departamento: this.formData.txt_departamento,
+      txt_provincia: this.formData.txt_provincia,
+      txt_distrito: this.formData.txt_distrito,
       photos: this.savedPhotoUris // Guardamos las URIs de las fotos
     };
 
@@ -482,5 +587,18 @@ export class RegisterdataPage implements OnInit {
   private toTitleCase(str: string): string {
     if (!str) return '';
     return str.toLowerCase().replace(/\b(\w)/g, s => s.toUpperCase());
+  }
+
+  private fillMidagriWithNoData(clearOnly: boolean = false) {
+    const value = clearOnly ? '' : 'Sin datos';
+    this.formData.txt_codigoautogenerado = value;
+    this.formData.fec_registro = value;
+    this.formData.txt_actagraria = value;
+    this.formData.num_superficie = value;
+    this.formData.txt_regtenencia = value;
+    this.formData.txt_sexo = value;
+    this.formData.txt_departamento = value;
+    this.formData.txt_provincia = value;
+    this.formData.txt_distrito = value;
   }
 }

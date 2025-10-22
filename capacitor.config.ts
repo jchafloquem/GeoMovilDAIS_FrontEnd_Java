@@ -12,7 +12,8 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     allowNavigation: [
-      "api.decolecta.com"
+      "api.decolecta.com",
+      "gateway.midagri.gob.pe"
     ]
     // -------------------------
   }
