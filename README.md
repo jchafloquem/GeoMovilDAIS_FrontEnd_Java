@@ -1,5 +1,8 @@
 # GeoDAIS Móvil
 
+# Developer
+Jorge Chafloque Millones
+
 Aplicacion Móvil de la Sub Direccion de Monitoreo
 
 ## 🚀 Características principales
