@@ -59,12 +59,12 @@
       translucent="true"
       backdropDismiss="false">
     </ion-loading>
-    <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="top">
+    <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="bottom">
       <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'">
         <ion-icon name="image-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
-    <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="top">
+    <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="bottom">
       <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'">
         <ion-icon name="layers-outline"></ion-icon>
       </ion-fab-button>

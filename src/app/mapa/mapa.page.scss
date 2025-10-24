@@ -214,10 +214,9 @@ ion-title {
 
 .satellite-layer-btn-wrapper,
 .streets-layer-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 10px);
+  bottom: 150px;
   z-index: 1000;
   overflow: visible;
-
   ion-fab-button {
     width: 40px;
     height: 40px;
@@ -225,7 +224,6 @@ ion-title {
     --color: #333;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease-in-out;
-
     &.active-layer {
       --background: #0D9BD7; /* Azul primario de Ionic */
       --color: white;
@@ -369,3 +367,40 @@ ion-title {
   bottom: 350px; // Posición más alta para no solapar con ningún botón de "stop"
   background-color: #0D9BD7; // Restaurado a tu color azul
 }
+
+/* Ajuste para posicionar la escala de Leaflet sobre el panel GPS */
+.leaflet-bottom.leaflet-left {
+  // Lo alineamos verticalmente con los botones de cambio de capa.
+  bottom: 160px;
+  // Lo ponemos por encima del panel GPS que tiene z-index: 2000
+  z-index: 2001;
+
+  .leaflet-control-scale {
+    background: rgba(13, 155, 215, 0.7); // Mismo fondo que el panel GPS
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: white;
+    text-shadow: 0 0 2px black;
+  }
+
+  .leaflet-control-scale-line {
+    background-color: white;
+    border: none;
+    height: 2px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+  }
+}
+// Esto asegura que los estilos de Leaflet se puedan sobreescribir desde nuestro componente.
+:host ::ng-deep {
+  // Mueve el contenedor de controles de la esquina inferior izquierda
+  // para que aparezca justo encima del panel de coordenadas GPS.
+  .leaflet-bottom.leaflet-left {
+    // El panel GPS tiene una altura aproximada de 140px y un margen inferior de 20px.
+    // 165px debería ser suficiente para que la escala aparezca por encima con un pequeño margen.
+    // Puedes ajustar este valor si es necesario.
+    bottom: 150px;
+  }
+}
+
+

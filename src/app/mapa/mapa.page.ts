@@ -755,7 +755,8 @@ export class MapaPage implements OnDestroy {
 
     // Añadimos la capa de mapa por defecto
     this.satelliteLayer.addTo(map);
-    L.control.scale({position: 'topleft', metric: true, imperial: false, maxWidth: 100}).addTo(map);
+    L.control.scale({position: 'bottomleft', metric: true, imperial: false, maxWidth: 100}).addTo(map);
+
 
     // Inicializamos el FeatureGroup para los elementos dibujados
     this.drawnItems = new L.FeatureGroup();
@@ -774,7 +775,7 @@ export class MapaPage implements OnDestroy {
       },
       draw: false // Desactivamos las herramientas de dibujo manual
     });
-    //map.addControl(editControl);
+
 
     // Eventos para los elementos dibujados (útil si se editan/borran con leaflet-draw)
     map.on(L.Draw.Event.CREATED, (event: any) => {
