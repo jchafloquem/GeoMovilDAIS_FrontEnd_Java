@@ -1,0 +1,50 @@
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonContent, IonButton, IonIcon, IonModal } from '@ionic/angular/standalone';
+import { RegisterDataService } from 'src/app/services/register-data.service';
+import { addIcons } from 'ionicons';
+import { camera, close, closeCircle, imagesOutline } from 'ionicons/icons';
+import { register } from 'swiper/element/bundle';
+import { SwiperOptions } from 'swiper/types';
+
+register();
+
+@Component({
+  selector: 'app-fotos-tab',
+  templateUrl: './fotos-tab.page.html',
+  styleUrls: ['./fotos-tab.page.scss'],
+  standalone: true,
+  imports: [CommonModule, IonContent, IonButton, IonIcon, IonModal],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+})
+export class FotosTabPage {
+  isViewerOpen = false;
+
+  viewerSlideOpts: SwiperOptions = {
+    initialSlide: 0,
+    slidesPerView: 1,
+    centeredSlides: true,
+    zoom: {
+      maxRatio: 3,
+      minRatio: 1,
+    },
+  };
+
+  constructor(public registerDataService: RegisterDataService) {
+    addIcons({ camera, closeCircle, imagesOutline, close });
+  }
+
+  deletePhoto(index: number, event: MouseEvent) {
+    event.stopPropagation(); // Evita que se abra el visor de imágenes al hacer clic en el botón de eliminar.
+    this.registerDataService.deletePhoto(index);
+  }
+
+  openViewer(index: number) {
+    this.viewerSlideOpts.initialSlide = index;
+    this.isViewerOpen = true;
+  }
+
+  closeViewer = () => {
+    this.isViewerOpen = false;
+  }
+}

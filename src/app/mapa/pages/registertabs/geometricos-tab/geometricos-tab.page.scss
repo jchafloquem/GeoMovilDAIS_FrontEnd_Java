@@ -1,0 +1,36 @@
+// Reusing styles for consistency
+ion-card {
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  ion-card-header {
+    background-color: #0DA642;
+    color: white;
+  }
+}
+
+ion-list[lines="none"] ion-item {
+  --inner-padding-end: 0;
+  --padding-start: 0;
+}
+
+// Contenedor para alinear el título y el chip
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+// Estilo para el chip que indica el tipo de geometría
+.geometry-chip {
+  --background: rgba(255, 255, 255, 0.9);
+  --color: #0DA642; // Usamos el color principal para que resalte
+  font-weight: bold;
+  height: 28px;
+  border-color: rgba(255, 255, 255, 0.7);
+
+  ion-icon {
+    font-size: 18px;
+  }
+}

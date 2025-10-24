@@ -1,0 +1,16 @@
+// Reusing styles for consistency
+ion-card {
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  ion-card-header {
+    background-color: #0DA642;
+    color: white;
+  }
+}
+
+ion-list[lines="none"] ion-item {
+  --inner-padding-end: 0;
+  --padding-start: 0;
+}
+

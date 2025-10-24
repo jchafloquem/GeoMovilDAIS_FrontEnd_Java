@@ -1,0 +1,36 @@
+// Puedes mover aquí los estilos generales de registerdata.page.scss
+// o dejarlos en un archivo global si son compartidos.
+ion-header {
+  background: transparent;
+  pointer-events: none;
+}
+
+ion-toolbar {
+  pointer-events: auto;
+  --background: #0D9BD7;
+  margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
+  --padding-top: 35px;
+  --padding-start: 5px;
+  --padding-end: 5px;
+  --padding-bottom: 5px;
+}
+
+ion-title {
+  position: static;
+  padding: 0;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+ion-tab-bar {
+  --background: var(--ion-color-light);
+}
+
+ion-tab-button {
+  --color: var(--ion-color-medium-shade);
+  --color-selected: var(--ion-color-primary);
+}

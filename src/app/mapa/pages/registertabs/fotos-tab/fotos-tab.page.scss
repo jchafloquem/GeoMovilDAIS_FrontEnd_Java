@@ -1,0 +1,111 @@
+// Contenedor principal para la cuadrícula de fotos
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); // 2 columnas iguales
+  gap: 5px; // Espacio pequeño entre fotos
+  padding: 5px;
+}
+
+// Cada elemento de la cuadrícula
+.photo-item {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; // Truco para mantener una relación de aspecto 1:1 (cuadrado)
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--ion-color-light, #f4f5f8);
+
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // Asegura que la imagen cubra el espacio sin deformarse
+    cursor: pointer;
+  }
+}
+
+// Botón para eliminar la foto, estilizado para superponerse
+.delete-photo-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  font-size: 24px;
+  --color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); // Sombra más pronunciada para legibilidad
+}
+
+// Mensaje para cuando no hay fotos
+.no-photos-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--ion-color-medium-shade);
+  height: 50vh;
+
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: var(--ion-color-medium);
+  }
+}
+
+// Botón de acción principal (Tomar Foto)
+.main-action-button {
+  --background: #0DA642;
+  --background-activated: #0a8a35;
+  --color: white;
+  font-weight: bold;
+  margin: 16px; // Margen para separarlo del contenido
+}
+
+// Estilos para el visor de imágenes a pantalla completa (Modal)
+ion-modal {
+  --background: rgba(0, 0, 0, 0.85); // Fondo oscuro semitransparente
+
+  .viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .close-viewer-btn {
+    position: absolute;
+    top: 20px;
+    right: 15px;
+    z-index: 1001; // Por encima del swiper
+    font-size: 32px;
+    --color: white;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  }
+
+  .viewer-swiper {
+    width: 100%;
+    height: 100%;
+
+    swiper-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .swiper-zoom-container {
+        img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain; // La imagen se ajusta sin recortarse ni deformarse
+        }
+      }
+    }
+  }
+}

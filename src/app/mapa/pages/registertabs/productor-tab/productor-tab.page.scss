@@ -1,0 +1,16 @@
+// Aquí puedes poner estilos específicos para la tarjeta de productor si los necesitas.
+// Por ejemplo, los estilos de ion-card que estaban en registerdata.page.scss
+ion-card {
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  ion-card-header {
+    background-color: #0DA642;
+    color: white;
+  }
+}
+
+ion-list[lines="none"] ion-item {
+  --inner-padding-end: 0;
+  --padding-start: 0;
+}

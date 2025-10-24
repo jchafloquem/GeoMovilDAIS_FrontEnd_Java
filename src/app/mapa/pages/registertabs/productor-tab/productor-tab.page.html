@@ -1,0 +1,37 @@
+<ion-content>
+  <!-- Usamos el async pipe para suscribirnos a los datos del formulario -->
+  <ng-container *ngIf="registerDataService.formData$ | async as formData">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title color="white">Datos del Productor</ion-card-title>
+        <ion-card-subtitle color="white">Fuente: RENIEC</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list lines="none">
+          <ion-item>
+            <!-- El [(ngModel)] ahora modifica directamente la propiedad del objeto formData -->
+            <ion-input label="DNI" label-placement="floating" type="tel" inputmode="numeric" pattern="[0-9]*" name="dni" maxlength="8" [(ngModel)]="formData.dni" (ionChange)="searchDni()"></ion-input>
+            <ion-button slot="end" fill="clear" aria-label="Buscar DNI" (click)="searchDni()" [disabled]="!formData.dni || formData.dni.length !== 8">
+              <ion-icon name="search" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Nombres" label-placement="floating" type="text" name="nombres" required [(ngModel)]="formData.nombres" [readonly]="true"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Apellido Paterno" label-placement="floating" type="text" name="apellido_paterno" required [(ngModel)]="formData.apellido_paterno" [readonly]="true"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Apellido Materno" label-placement="floating" type="text" name="apellido_materno" required [(ngModel)]="formData.apellido_materno" [readonly]="true"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Fecha de Nacimiento" label-placement="floating" type="date" name="fecha_nacimiento" [(ngModel)]="formData.fecha_nacimiento"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Celular del Participante" label-placement="floating" type="tel" name="celular_participante" [(ngModel)]="formData.celular_participante" placeholder="987654321" maxlength="9"></ion-input>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+</ion-content>
