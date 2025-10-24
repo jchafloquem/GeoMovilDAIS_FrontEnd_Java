@@ -368,39 +368,109 @@ ion-title {
   background-color: #0D9BD7; // Restaurado a tu color azul
 }
 
-/* Ajuste para posicionar la escala de Leaflet sobre el panel GPS */
-.leaflet-bottom.leaflet-left {
-  // Lo alineamos verticalmente con los botones de cambio de capa.
-  bottom: 160px;
-  // Lo ponemos por encima del panel GPS que tiene z-index: 2000
-  z-index: 2001;
-
-  .leaflet-control-scale {
-    background: rgba(13, 155, 215, 0.7); // Mismo fondo que el panel GPS
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
-    padding: 2px 5px;
-    color: white;
-    text-shadow: 0 0 2px black;
-  }
-
-  .leaflet-control-scale-line {
-    background-color: white;
-    border: none;
-    height: 2px;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.6);
-  }
-}
-// Esto asegura que los estilos de Leaflet se puedan sobreescribir desde nuestro componente.
+// Estilos para los controles de Leaflet y plugins, que requieren ::ng-deep para sobreescribir los estilos globales.
 :host ::ng-deep {
-  // Mueve el contenedor de controles de la esquina inferior izquierda
-  // para que aparezca justo encima del panel de coordenadas GPS.
+  /* Ajuste para posicionar la escala de Leaflet sobre el panel GPS */
   .leaflet-bottom.leaflet-left {
-    // El panel GPS tiene una altura aproximada de 140px y un margen inferior de 20px.
-    // 165px debería ser suficiente para que la escala aparezca por encima con un pequeño margen.
-    // Puedes ajustar este valor si es necesario.
-    bottom: 150px;
+    bottom: 150px; // Lo subimos para que quede sobre el panel GPS
+    z-index: 2001; // Aseguramos que esté por encima del panel GPS
+
+    .leaflet-control-scale {
+      background: rgba(13, 155, 215, 0.7); // Mismo fondo que el panel GPS
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+      padding: 2px 5px;
+      color: white;
+      text-shadow: 0 0 2px black;
+    }
+
+    .leaflet-control-scale-line {
+      /* Se quita el fondo para que el texto sea visible */
+      background-color: transparent;
+      border: none;
+      box-shadow: none;
+      /* Se añade espacio inferior para separar el texto de la línea */
+      padding-bottom: 5px;
+      position: relative; /* Necesario para el pseudo-elemento ::after */
+      line-height: 1; /* Asegura que el texto no tenga espacio extra */
+    }
+
+    /* Se crea la línea visual usando un pseudo-elemento */
+    .leaflet-control-scale-line::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 2px;
+      background-color: white;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    }
+  }
+
+  /* Estilos para que el buscador se parezca a los botones de zoom */
+  .leaflet-control-geosearch {
+    // El botón de búsqueda (lupa)
+    a.leaflet-bar-part {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      background-color: #0D9BD7; // Mismo azul que los botones de zoom
+      border-radius: 50%; // Totalmente redondo
+      border: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); // Misma sombra
+
+      // Cambiamos el color del icono de la lupa a blanco
+      &::before {
+        border-top-color: white;
+        width: 8px;
+        top: 23px;
+        left: 20px;
+      }
+      &::after {
+        border-color: white;
+        width: 12px;
+        height: 12px;
+        top: 14px;
+        left: 14px;
+      }
+
+      // Efecto hover similar a los botones de Ionic
+      &:hover {
+        background-color: #0b84b8;
+      }
+    }
+
+    // Cuando el buscador está activo (formulario visible)
+    &.active {
+      // Hacemos que el botón y el formulario parezcan una sola pieza
+      a.leaflet-bar-part {
+        border-radius: 20px 0 0 20px; // Redondeamos solo las esquinas izquierdas
+      }
+
+      form {
+        height: 40px;
+        // Posicionamos el formulario justo a la derecha del botón
+        left: 40px;
+        // Redondeamos las esquinas derechas
+        border-radius: 0 20px 20px 0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        border: none;
+        background-color: #fff;
+      }
+
+      form input {
+        height: 40px;
+        border-radius: 0 20px 20px 0;
+      }
+    }
+
+    // Estilos para la lista de resultados
+    .results {
+      margin-top: 5px;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      border: 1px solid #ddd;
+    }
   }
 }
-
-

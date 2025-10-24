@@ -13,7 +13,6 @@ import {
   IonButton,
   IonList,
   IonItem,
-  IonLabel,
   IonInput,
   ToastController,
   NavController,
@@ -65,7 +64,7 @@ interface GeoJsonProperties {
   templateUrl: './registerdata.page.html',
   styleUrls: ['./registerdata.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonLabel, IonInput, IonImg, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent],
+  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonButtons, IonBackButton, IonButton, RouterLink, IonList, IonItem, IonInput, IonImg, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class RegisterdataPage implements OnInit {

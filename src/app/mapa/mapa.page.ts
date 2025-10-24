@@ -5,9 +5,10 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
 import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
@@ -544,6 +545,60 @@ export class MapaPage implements OnDestroy {
     });
   }
 
+  async exportAllGeometries() {
+    this.isLoading = true;
+    try {
+      const { keys } = await Preferences.keys();
+      const geometryKeys = keys.filter(key =>
+        key.startsWith('polygon_') ||
+        key.startsWith('point_') ||
+        key.startsWith('linestring_')
+      );
+
+      if (geometryKeys.length === 0) {
+        this.presentToast('No hay geometrías para exportar.', 'warning', 'middle');
+        return;
+      }
+
+      const exportFolderName = 'GeoMOVILDAIS_Export';
+      let filesWritten = 0;
+
+      for (const key of geometryKeys) {
+        const { value } = await Preferences.get({ key });
+        if (value) {
+          const fileName = `${key}.geojson`;
+          const filePath = `${exportFolderName}/${fileName}`;
+
+          await Filesystem.writeFile({
+            path: filePath,
+            data: value,
+            directory: Directory.Documents,
+            encoding: Encoding.UTF8,
+            recursive: true // Crea la carpeta si no existe
+          });
+          filesWritten++;
+        }
+      }
+
+      this.presentToast(
+        `${filesWritten} archivos exportados con éxito.\nBusque la carpeta '${exportFolderName}' en la carpeta 'Documentos' de su dispositivo.`,
+        'success',
+        'middle'
+      );
+
+    } catch (error: any) {
+      console.error('Error al exportar archivos:', error);
+      const alert = await this.alertController.create({
+        header: 'Error de Exportación',
+        message: `No se pudieron guardar los archivos. Asegúrese de que la aplicación tenga permisos para acceder al almacenamiento.\n\nError: ${error.message}`,
+        buttons: ['OK']
+      });
+      await alert.present();
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
   private editGeometryInfo(key: string) {
     if (!key) return;
     // Navegamos a la ruta de edición, pasando la clave como parámetro en la URL.
@@ -591,12 +646,8 @@ export class MapaPage implements OnDestroy {
               return {}; // Estilo por defecto para otros tipos (como puntos)
             },
             pointToLayer: (_feature: any, latlng: any) => {
-              // Si estamos en modo edición, usamos el ícono amarillo para los puntos.
-              if (this.isEditingMode) {
-                return L.marker(latlng, { icon: iconYellow });
-              }
-              // Si no, usamos el ícono azul por defecto.
-              return L.marker(latlng);
+              const iconToUse = this.isEditingMode ? iconYellow : iconDefault;
+              return L.marker(latlng, { icon: iconToUse });
             },
             onEachFeature: (feature: any, layer: any) => {
               const name = feature.properties?.name || (feature.geometry.type === 'Point' ? 'Punto sin nombre' : 'Polígono sin nombre');
@@ -735,14 +786,35 @@ export class MapaPage implements OnDestroy {
   }
 
   private initMap(): void {
-    // Asignamos el icono por defecto a los marcadores de Leaflet
-    L.Marker.prototype.options.icon = iconDefault;
-
     const map = L.map('map', {
       center: [-9.19, -75.0152],
       zoomControl: false,
       zoom: 10
     });
+
+    // --- INICIO: Añadir control de búsqueda de direcciones (leaflet-geosearch) ---
+    const provider = new OpenStreetMapProvider({
+      params: {
+        countrycodes: 'pe', // Limitar la búsqueda a Perú
+        viewbox: '-81.3,0,-68.6,-18.4', // Bounding box de Perú para sesgar resultados
+        bounded: true, // Restringir resultados estrictamente al viewbox
+      },
+    });
+    const searchControl = GeoSearchControl({
+      provider: provider,
+      style: 'button', // Muestra una barra de búsqueda en lugar de un botón
+      showMarker: true, // Muestra un marcador en el resultado
+      showPopup: false, // No muestra un popup
+      marker: {
+        icon: iconDefault, // Usa el ícono azul por defecto
+        draggable: false,
+      },
+      autoClose: true, // Cierra los resultados al seleccionar uno
+      keepResult: true, // Mantiene el texto del resultado en la barra
+      searchLabel: 'Buscar dirección o lugar...' // Texto de placeholder
+    });
+    map.addControl(searchControl);
+    // --- FIN: Añadir control de búsqueda de direcciones ---
 
     this.lightLayer = L.tileLayer(
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
