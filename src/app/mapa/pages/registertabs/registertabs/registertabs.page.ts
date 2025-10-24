@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonButton } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { personOutline, leafOutline, shapesOutline, cameraOutline, saveOutline, createOutline, pencilOutline } from 'ionicons/icons';
+import { personOutline, leafOutline, shapesOutline, cameraOutline, saveOutline, createOutline, pencilOutline, idCardOutline } from 'ionicons/icons';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,7 +23,7 @@ export class RegistertabsPage implements OnInit {
     private route: ActivatedRoute,
     public registerDataService: RegisterDataService // Hacemos público para usarlo en el template
   ) {
-    addIcons({ personOutline, leafOutline, shapesOutline, cameraOutline, saveOutline, createOutline, pencilOutline });
+    addIcons({saveOutline,personOutline,leafOutline,shapesOutline,cameraOutline,idCardOutline,createOutline,pencilOutline});
 
     this.pageTitle$ = this.registerDataService.editKey$.pipe(
       map(key => key ? 'Editar Información' : 'Registrar Datos')

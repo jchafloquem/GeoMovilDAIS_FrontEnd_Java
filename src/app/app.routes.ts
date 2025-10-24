@@ -47,6 +47,7 @@ export const routes: Routes = [
       { path: 'agrarios', loadComponent: () => import('./mapa/pages/registertabs/agrarios-tab/agrarios-tab.page').then(m => m.AgrariosTabPage) },
       { path: 'geometricos', loadComponent: () => import('./mapa/pages/registertabs/geometricos-tab/geometricos-tab.page').then(m => m.GeometricosTabPage) },
       { path: 'fotos', loadComponent: () => import('./mapa/pages/registertabs/fotos-tab/fotos-tab.page').then(m => m.FotosTabPage) },
+      { path: 'profesional-tab', loadComponent: () => import('./mapa/pages/registertabs/profesional-tab/profesional-tab.page').then( m => m.ProfesionalTabPage)},
       { path: '', redirectTo: 'productor', pathMatch: 'full' }
     ]
   },
@@ -59,4 +60,5 @@ export const routes: Routes = [
     redirectTo: 'mapa',
     pathMatch: 'full',
   },
+
 ];
