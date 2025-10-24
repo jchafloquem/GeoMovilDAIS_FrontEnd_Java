@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
 import { ToastController, NavController, AlertController, LoadingController } from '@ionic/angular/standalone';
 import { BehaviorSubject } from 'rxjs';
 import * as L from 'leaflet';
@@ -29,6 +29,18 @@ interface GeoJsonProperties {
   txt_departamento: string;
   txt_provincia: string;
   txt_distrito: string;
+  tipo_productor: string;
+  dni_photo_front: string;
+  dni_photo_back: string;
+  tipo_cultivo: string;
+  ubigeo_oficina_zonal: string;
+  ubigeo_departamento: string;
+  ubigeo_provincia: string;
+  ubigeo_distrito: string;
+  ubigeo_caserio: string;
+  fuente: string;
+  datum: string;
+  observaciones: string;
   photos: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -71,7 +83,19 @@ export class RegisterDataService {
     area: '',
     altitud: '',
     centroide: '',
+    tipo_productor: '',
     geometryTypeLabel: '',
+    dni_photo_front: '',
+    dni_photo_back: '',
+    tipo_cultivo: '',
+    ubigeo_oficina_zonal: '',
+    ubigeo_departamento: '',
+    ubigeo_provincia: '',
+    ubigeo_distrito: '',
+    ubigeo_caserio: '',
+    fuente: 'DEVIDA',
+    datum: 'WGS-84',
+    observaciones: '',
   });
   readonly formData$ = this._formData.asObservable();
 
@@ -136,6 +160,18 @@ export class RegisterDataService {
       txt_departamento: '', txt_provincia: '', txt_distrito: '',
       perimetro: '', area: '', altitud: '', centroide: '',
       geometryTypeLabel: '',
+      tipo_productor: '',
+      dni_photo_front: '',
+      dni_photo_back: '',
+      tipo_cultivo: '',
+      ubigeo_oficina_zonal: '',
+      ubigeo_departamento: '',
+      ubigeo_provincia: '',
+      ubigeo_distrito: '',
+      ubigeo_caserio: '',
+      fuente: 'DEVIDA',
+      datum: 'WGS-84',
+      observaciones: '',
     });
   }
 
@@ -156,6 +192,18 @@ export class RegisterDataService {
     currentData.txt_departamento = properties.txt_departamento || '';
     currentData.txt_provincia = properties.txt_provincia || '';
     currentData.txt_distrito = properties.txt_distrito || '';
+    currentData.tipo_productor = properties.tipo_productor || '';
+    currentData.dni_photo_front = properties.dni_photo_front || '';
+    currentData.dni_photo_back = properties.dni_photo_back || '';
+    currentData.tipo_cultivo = properties.tipo_cultivo || '';
+    currentData.ubigeo_oficina_zonal = properties.ubigeo_oficina_zonal || '';
+    currentData.ubigeo_departamento = properties.ubigeo_departamento || '';
+    currentData.ubigeo_provincia = properties.ubigeo_provincia || '';
+    currentData.ubigeo_distrito = properties.ubigeo_distrito || '';
+    currentData.ubigeo_caserio = properties.ubigeo_caserio || '';
+    currentData.fuente = properties.fuente || 'DEVIDA';
+    currentData.datum = properties.datum || 'WGS-84';
+    currentData.observaciones = properties.observaciones || '';
 
     if (!currentData.nombres && properties.name) {
       currentData.nombres = properties.name;
@@ -254,6 +302,27 @@ export class RegisterDataService {
   }
 
   public async saveData() {
+    const formData = this._formData.getValue();
+
+    // --- Validación de Campos Obligatorios ---
+    const missingFields = [];
+    if (!formData.dni) missingFields.push('DNI del productor');
+    if (!formData.nombres) missingFields.push('Nombres del productor');
+    if (!formData.tipo_productor) missingFields.push('Tipo de Productor');
+    if (!formData.dni_photo_front) missingFields.push('Foto frontal del DNI');
+    if (!formData.dni_photo_back) missingFields.push('Foto posterior del DNI');
+    if (!formData.tipo_cultivo) missingFields.push('Tipo de Cultivo');
+
+    if (missingFields.length > 0) {
+      const alert = await this.alertController.create({
+        header: 'Campos Incompletos',
+        message: `Por favor, complete los siguientes campos antes de guardar:<br><ul>${missingFields.map(f => `<li>${f}</li>`).join('')}</ul>`,
+        buttons: ['OK']
+      });
+      await alert.present();
+      return; // Detiene el proceso de guardado
+    }
+
     const geojson = this._geojson.getValue();
     if (!geojson) {
       console.error('No hay GeoJSON para guardar.');
@@ -267,7 +336,6 @@ export class RegisterDataService {
     else if (geometryType.includes('linestring')) keyPrefix = 'linestring';
 
     const key = isEditing ? this._editKey.getValue()! : `${keyPrefix}_${new Date().getTime()}`;
-    const formData = this._formData.getValue();
     const fullName = `${formData.nombres} ${formData.apellido_paterno} ${formData.apellido_materno}`.trim();
 
     const newProperties: GeoJsonProperties = {
@@ -288,6 +356,18 @@ export class RegisterDataService {
       txt_departamento: formData.txt_departamento,
       txt_provincia: formData.txt_provincia,
       txt_distrito: formData.txt_distrito,
+      tipo_productor: formData.tipo_productor,
+      dni_photo_front: formData.dni_photo_front,
+      dni_photo_back: formData.dni_photo_back,
+      tipo_cultivo: formData.tipo_cultivo,
+      ubigeo_oficina_zonal: formData.ubigeo_oficina_zonal,
+      ubigeo_departamento: formData.ubigeo_departamento,
+      ubigeo_provincia: formData.ubigeo_provincia,
+      ubigeo_distrito: formData.ubigeo_distrito,
+      ubigeo_caserio: formData.ubigeo_caserio,
+      fuente: formData.fuente,
+      datum: formData.datum,
+      observaciones: formData.observaciones,
       photos: this._savedPhotoUris.getValue()
     };
 
@@ -405,6 +485,96 @@ export class RegisterDataService {
     await alert.present();
   }
 
+  public async takeDniPicture(side: 'front' | 'back') {
+    const permissions = await Camera.requestPermissions({ permissions: ['camera'] });
+    if (permissions.camera !== 'granted') {
+      const toast = await this.toastController.create({ message: 'Se necesita permiso de cámara.', duration: 3000, color: 'warning' });
+      await toast.present();
+      return;
+    }
+
+    const loading = await this.loadingController.create({ message: 'Procesando foto...' });
+    await loading.present();
+
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri, // Usar URI es más eficiente
+        source: CameraSource.Camera
+      });
+
+      if (!image.path) return;
+
+      // Leemos el archivo de la ruta temporal que nos da la cámara
+      const fileData = await Filesystem.readFile({
+        path: image.path
+      });
+
+      const fileName = `dni_${side}_${new Date().getTime()}.jpeg`;
+
+      // Si ya existe una foto para este lado, la eliminamos primero
+      const currentFormData = this._formData.getValue();
+      const existingUri = side === 'front' ? currentFormData.dni_photo_front : currentFormData.dni_photo_back;
+      if (existingUri) {
+        try {
+          // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
+          await Filesystem.deleteFile({ path: existingUri });
+        } catch (e) {
+          console.warn('No se pudo eliminar el archivo DNI anterior:', existingUri, e);
+        }
+      }
+
+      // Escribimos el archivo en el directorio de datos de la app para obtener un URI permanente
+      const savedFile = await Filesystem.writeFile({
+        path: fileName,
+        data: fileData.data, // Usamos los datos en base64 leídos del archivo temporal
+        directory: Directory.Data
+      });
+
+      // Actualizamos el estado del formulario con el URI completo y correcto
+      if (side === 'front') {
+        currentFormData.dni_photo_front = savedFile.uri;
+      } else {
+        currentFormData.dni_photo_back = savedFile.uri;
+      }
+      this._formData.next(currentFormData);
+
+    } catch (error: any) {
+      const errorMessage = error.message || JSON.stringify(error);
+      if (errorMessage.toLowerCase().includes('user cancelled')) {
+        console.log('Cámara cancelada por el usuario.');
+        return; // No mostrar error si el usuario cancela
+      }
+      console.error('Error al tomar la foto del DNI:', errorMessage);
+      const toast = await this.toastController.create({ message: `Error: ${errorMessage}`, duration: 5000, color: 'danger' });
+      await toast.present();
+    } finally {
+      await loading.dismiss();
+    }
+  }
+
+  public async deleteDniPicture(side: 'front' | 'back') {
+    const currentFormData = this._formData.getValue();
+    const uriToDelete = side === 'front' ? currentFormData.dni_photo_front : currentFormData.dni_photo_back;
+
+    if (uriToDelete) {
+      try {
+        // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
+        await Filesystem.deleteFile({ path: uriToDelete });
+      } catch (e) {
+        console.warn('No se pudo eliminar el archivo DNI:', uriToDelete, e);
+      }
+
+      if (side === 'front') {
+        currentFormData.dni_photo_front = '';
+      } else {
+        currentFormData.dni_photo_back = '';
+      }
+      this._formData.next(currentFormData);
+    }
+  }
+
   // --- Métodos Privados de Ayuda (Helper) ---
 
   private async loadPhotosForDisplay() {
@@ -458,9 +628,9 @@ export class RegisterDataService {
       data.area = 'N/A (Línea)';
       const center = L.polyline(latlngs).getBounds().getCenter();
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
-      this.calculateAverageAltitude(coords);
+      data.altitud = this.calculateAverageAltitude(coords);
     } else { // Polygon or MultiPolygon
-      data.geometryTypeLabel = 'Polígono'; 
+      data.geometryTypeLabel = 'Polígono';
       let coords = (geometryType === 'Polygon') ? geojson.geometry.coordinates[0] : geojson.geometry.coordinates[0][0];
       if (!coords || coords.length < 3) return;
       const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
@@ -476,21 +646,113 @@ export class RegisterDataService {
       data.perimetro = `${perimeter.toFixed(2)} m`;
       const center = L.polygon(latlngs).getBounds().getCenter();
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
-      this.calculateAverageAltitude(coords);
+      data.altitud = this.calculateAverageAltitude(coords);
     }
     this._formData.next(data);
+    // Iniciar autocompletado de ubigeo después de calcular los datos geométricos
+    this.autocompletarUbicacion(geojson.geometry);
   }
 
-  private calculateAverageAltitude(coords: any[]) {
+  private calculateAverageAltitude(coords: any[]): string {
     const altitudes = coords.map((c: any[]) => c[2]).filter((alt: number | undefined) => alt !== undefined && typeof alt === 'number');
-    const data = this._formData.getValue();
     if (altitudes.length > 0) {
       const sum = altitudes.reduce((a, b) => a + b, 0);
-      data.altitud = `${(sum / altitudes.length).toFixed(2)} msnm`;
+      return `${(sum / altitudes.length).toFixed(2)} msnm`;
     } else {
-      data.altitud = 'No disponible';
+      return 'No disponible';
     }
-    this._formData.next(data);
+  }
+
+  private async autocompletarUbicacion(geometry: any) {
+    if (!geometry) return;
+
+    let point: { x: number, y: number };
+
+    // Determinar el punto a consultar (centroide para líneas y polígonos)
+    if (geometry.type === 'Point') {
+      point = { x: geometry.coordinates[0], y: geometry.coordinates[1] };
+    } else {
+      let latlngs: L.LatLng[];
+      if (geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
+        const coords = geometry.type === 'LineString' ? geometry.coordinates : geometry.coordinates[0];
+        latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
+        const center = L.polyline(latlngs).getBounds().getCenter();
+        point = { x: center.lng, y: center.lat };
+      } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+        const coords = geometry.type === 'Polygon' ? geometry.coordinates[0] : geometry.coordinates[0][0];
+        latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
+        const center = L.polygon(latlngs).getBounds().getCenter();
+        point = { x: center.lng, y: center.lat };
+      } else {
+        console.warn('Tipo de geometría no soportado para autocompletar ubigeo:', geometry.type);
+        return;
+      }
+    }
+
+    // --- Query for Distrito/Provincia/Departamento ---
+    const ubigeoQueryParams = new URLSearchParams({
+      geometry: JSON.stringify({ x: point.x, y: point.y }),
+      geometryType: 'esriGeometryPoint',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'nombdep,nombprov,nombdist',
+      returnGeometry: 'false',
+      f: 'json'
+    });
+    const ubigeoUrl = `https://siscod.devida.gob.pe/server/rest/services/DPM_PIRDAIS_CULTIVOS_DESARROLLO/MapServer/6/query?${ubigeoQueryParams.toString()}`;
+
+    // --- Query for Oficina Zonal ---
+    const zonalQueryParams = new URLSearchParams({
+      geometry: JSON.stringify({ x: point.x, y: point.y }),
+      geometryType: 'esriGeometryPoint',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'OFICINA_ZO',
+      returnGeometry: 'false',
+      f: 'json'
+    });
+    const zonalUrl = `https://siscod.devida.gob.pe/server/rest/services/DPM_PIRDAIS_CULTIVOS_DESARROLLO/MapServer/0/query?${zonalQueryParams.toString()}`;
+
+    try {
+      const [ubigeoResponse, zonalResponse] = await Promise.all([
+        CapacitorHttp.get({ url: ubigeoUrl }),
+        CapacitorHttp.get({ url: zonalUrl })
+      ]);
+
+      const currentFormData = this._formData.getValue();
+      let ubigeoDataFound = false;
+
+      // Process Ubigeo Response
+      if (ubigeoResponse.status === 200 && ubigeoResponse.data && ubigeoResponse.data.features && ubigeoResponse.data.features.length > 0) {
+        const attributes = ubigeoResponse.data.features[0].attributes;
+        currentFormData.ubigeo_departamento = attributes.nombdep || '';
+        currentFormData.ubigeo_provincia = attributes.nombprov || '';
+        currentFormData.ubigeo_distrito = attributes.nombdist || '';
+        ubigeoDataFound = true;
+      }
+
+      // Process Zonal Office Response
+      if (zonalResponse.status === 200 && zonalResponse.data && zonalResponse.data.features && zonalResponse.data.features.length > 0) {
+        const attributes = zonalResponse.data.features[0].attributes;
+        currentFormData.ubigeo_oficina_zonal = attributes.OFICINA_ZO || 'FUERA DE LA OFICINA ZONAL';
+      } else {
+        currentFormData.ubigeo_oficina_zonal = 'FUERA DE LA OFICINA ZONAL';
+      }
+
+      // Update state immutably
+      const updatedFormData = { ...currentFormData };
+      this.zone.run(() => this._formData.next(updatedFormData));
+
+      if (ubigeoDataFound) {
+        const toast = await this.toastController.create({ message: 'Datos de ubicación autocompletados.', duration: 2000, color: 'success', position: 'bottom' });
+        await toast.present();
+      }
+
+    } catch (error: any) {
+      console.error('Error al autocompletar ubicación:', error);
+      const toast = await this.toastController.create({ message: `No se pudo autocompletar la ubicación: ${error.message || 'Error de red'}`, duration: 3000, color: 'warning', position: 'bottom' });
+      await toast.present();
+    }
   }
 
   private addTextOverlayToImage(base64ImageData: string, textLines: string[]): Promise<string> {

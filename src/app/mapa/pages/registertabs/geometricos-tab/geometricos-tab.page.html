@@ -12,6 +12,55 @@
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">
+          <ion-item>
+            <ion-select label="Tipo de Cultivo" label-placement="stacked" interface="action-sheet" placeholder="Seleccione un cultivo"
+                        [ngModel]="formData.tipo_cultivo"
+                        (ngModelChange)="formData.tipo_cultivo = $event">
+              <ion-select-option value="CACAO">CACAO</ion-select-option>
+              <ion-select-option value="CAFE">CAFÉ</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Oficina Zonal" label-placement="stacked"
+                       [ngModel]="formData.ubigeo_oficina_zonal"
+                       (ngModelChange)="formData.ubigeo_oficina_zonal = $event"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Departamento" label-placement="stacked"
+                       [ngModel]="formData.ubigeo_departamento"
+                       (ngModelChange)="formData.ubigeo_departamento = $event"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Provincia" label-placement="stacked"
+                       [ngModel]="formData.ubigeo_provincia"
+                       (ngModelChange)="formData.ubigeo_provincia = $event"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Distrito" label-placement="stacked"
+                       [ngModel]="formData.ubigeo_distrito"
+                       (ngModelChange)="formData.ubigeo_distrito = $event"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Caserío" label-placement="stacked"
+                       [ngModel]="formData.ubigeo_caserio"
+                       (ngModelChange)="formData.ubigeo_caserio = $event"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Fuente" label-placement="stacked" [readonly]="true"
+                       [ngModel]="formData.fuente"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Datum" label-placement="stacked" [readonly]="true"
+                       [ngModel]="formData.datum"></ion-input>
+          </ion-item>
+
           <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
             <ion-label>
               <h2>Perímetro</h2>
@@ -35,6 +84,13 @@
               <h2>Centroide (Lat, Lon)</h2>
               <p>{{ formData.centroide || 'Calculando...' }}</p>
             </ion-label>
+          </ion-item>
+
+          <ion-item>
+            <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
+                          placeholder="Añada notas adicionales aquí..."
+                          [ngModel]="formData.observaciones"
+                          (ngModelChange)="formData.observaciones = $event"></ion-textarea>
           </ion-item>
         </ion-list>
       </ion-card-content>

@@ -1,5 +1,3 @@
-// Aquí puedes poner estilos específicos para la tarjeta de productor si los necesitas.
-// Por ejemplo, los estilos de ion-card que estaban en registerdata.page.scss
 ion-card {
   margin-top: 16px;
   margin-bottom: 16px;
@@ -13,4 +11,54 @@ ion-card {
 ion-list[lines="none"] ion-item {
   --inner-padding-end: 0;
   --padding-start: 0;
+}
+
+ion-item-divider {
+  margin-top: 16px;
+  --background: var(--ion-color-light);
+}
+
+.dni-photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 8px;
+}
+
+.dni-photo-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .photo-box {
+    width: 100%;
+    aspect-ratio: 1.58; // Proporción de una tarjeta de crédito/DNI
+    border: 2px dashed var(--ion-color-medium);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: var(--ion-color-light-tint);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    ion-icon {
+      font-size: 40px;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  .delete-dni-btn {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+  }
 }
