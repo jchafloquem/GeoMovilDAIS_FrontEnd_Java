@@ -1,0 +1,35 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>login</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+ <form [formGroup]="formLogin" (ngSubmit)="login()">
+  <ion-item>
+    <ion-input
+    label="Email"
+    type="email"
+    name="email"
+    formControlName="email"
+    />
+  </ion-item>
+  <ion-item>
+    <ion-input
+    label="Contraseña"
+    type="password"
+    name="password"
+    formControlName="password"
+    />
+  </ion-item>
+  <ion-item lines="none">
+    <ion-button slot="start" type="button" [routerLink]="['/mapa']">
+      Volver
+    </ion-button>
+    <ion-button slot="end" type="submit">
+      Login
+    </ion-button>
+  </ion-item>
+
+ </form>
+</ion-content>
