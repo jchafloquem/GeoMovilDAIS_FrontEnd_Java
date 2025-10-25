@@ -4,12 +4,19 @@ import { Preferences } from '@capacitor/preferences';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
-import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
+import { ConnectionStatus, Network } from '@capacitor/network';
 import { ToastController, NavController, AlertController, LoadingController } from '@ionic/angular/standalone';
 import { BehaviorSubject } from 'rxjs';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
+
+// Reutilizamos la interfaz de propiedades
+export interface ValidationResult {
+  isValid: boolean;
+  missing: string[];
+}
 
 // Reutilizamos la interfaz de propiedades
 interface GeoJsonProperties {
@@ -50,6 +57,8 @@ interface GeoJsonProperties {
   providedIn: 'root'
 })
 export class RegisterDataService {
+
+  private isOnline = true;
 
   // --- Estado Reactivo con BehaviorSubjects ---
   private readonly _geojson = new BehaviorSubject<any>(null);
@@ -107,9 +116,84 @@ export class RegisterDataService {
     private loadingController: LoadingController,
     private zone: NgZone,
     private apiService: ApiService
-  ) { }
+  ) {
+    this.initializeNetworkListener();
+  }
 
   // --- Métodos de Inicialización y Carga ---
+
+  private async initializeNetworkListener() {
+    // Espera a que la plataforma esté lista para evitar errores en el arranque
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const status = await Network.getStatus();
+    this.isOnline = status.connected;
+
+    Network.addListener('networkStatusChange', (status: ConnectionStatus) => {
+      // Solo actuar si el estado de la conexión realmente ha cambiado
+      if (this.isOnline === status.connected) {
+        return;
+      }
+
+      this.isOnline = status.connected;
+      // Usamos NgZone para asegurar que los cambios se reflejen en la UI
+      this.zone.run(async () => {
+        if (this.isOnline) { // Transición de offline a online
+          await this.showToast('Conexión recuperada. Iniciando sincronización...', 'success');
+          this.syncPendingProductorData();
+        } else { // Transición de online a offline
+          await this.showToast('Estás sin conexión. Se guardarán los datos localmente.', 'warning');
+        }
+      });
+    });
+  }
+
+  private async syncPendingProductorData() {
+    console.log('Iniciando proceso de sincronización de registros pendientes...');
+    const { keys } = await Preferences.keys();
+    const recordKeys = keys.filter(k => k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_'));
+    let syncedCount = 0;
+
+    for (const key of recordKeys) {
+      const { value } = await Preferences.get({ key });
+      if (!value) continue;
+
+      try {
+        const geojson = JSON.parse(value);
+        const properties = geojson.properties as GeoJsonProperties;
+
+        // Condición: El registro está marcado como pendiente de sincronización.
+        if (properties && (properties as any).syncStatus === 'pending') {
+          console.log(`Registro ${key} con DNI ${properties.dni} necesita sincronización.`);
+          const fetchedData = await this.fetchProductorDataForSync(properties.dni);
+
+          if (fetchedData) {
+            // Fusionar los datos nuevos con los existentes y guardar
+            Object.assign(properties, fetchedData);
+            properties.name = `${properties.nombres || ''} ${properties.apellido_paterno || ''} ${properties.apellido_materno || ''}`.trim();
+            properties.updatedAt = new Date().toISOString();
+            delete (properties as any).syncStatus; // Elimina el flag de pendiente
+            await Preferences.set({ key, value: JSON.stringify(geojson) });
+            syncedCount++;
+            console.log(`Registro ${key} sincronizado y guardado.`);
+
+            // Si el usuario está viendo este registro, actualizamos la UI en tiempo real
+            if (this._editKey.getValue() === key) {
+              this.zone.run(() => this.loadFormDataFromProperties(properties));
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error procesando la sincronización para la clave ${key}:`, error);
+      }
+    }
+
+    if (syncedCount > 0) {
+      await this.showToast(`${syncedCount} registro(s) ha(n) sido sincronizado(s) con éxito.`, 'success');
+    } else {
+      console.log('No hay registros pendientes de sincronización.');
+    }
+  }
 
   public async loadInitialData(key: string | null, navigationState: any) {
     this.resetState();
@@ -132,8 +216,7 @@ export class RegisterDataService {
         }
       } else {
         console.error('No se encontró el polígono para la clave:', key);
-        const toast = await this.toastController.create({ message: 'Error: No se pudo cargar el polígono para editar.', duration: 3000, color: 'danger' });
-        await toast.present();
+        await this.showToast('Error: No se pudo cargar el polígono para editar.', 'danger');
         this.navCtrl.navigateBack('/mapa');
       }
     } else if (navigationState && navigationState.geojson) {
@@ -213,22 +296,41 @@ export class RegisterDataService {
 
   // --- Lógica de Negocio (extraída de registerdata.page.ts) ---
 
-  public async searchDni() {
+  public async searchDni(isSync: boolean = false) {
     const currentFormData = this._formData.getValue();
     if (!currentFormData.dni || currentFormData.dni.length !== 8) {
-      const toast = await this.toastController.create({ message: 'Por favor, ingrese un DNI válido de 8 dígitos.', duration: 2000, color: 'warning' });
-      await toast.present();
+      await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos.', 'warning');
       return;
     }
 
-    const loading = await this.loadingController.create({ message: 'Buscando DNI...' });
-    await loading.present();
+    // --- NUEVA LÓGICA OFFLINE ---
+    if (!this.isOnline) {
+      await this.showToast('Sin conexión. Nombres y apellidos se completarán al recuperar internet.', 'tertiary');
+      // Limpiamos los datos por si había una búsqueda anterior para forzar la sincronización
+      currentFormData.nombres = '';
+      currentFormData.apellido_paterno = '';
+      currentFormData.apellido_materno = '';
+      this._formData.next(currentFormData);
+      return; // Salimos del método para no hacer la llamada a la API
+    }
+    // --- FIN LÓGICA OFFLINE ---
+
+    const loading = !isSync ? await this.loadingController.create({ message: 'Buscando DNI...' }) : null;
+    if (loading) await loading.present();
 
     try {
       currentFormData.nombres = '';
       currentFormData.apellido_paterno = '';
       currentFormData.apellido_materno = '';
-      this.fillMidagriWithNoData(true);
+      currentFormData.txt_codigoautogenerado = '';
+      currentFormData.fec_registro = '';
+      currentFormData.txt_actagraria = '';
+      currentFormData.num_superficie = '';
+      currentFormData.txt_regtenencia = '';
+      currentFormData.txt_sexo = '';
+      currentFormData.txt_departamento = '';
+      currentFormData.txt_provincia = '';
+      currentFormData.txt_distrito = '';
 
       let reniecSuccess = false;
       let midagriSuccess = false;
@@ -270,35 +372,116 @@ export class RegisterDataService {
         console.error('Error al consultar MIDAGRI:', midagriError.message || midagriError);
       }
 
-      this._formData.next(currentFormData); // Actualiza el estado
-
       let toastMessage = '';
       let toastColor = 'danger';
+
       if (reniecSuccess && midagriSuccess) {
         toastMessage = 'Datos de RENIEC y MIDAGRI cargados.';
         toastColor = 'success';
       } else if (reniecSuccess) {
         toastMessage = 'Datos de RENIEC cargados. No se encontraron en MIDAGRI.';
         toastColor = 'warning';
-        this.fillMidagriWithNoData();
       } else if (midagriSuccess) {
         toastMessage = 'Datos de MIDAGRI cargados. No se encontraron en RENIEC.';
         toastColor = 'warning';
-        const data = this._formData.getValue();
-        data.nombres = 'Sin datos';
-        data.apellido_paterno = 'Sin datos';
-        data.apellido_materno = 'Sin datos';
-        this._formData.next(data);
       } else {
         toastMessage = 'DNI no encontrado en ninguna de las fuentes.';
         toastColor = 'danger';
       }
-      const toast = await this.toastController.create({ message: toastMessage, duration: 3000, color: toastColor });
-      await toast.present();
+
+      // Rellenar campos si las búsquedas fallaron
+      if (!reniecSuccess) {
+        currentFormData.nombres = 'NO ENCONTRADO';
+        currentFormData.apellido_paterno = 'NO ENCONTRADO';
+        currentFormData.apellido_materno = 'NO ENCONTRADO';
+      }
+      if (!midagriSuccess) {
+        currentFormData.txt_codigoautogenerado = 'NO REGISTRA';
+        currentFormData.fec_registro = 'NO REGISTRA';
+        currentFormData.txt_actagraria = 'NO REGISTRA';
+        currentFormData.num_superficie = 'NO REGISTRA';
+        currentFormData.txt_regtenencia = 'NO REGISTRA';
+        currentFormData.txt_sexo = 'NO REGISTRA';
+        currentFormData.txt_departamento = 'NO REGISTRA';
+        currentFormData.txt_provincia = 'NO REGISTRA';
+        currentFormData.txt_distrito = 'NO REGISTRA';
+      }
+
+      // Actualiza el estado del formulario una sola vez con todos los datos consolidados
+      this._formData.next(currentFormData);
+
+      // Solo mostramos el toast si NO es una sincronización automática
+      if (!isSync) {
+        await this.showToast(toastMessage, toastColor as any);
+      }
 
     } finally {
-      await loading.dismiss();
+      if (loading) await loading.dismiss();
     }
+  }
+
+  private async fetchProductorDataForSync(dni: string): Promise<Partial<GeoJsonProperties> | null> {
+    if (!this.isOnline || !dni || dni.length !== 8) {
+      return null;
+    }
+
+    const fetchedData: Partial<GeoJsonProperties> = {};
+    let reniecSuccess = false;
+    let midagriSuccess = false;
+
+    try {
+      const reniecData = await this.apiService.getReniecData(dni);
+      if (reniecData) {
+        fetchedData.nombres = (reniecData.first_name || '').toUpperCase();
+        fetchedData.apellido_paterno = (reniecData.first_last_name || '').toUpperCase();
+        fetchedData.apellido_materno = (reniecData.second_last_name || '').toUpperCase();
+        reniecSuccess = true;
+      }
+    } catch (err) {
+      console.error(`Sync Error (RENIEC) for DNI ${dni}:`, err);
+    }
+
+    try {
+      const productor = await this.apiService.getMidagriData(dni);
+      if (productor) {
+        fetchedData.txt_codigoautogenerado = productor.txt_codigoautogenerado || '';
+        if (productor.fec_registro) {
+          const date = new Date(productor.fec_registro);
+          fetchedData.fec_registro = !isNaN(date.getTime())
+            ? `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+            : productor.fec_registro;
+        }
+        fetchedData.txt_actagraria = productor.txt_actagraria || '';
+        fetchedData.num_superficie = productor.num_superficie || '';
+        fetchedData.txt_regtenencia = productor.txt_regtenencia || '';
+        fetchedData.txt_sexo = productor.txt_sexo || '';
+        fetchedData.txt_departamento = productor.txt_departamento || '';
+        fetchedData.txt_provincia = productor.txt_provincia || '';
+        fetchedData.txt_distrito = productor.txt_distrito || '';
+        midagriSuccess = true;
+      }
+    } catch (err) {
+      console.error(`Sync Error (MIDAGRI) for DNI ${dni}:`, err);
+    }
+
+    if (!reniecSuccess) {
+      fetchedData.nombres = 'NO ENCONTRADO';
+      fetchedData.apellido_paterno = 'NO ENCONTRADO';
+      fetchedData.apellido_materno = 'NO ENCONTRADO';
+    }
+    if (!midagriSuccess) {
+      fetchedData.txt_codigoautogenerado = 'NO REGISTRA';
+      fetchedData.fec_registro = 'NO REGISTRA';
+      fetchedData.txt_actagraria = 'NO REGISTRA';
+      fetchedData.num_superficie = 'NO REGISTRA';
+      fetchedData.txt_regtenencia = 'NO REGISTRA';
+      fetchedData.txt_sexo = 'NO REGISTRA';
+      fetchedData.txt_departamento = 'NO REGISTRA';
+      fetchedData.txt_provincia = 'NO REGISTRA';
+      fetchedData.txt_distrito = 'NO REGISTRA';
+    }
+
+    return fetchedData;
   }
 
   public async saveData() {
@@ -306,21 +489,30 @@ export class RegisterDataService {
 
     // --- Validación de Campos Obligatorios ---
     const missingFields = [];
+    // Campos siempre obligatorios
     if (!formData.dni) missingFields.push('DNI del productor');
-    if (!formData.nombres) missingFields.push('Nombres del productor');
     if (!formData.tipo_productor) missingFields.push('Tipo de Productor');
+    if (!formData.celular_participante) missingFields.push('Número de celular');
     if (!formData.dni_photo_front) missingFields.push('Foto frontal del DNI');
     if (!formData.dni_photo_back) missingFields.push('Foto posterior del DNI');
     if (!formData.tipo_cultivo) missingFields.push('Tipo de Cultivo');
 
+    // Validación de fecha de nacimiento
+    if (!formData.fecha_nacimiento) {
+      missingFields.push('Fecha de nacimiento');
+    } else if (!this.isOfLegalAge(formData.fecha_nacimiento)) {
+      missingFields.push('El productor debe ser mayor de 18 años');
+    }
+
+    // Campos obligatorios solo si hay conexión a internet
+    if (this.isOnline && !formData.nombres) {
+      missingFields.push('Nombres del productor');
+    }
+
     if (missingFields.length > 0) {
-      const alert = await this.alertController.create({
-        header: 'Campos Incompletos',
-        message: `Por favor, complete los siguientes campos antes de guardar:<br><ul>${missingFields.map(f => `<li>${f}</li>`).join('')}</ul>`,
-        buttons: ['OK']
-      });
-      await alert.present();
-      return; // Detiene el proceso de guardado
+      // Mostramos un toast con el primer campo faltante para guiar al usuario.
+      await this.showToast(`Falta completar: ${missingFields[0]}`, 'warning');
+      return;
     }
 
     const geojson = this._geojson.getValue();
@@ -336,7 +528,7 @@ export class RegisterDataService {
     else if (geometryType.includes('linestring')) keyPrefix = 'linestring';
 
     const key = isEditing ? this._editKey.getValue()! : `${keyPrefix}_${new Date().getTime()}`;
-    const fullName = `${formData.nombres} ${formData.apellido_paterno} ${formData.apellido_materno}`.trim();
+    let fullName = `${formData.nombres} ${formData.apellido_paterno} ${formData.apellido_materno}`.trim();
 
     const newProperties: GeoJsonProperties = {
       ...geojson.properties,
@@ -368,8 +560,17 @@ export class RegisterDataService {
       fuente: formData.fuente,
       datum: formData.datum,
       observaciones: formData.observaciones,
-      photos: this._savedPhotoUris.getValue()
+      photos: this._savedPhotoUris.getValue(),
     };
+
+    // Si estamos offline y los nombres están vacíos, es un registro pendiente.
+    if (!this.isOnline && !formData.nombres) {
+      newProperties.name = 'PENDIENTE DE SINCRONIZACIÓN';
+      newProperties.nombres = 'PENDIENTE';
+      newProperties.apellido_paterno = '';
+      newProperties.apellido_materno = '';
+      (newProperties as any).syncStatus = 'pending';
+    }
 
     if (isEditing) {
       newProperties.updatedAt = new Date().toISOString();
@@ -380,28 +581,50 @@ export class RegisterDataService {
 
     await Preferences.set({ key, value: JSON.stringify(geojson) });
 
-    const toast = await this.toastController.create({
-      message: isEditing ? 'Información actualizada con éxito' : 'Registro guardado con éxito',
-      duration: 2000,
-      color: 'success'
-    });
-    await toast.present();
+    await this.showToast(
+      isEditing ? 'Información actualizada con éxito' : 'Registro guardado con éxito',
+      'success'
+    );
     this.navCtrl.navigateBack('/mapa');
+  }
+
+  /**
+   * Valida que los campos offline obligatorios estén completos.
+   */
+  public isProductorTabValid(): ValidationResult {
+    const data = this._formData.getValue();
+    const missing: string[] = [];
+
+    if (!data.dni || data.dni.length !== 8) missing.push('DNI (8 dígitos)');
+    if (!data.tipo_productor) missing.push('Tipo de productor');
+    if (!data.celular_participante) missing.push('Número de celular');
+    if (!data.dni_photo_front) missing.push('Foto frontal del DNI');
+    if (!data.dni_photo_back) missing.push('Foto posterior del DNI');
+
+    // Validación de fecha de nacimiento
+    if (!data.fecha_nacimiento) {
+      missing.push('Fecha de nacimiento');
+    } else if (!this.isOfLegalAge(data.fecha_nacimiento)) {
+      missing.push('El productor debe ser mayor de 18 años');
+    }
+
+    return {
+      isValid: missing.length === 0,
+      missing: missing,
+    };
   }
 
   // --- Lógica de Fotos ---
 
   public async takePicture() {
     if (this._photosForDisplay.getValue().length >= 6) {
-      const toast = await this.toastController.create({ message: 'Límite de 6 fotos alcanzado.', duration: 2000, color: 'warning' });
-      await toast.present();
+      await this.showToast('Límite de 6 fotos alcanzado.', 'warning');
       return;
     }
 
     const permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
     if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
-      const toast = await this.toastController.create({ message: 'Se necesitan permisos de cámara y galería.', duration: 3000, color: 'warning' });
-      await toast.present();
+      await this.showToast('Se necesitan permisos de cámara y galería.', 'warning');
       return;
     }
 
@@ -437,8 +660,7 @@ export class RegisterDataService {
         await Filesystem.writeFile({
           path: `GeoDAIS/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
         });
-        const toast = await this.toastController.create({ message: 'Copia de la foto guardada en la galería.', duration: 3000, color: 'success' });
-        await toast.present();
+        await this.showToast('Copia de la foto guardada en la galería.', 'success');
       } catch (publicSaveError: any) {
         console.error('Error al guardar en almacenamiento público:', publicSaveError.message);
       }
@@ -451,8 +673,7 @@ export class RegisterDataService {
     } catch (error: any) {
       const errorMessage = error.message || JSON.stringify(error);
       console.error('Error al tomar la foto:', errorMessage);
-      const toast = await this.toastController.create({ message: `Error: ${errorMessage}`, duration: 5000, color: 'danger' });
-      await toast.present();
+      await this.showToast(`Error: ${errorMessage}`, 'danger', 5000);
     } finally {
       await loading.dismiss();
     }
@@ -488,8 +709,7 @@ export class RegisterDataService {
   public async takeDniPicture(side: 'front' | 'back') {
     const permissions = await Camera.requestPermissions({ permissions: ['camera'] });
     if (permissions.camera !== 'granted') {
-      const toast = await this.toastController.create({ message: 'Se necesita permiso de cámara.', duration: 3000, color: 'warning' });
-      await toast.present();
+      await this.showToast('Se necesita permiso de cámara.', 'warning');
       return;
     }
 
@@ -547,8 +767,7 @@ export class RegisterDataService {
         return; // No mostrar error si el usuario cancela
       }
       console.error('Error al tomar la foto del DNI:', errorMessage);
-      const toast = await this.toastController.create({ message: `Error: ${errorMessage}`, duration: 5000, color: 'danger' });
-      await toast.present();
+      await this.showToast(`Error: ${errorMessage}`, 'danger', 5000);
     } finally {
       await loading.dismiss();
     }
@@ -583,21 +802,6 @@ export class RegisterDataService {
       displayPhotos.push(Capacitor.convertFileSrc(fileUri));
     }
     this._photosForDisplay.next(displayPhotos);
-  }
-
-  private fillMidagriWithNoData(clearOnly: boolean = false) {
-    const value = clearOnly ? '' : 'Sin datos';
-    const data = this._formData.getValue();
-    data.txt_codigoautogenerado = value;
-    data.fec_registro = value;
-    data.txt_actagraria = value;
-    data.num_superficie = value;
-    data.txt_regtenencia = value;
-    data.txt_sexo = value;
-    data.txt_departamento = value;
-    data.txt_provincia = value;
-    data.txt_distrito = value;
-    this._formData.next(data);
   }
 
   private calculateGeometryData() {
@@ -665,6 +869,13 @@ export class RegisterDataService {
 
   private async autocompletarUbicacion(geometry: any) {
     if (!geometry) return;
+
+    // Si ya existen datos de ubicación, no volvemos a buscarlos para evitar el toast.
+    const existingData = this._formData.getValue();
+    if (existingData.ubigeo_departamento || existingData.ubigeo_provincia || existingData.ubigeo_distrito) {
+      console.log('Datos de ubicación ya existen, se omite la búsqueda automática.');
+      return;
+    }
 
     let point: { x: number, y: number };
 
@@ -744,14 +955,12 @@ export class RegisterDataService {
       this.zone.run(() => this._formData.next(updatedFormData));
 
       if (ubigeoDataFound) {
-        const toast = await this.toastController.create({ message: 'Datos de ubicación autocompletados.', duration: 2000, color: 'success', position: 'bottom' });
-        await toast.present();
+        await this.showToast('Datos de ubicación autocompletados.', 'success');
       }
 
     } catch (error: any) {
       console.error('Error al autocompletar ubicación:', error);
-      const toast = await this.toastController.create({ message: `No se pudo autocompletar la ubicación: ${error.message || 'Error de red'}`, duration: 3000, color: 'warning', position: 'bottom' });
-      await toast.present();
+      await this.showToast(`No se pudo autocompletar la ubicación: ${error.message || 'Error de red'}`, 'warning');
     }
   }
 
@@ -810,5 +1019,35 @@ export class RegisterDataService {
       img.onerror = (err) => reject(new Error(`Error al cargar la imagen: ${JSON.stringify(err)}`));
       img.src = base64ImageData;
     });
+  }
+
+  private isOfLegalAge(birthDateString: string): boolean {
+    if (!birthDateString) return false;
+    // La fecha de ion-datetime viene en formato ISO 8601 (ej: "2006-01-01T00:00:00")
+    const birthDate = new Date(birthDateString);
+    if (isNaN(birthDate.getTime())) {
+      console.error('Fecha de nacimiento inválida:', birthDateString);
+      return false;
+    }
+
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  }
+
+  public async showToast(message: string, color: 'success' | 'danger' | 'warning' | 'tertiary' = 'tertiary', duration: number = 3000) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: duration,
+      position: 'middle',
+      color: color,
+    });
+    await toast.present();
   }
 }

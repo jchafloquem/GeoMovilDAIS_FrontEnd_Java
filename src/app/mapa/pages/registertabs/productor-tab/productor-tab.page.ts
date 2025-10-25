@@ -50,4 +50,19 @@ export class ProductorTabPage {
     if (!path) return '';
     return Capacitor.convertFileSrc(path);
   }
+
+  /**
+   * Ejemplo de cómo usar la validación antes de continuar.
+   * Podrías llamar a este método desde un botón "Siguiente" o "Guardar".
+   */
+  async checkAndProceed() {
+    const validation = this.registerDataService.isProductorTabValid();
+    if (validation.isValid) {
+      console.log('Datos del productor válidos para guardar offline.');
+      // Aquí iría la lógica para pasar a la siguiente pestaña o guardar.
+    } else {
+      // Usamos un toast para notificar del primer campo faltante de forma menos intrusiva.
+      this.registerDataService.showToast(`Falta completar: ${validation.missing[0]}`, 'warning');
+    }
+  }
 }
