@@ -1,111 +1,87 @@
-// Contenedor principal para la cuadrícula de fotos
+ion-list-header {
+  padding-bottom: 8px;
+}
+
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); // 2 columnas iguales
-  gap: 5px; // Espacio pequeño entre fotos
-  padding: 5px;
+  grid-template-columns: 1fr 1fr; // 2 columnas como en productor-tab
+  gap: 16px;
+  padding: 0 16px 16px;
 }
 
-// Cada elemento de la cuadrícula
-.photo-item {
+.photo-container {
   position: relative;
-  width: 100%;
-  padding-top: 100%; // Truco para mantener una relación de aspecto 1:1 (cuadrado)
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: var(--ion-color-light, #f4f5f8);
 
-  img {
-    position: absolute;
-    top: 0;
-    left: 0;
+  .photo-box {
     width: 100%;
-    height: 100%;
-    object-fit: cover; // Asegura que la imagen cubra el espacio sin deformarse
-    cursor: pointer;
-  }
-}
-
-// Botón para eliminar la foto, estilizado para superponerse
-.delete-photo-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 10;
-  --padding-start: 0;
-  --padding-end: 0;
-  --padding-top: 0;
-  --padding-bottom: 0;
-  font-size: 24px;
-  --color: white;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); // Sombra más pronunciada para legibilidad
-}
-
-// Mensaje para cuando no hay fotos
-.no-photos-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 50px 20px;
-  color: var(--ion-color-medium-shade);
-  height: 50vh;
-
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    color: var(--ion-color-medium);
-  }
-}
-
-// Botón de acción principal (Tomar Foto)
-.main-action-button {
-  --background: #0DA642;
-  --background-activated: #0a8a35;
-  --color: white;
-  font-weight: bold;
-  margin: 16px; // Margen para separarlo del contenido
-}
-
-// Estilos para el visor de imágenes a pantalla completa (Modal)
-ion-modal {
-  --background: rgba(0, 0, 0, 0.85); // Fondo oscuro semitransparente
-
-  .viewer-container {
-    width: 100%;
-    height: 100%;
+    aspect-ratio: 1.25; // Un aspect ratio más general que el de DNI
+    border: 2px dashed var(--ion-color-medium);
+    border-radius: 8px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
+    overflow: hidden;
+    background-color: var(--ion-color-light-tint);
+    transition: background-color 0.3s ease;
 
-  .close-viewer-btn {
-    position: absolute;
-    top: 20px;
-    right: 15px;
-    z-index: 1001; // Por encima del swiper
-    font-size: 32px;
-    --color: white;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  }
-
-  .viewer-swiper {
-    width: 100%;
-    height: 100%;
-
-    swiper-slide {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      .swiper-zoom-container {
-        img {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain; // La imagen se ajusta sin recortarse ni deformarse
-        }
+    &.add-photo-box {
+      cursor: pointer;
+      &:hover {
+        background-color: var(--ion-color-light-shade);
       }
     }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    ion-icon {
+      font-size: 40px;
+      color: var(--ion-color-medium);
+    }
+
+    ion-label {
+      font-size: 0.9em;
+      color: var(--ion-color-medium);
+      margin-top: 8px;
+    }
   }
+
+  .delete-photo-btn {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    --background: rgba(255, 255, 255, 0.7);
+    --background-hover: rgba(255, 255, 255, 1);
+    --border-radius: 50%;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+// Estilos para el visor de imágenes (modal)
+.viewer-container {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-viewer-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  font-size: 2rem;
+  --color: white;
+}
+
+.viewer-swiper {
+  width: 100%;
+  height: 100%;
 }

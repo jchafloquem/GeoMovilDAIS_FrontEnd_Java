@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonItem, IonInput, IonButton, IonList, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
-import { Router, RouterLink } from '@angular/router';
+import { IonContent, IonItem, IonInput, IonButton, IonList, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
+import { Router} from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { IUser } from '../models/user.model';
 
@@ -13,23 +13,19 @@ import { IUser } from '../models/user.model';
   styleUrls: ['./login.page.scss'],
   standalone: true,
   imports: [
-    IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
-    IonItem,
-    IonInput,
     IonButton,
-    IonList,
-    RouterLink,
     IonCard,
     IonCardContent,
     IonCardHeader,
     IonCardSubtitle,
-    IonCardTitle
+    IonCardTitle,
+    IonContent,
+    IonInput,
+    IonItem,
+    IonList,
+    ReactiveFormsModule,
   ]
 })
 export class LoginPage {

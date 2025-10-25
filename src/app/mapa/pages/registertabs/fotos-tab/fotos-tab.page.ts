@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonContent, IonButton, IonIcon, IonModal } from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { addIcons } from 'ionicons';
-import { camera, close, closeCircle, imagesOutline } from 'ionicons/icons';
+import { camera, close, closeCircle, imagesOutline, trashOutline, cameraOutline } from 'ionicons/icons';
 import { register } from 'swiper/element/bundle';
 import { SwiperOptions } from 'swiper/types';
 
@@ -31,7 +31,7 @@ export class FotosTabPage {
   };
 
   constructor(public registerDataService: RegisterDataService) {
-    addIcons({ camera, closeCircle, imagesOutline, close });
+    addIcons({trashOutline,cameraOutline,close,camera,closeCircle,imagesOutline});
   }
 
   deletePhoto(index: number, event: MouseEvent) {
