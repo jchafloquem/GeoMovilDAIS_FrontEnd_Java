@@ -14,12 +14,8 @@
             <ion-item>
               <ion-input label="Contraseña" labelPlacement="floating" type="password" name="password" formControlName="password" placeholder="Ingresa tu contraseña"></ion-input>
             </ion-item>
-            <ion-item lines="none" class="ion-margin-top">
-              <ion-button expand="block" type="submit" color="primary" [disabled]="formLogin.invalid">
-                Login
-              </ion-button>
-            </ion-item>
           </ion-list>
+          <ion-button expand="block" type="submit" color="primary" [disabled]="formLogin.invalid" class="ion-margin-top">Login</ion-button>
         </form>
       </ion-card-content>
     </ion-card>
