@@ -504,6 +504,11 @@ export class RegisterDataService {
       missingFields.push('El productor debe ser mayor de 18 años');
     }
 
+    // Validación de fotos adicionales
+    if (this._savedPhotoUris.getValue().length < 2) {
+      missingFields.push('Se requieren al menos 2 fotos adicionales');
+    }
+
     // Campos obligatorios solo si hay conexión a internet
     if (this.isOnline && !formData.nombres) {
       missingFields.push('Nombres del productor');
