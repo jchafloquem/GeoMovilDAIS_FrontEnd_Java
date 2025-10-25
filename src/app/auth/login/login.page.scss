@@ -1,0 +1,23 @@
+// Opcional: Darle un fondo a la página para que la tarjeta resalte
+ion-content {
+  --background: var(--ion-color-light, #f4f5f8);
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+ion-card {
+  width: 100%;
+  max-width: 450px;
+  margin: 0 20px;
+}
+
+@media (min-width: 490px) {
+  ion-card {
+    margin: 0;
+  }
+}

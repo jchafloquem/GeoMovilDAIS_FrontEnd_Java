@@ -1,31 +1,27 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>login</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
- <form [formGroup]="formLogin" (ngSubmit)="login()">
-  <ion-item>
-    <ion-input
-    label="Email"
-    type="email"
-    name="email"
-    formControlName="email"
-    />
-  </ion-item>
-  <ion-item>
-    <ion-input
-    label="Contraseña"
-    type="password"
-    name="password"
-    formControlName="password"
-    />
-  </ion-item>
-  <ion-item lines="none">
-    <ion-button slot="end" type="submit">
-      Login
-    </ion-button>
-  </ion-item>
- </form>
+  <div class="login-container">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title class="ion-text-center">Bienvenido a GeoMovilDAIS</ion-card-title>
+        <ion-card-subtitle class="ion-text-center">Accede a tu cuenta</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <form [formGroup]="formLogin" (ngSubmit)="login()">
+          <ion-list>
+            <ion-item>
+              <ion-input label="Email" labelPlacement="floating" type="email" name="email" formControlName="email" placeholder="tu@ejemplo.com"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Contraseña" labelPlacement="floating" type="password" name="password" formControlName="password" placeholder="Ingresa tu contraseña"></ion-input>
+            </ion-item>
+            <ion-item lines="none" class="ion-margin-top">
+              <ion-button expand="block" type="submit" color="primary" [disabled]="formLogin.invalid">
+                Login
+              </ion-button>
+            </ion-item>
+          </ion-list>
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
 </ion-content>
