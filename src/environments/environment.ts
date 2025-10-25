@@ -4,7 +4,15 @@
 
 export const environment = {
   production: false,
-  apiUrl: '/v1' // Usar el proxy en desarrollo
+  apiUrl: '/v1', // Usar el proxy en desarrollo
+  firebase: {
+      apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
+      authDomain: "geomovildais.firebaseapp.com",
+      projectId: "geomovildais",
+      storageBucket: "geomovildais.firebasestorage.app",
+      messagingSenderId: "553060227607",
+      appId: "1:553060227607:web:1105c2b7f35c1bc00cda52"
+  }
 };
 
 /*
