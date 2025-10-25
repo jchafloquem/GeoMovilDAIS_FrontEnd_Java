@@ -474,3 +474,37 @@ ion-title {
     }
   }
 }
+ion-toolbar ion-buttons[slot="end"] {
+  .network-status-button {
+    // Aumenta el área táctil del botón
+    --padding-start: 8px;
+    --padding-end: 8px;
+
+    ion-icon {
+      // Aumenta el tamaño del ícono
+      font-size: 1.8rem;
+      // Añadimos una transición para suavizar el cambio de color
+      transition: color 0.3s ease-in-out;
+    }
+
+    // Animación de pulso para el cambio de estado
+    ion-icon.status-changed {
+      animation: pulse-status 700ms ease-out;
+    }
+  }
+}
+
+@keyframes pulse-status {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

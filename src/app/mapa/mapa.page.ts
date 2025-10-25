@@ -1,14 +1,16 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
-import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController, IonMenu, IonMenuButton, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, IonButton } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline } from 'ionicons/icons';
+import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline, wifiOutline, ellipseOutline, cellularOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+import { Network } from '@capacitor/network';
+
 
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
@@ -43,7 +45,7 @@ const iconYellow = L.icon({
   templateUrl: './mapa.page.html',
   styleUrls: ['./mapa.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, RouterLink]
+  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, RouterLink, IonButton]
 })
 
 export class MapaPage implements OnDestroy {
@@ -79,6 +81,8 @@ export class MapaPage implements OnDestroy {
   public isEditingMode = false;
   public showInitialSpinner = true;
   public isDrawingLine = false;
+  public isOnline = true;
+  public networkStatusChanged = false;
 
   constructor(
     private http: HttpClient,
@@ -87,10 +91,11 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline });
+    addIcons({ ellipseOutline, mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline, wifiOutline, cellularOutline });
   }
 
   ionViewDidEnter() {
+    this.initializeNetworkListener();
     // Muestra un spinner inicial durante 5 segundos por estética
     setTimeout(() => {
       this.showInitialSpinner = false;
@@ -114,6 +119,7 @@ export class MapaPage implements OnDestroy {
   }
 
   ngOnDestroy() {
+    Network.removeAllListeners();
     if (this.locationWatchId) {
       Geolocation.clearWatch({ id: this.locationWatchId });
     }
@@ -129,6 +135,25 @@ export class MapaPage implements OnDestroy {
       this.map.remove();
       this.map = null;
     }
+  }
+
+  private async initializeNetworkListener() {
+    const initialStatus = await Network.getStatus();
+    this.zone.run(() => {
+      this.isOnline = initialStatus.connected;
+    });
+
+    Network.addListener('networkStatusChange', status => {
+      this.zone.run(() => {
+        // Solo animar si el estado realmente cambia
+        if (this.isOnline !== status.connected) {
+          this.isOnline = status.connected;
+          this.networkStatusChanged = true;
+          // La duración debe ser un poco mayor que la animación en el SCSS (700ms)
+          setTimeout(() => this.networkStatusChanged = false, 1000);
+        }
+      });
+    });
   }
 
   clearLocation() {

@@ -44,7 +44,11 @@
         <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
         GeoDAIS Móvil
       </ion-title>
-      <ion-buttons slot="end"></ion-buttons>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" class="network-status-button">
+          <ion-icon slot="icon-only" name="cellular-outline" [color]="isOnline ? 'success' : 'danger'" title="Estado de la conexión" [class.status-changed]="networkStatusChanged"></ion-icon>
+        </ion-button>
+      </ion-buttons>
     </ion-toolbar>
   </ion-header>
   <ion-content>
