@@ -1,66 +1,68 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Datos del Profesional</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content class="ion-padding">
+<ion-content>
   <!-- Muestra los datos si el perfil del profesional fue encontrado -->
   <div *ngIf="professionalProfile; else noProfile">
-    <ion-list>
-      <ion-item>
-        <ion-input
-          label="DNI"
-          labelPlacement="stacked"
-          [value]="professionalProfile.dni"
-          readonly="true"
-          class="uppercase-input"
-        ></ion-input>
-      </ion-item>
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title color="white">Datos del Profesional</ion-card-title>
+        <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item>
+            <ion-input
+              label="DNI"
+              labelPlacement="stacked"
+              [value]="professionalProfile.dni"
+              readonly="true"
+              class="uppercase-input"
+            ></ion-input>
+          </ion-item>
 
-      <ion-item>
-        <ion-input
-          label="Nombres"
-          labelPlacement="stacked"
-          [value]="professionalProfile.nombres"
-          readonly="true"
-          class="uppercase-input"
-        ></ion-input>
-      </ion-item>
+          <ion-item>
+            <ion-input
+              label="Nombres"
+              labelPlacement="stacked"
+              [value]="professionalProfile.nombres"
+              readonly="true"
+              class="uppercase-input"
+            ></ion-input>
+          </ion-item>
 
-      <ion-item>
-        <ion-input
-          label="Apellidos"
-          labelPlacement="stacked"
-          [value]="professionalProfile.apellidoPaterno + ' ' + professionalProfile.apellidoMaterno"
-          readonly="true"
-          class="uppercase-input"
-        ></ion-input>
-      </ion-item>
+          <ion-item>
+            <ion-input
+              label="Apellidos"
+              labelPlacement="stacked"
+              [value]="professionalProfile.apellidoPaterno + ' ' + professionalProfile.apellidoMaterno"
+              readonly="true"
+              class="uppercase-input"
+            ></ion-input>
+          </ion-item>
 
-      <ion-item>
-        <ion-input
-          label="Celular"
-          labelPlacement="stacked"
-          [value]="professionalProfile.celular"
-          readonly="true"
-        ></ion-input>
-      </ion-item>
+          <ion-item>
+            <ion-input
+              label="Celular"
+              labelPlacement="stacked"
+              [value]="professionalProfile.celular"
+              readonly="true"
+            ></ion-input>
+          </ion-item>
 
-      <ion-item>
-        <ion-input
-          label="Correo Electrónico"
-          labelPlacement="stacked"
-          [value]="professionalProfile.email"
-          readonly="true"
-        ></ion-input>
-      </ion-item>
-    </ion-list>
+          <ion-item>
+            <ion-input
+              label="Correo Electrónico"
+              labelPlacement="stacked"
+              [value]="professionalProfile.email"
+              readonly="true"
+            ></ion-input>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <!-- Mensaje a mostrar si no se encuentra el perfil del profesional -->
   <ng-template #noProfile>
-    <div class="ion-text-center">
+    <div class="ion-text-center ion-padding">
       <h3>Perfil del Profesional no Encontrado</h3>
       <p>No se ha registrado un perfil para el usuario de esta aplicación.</p>
       <p>Por favor, vaya al menú principal y seleccione <strong>"Registrar mi Perfil"</strong> para configurar la aplicación.</p>

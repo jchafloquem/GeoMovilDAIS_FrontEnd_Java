@@ -1,7 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonList, IonItem, IonInput, IonLabel } from '@ionic/angular/standalone';
+import {
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonContent,
+  IonInput,
+  IonItem,
+  IonLabel,
+  IonList,
+} from '@ionic/angular/standalone';
 import { Preferences } from '@capacitor/preferences';
 
 // Define una interfaz para el perfil del profesional
@@ -21,7 +32,20 @@ const USER_PROFILE_KEY = 'userProfile';
   templateUrl: './profesional-tab.page.html',
   styleUrls: ['./profesional-tab.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonList, IonItem, IonInput, IonLabel]
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonCard,
+    IonCardContent,
+    IonCardHeader,
+    IonCardSubtitle,
+    IonCardTitle,
+    IonContent,
+    IonInput,
+    IonItem,
+    IonLabel,
+    IonList,
+  ]
 })
 export class ProfesionalTabPage implements OnInit {
   public professionalProfile: ProfessionalProfile | null = null;

@@ -1,6 +1,20 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonButton, IonIcon, IonModal } from '@ionic/angular/standalone';
+import {
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonCard,
+  IonCardContent,
+  IonContent,
+  IonButton,
+  IonIcon,
+  IonModal,
+  IonList,
+  IonListHeader,
+  IonLabel,
+  IonNote,
+} from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { addIcons } from 'ionicons';
 import { camera, close, closeCircle, imagesOutline, trashOutline, cameraOutline } from 'ionicons/icons';
@@ -14,7 +28,22 @@ register();
   templateUrl: './fotos-tab.page.html',
   styleUrls: ['./fotos-tab.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonButton, IonIcon, IonModal],
+  imports: [
+    CommonModule,
+    IonContent,
+    IonButton,
+    IonIcon,
+    IonModal,
+    IonCardTitle,
+    IonCardSubtitle,
+    IonCard,
+    IonCardHeader,
+    IonCardContent,
+    IonList,
+    IonListHeader,
+    IonLabel,
+    IonNote,
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class FotosTabPage {

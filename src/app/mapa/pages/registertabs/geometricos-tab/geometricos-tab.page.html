@@ -2,8 +2,9 @@
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
     <ion-card>
       <ion-card-header>
+        <ion-card-title color="white">Datos Geométricos</ion-card-title>
+          <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
         <div class="header-container">
-          <ion-card-title color="white">Datos Geométricos</ion-card-title>
           <ion-chip *ngIf="formData.geometryTypeLabel" outline="true" class="geometry-chip">
             <ion-icon [name]="geometryIcons[formData.geometryTypeLabel] || 'shapes-outline'" aria-hidden="true"></ion-icon>
             <ion-label>{{ formData.geometryTypeLabel }}</ion-label>
@@ -24,31 +25,36 @@
           <ion-item>
             <ion-input label="Oficina Zonal" label-placement="stacked"
                        [ngModel]="formData.ubigeo_oficina_zonal"
-                       (ngModelChange)="formData.ubigeo_oficina_zonal = $event"></ion-input>
+                       (ngModelChange)="formData.ubigeo_oficina_zonal = $event"
+                       class="uppercase-input"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Departamento" label-placement="stacked"
                        [ngModel]="formData.ubigeo_departamento"
-                       (ngModelChange)="formData.ubigeo_departamento = $event"></ion-input>
+                       (ngModelChange)="formData.ubigeo_departamento = $event"
+                       class="uppercase-input"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Provincia" label-placement="stacked"
                        [ngModel]="formData.ubigeo_provincia"
-                       (ngModelChange)="formData.ubigeo_provincia = $event"></ion-input>
+                       (ngModelChange)="formData.ubigeo_provincia = $event"
+                       class="uppercase-input"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Distrito" label-placement="stacked"
                        [ngModel]="formData.ubigeo_distrito"
-                       (ngModelChange)="formData.ubigeo_distrito = $event"></ion-input>
+                       (ngModelChange)="formData.ubigeo_distrito = $event"
+                       class="uppercase-input"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Caserío" label-placement="stacked"
                        [ngModel]="formData.ubigeo_caserio"
-                       (ngModelChange)="formData.ubigeo_caserio = $event"></ion-input>
+                       (ngModelChange)="formData.ubigeo_caserio = $event"
+                       class="uppercase-input"></ion-input>
           </ion-item>
 
           <ion-item>
@@ -90,7 +96,8 @@
             <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
                           placeholder="Añada notas adicionales aquí..."
                           [ngModel]="formData.observaciones"
-                          (ngModelChange)="formData.observaciones = $event"></ion-textarea>
+                          (ngModelChange)="formData.observaciones = $event"
+                          class="uppercase-input"></ion-textarea>
           </ion-item>
         </ion-list>
       </ion-card-content>

@@ -1,39 +1,46 @@
 <ion-content>
   <ng-container *ngIf="registerDataService.photosForDisplay$ | async as photosForDisplay">
-    <ion-list>
-      <ion-list-header>
-        <ion-label>Fotos Adicionales ({{ photosForDisplay.length }} / 6)</ion-label>
-        <ion-note slot="end" color="primary">(Mínimo 2)</ion-note>
-      </ion-list-header>
-    </ion-list>
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title color="white">Registro fotográfico</ion-card-title>
+        <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-list-header>
+            <ion-label>Fotos Adicionales ({{ photosForDisplay.length }} / 6)</ion-label>
+            <ion-note slot="end" color="primary">(Mínimo 2)</ion-note>
+          </ion-list-header>
+        </ion-list>
+        <!-- Cuadrícula de fotos -->
+        <div class="photo-grid">
+          <!-- Itera 6 veces para crear 6 espacios para fotos -->
+          <div *ngFor="let i of [0, 1, 2, 3, 4, 5]" class="photo-container">
+            <div
+              class="photo-box"
+              [class.add-photo-box]="!photosForDisplay[i]"
+              (click)="photosForDisplay[i] ? openViewer(i) : registerDataService.takePicture()"
+            >
+              <ng-container *ngIf="photosForDisplay[i] as photoSrc; else addPhotoContent">
+                <!-- Contenido para una foto existente -->
+                <img [src]="photoSrc" [alt]="'Foto ' + (i + 1)" />
+              </ng-container>
 
-    <!-- Cuadrícula de fotos -->
-    <div class="photo-grid">
-      <!-- Itera 6 veces para crear 6 espacios para fotos -->
-      <div *ngFor="let i of [0, 1, 2, 3, 4, 5]" class="photo-container">
-        <div
-          class="photo-box"
-          [class.add-photo-box]="!photosForDisplay[i]"
-          (click)="photosForDisplay[i] ? openViewer(i) : registerDataService.takePicture()"
-        >
-          <ng-container *ngIf="photosForDisplay[i] as photoSrc; else addPhotoContent">
-            <!-- Contenido para una foto existente -->
-            <img [src]="photoSrc" [alt]="'Foto ' + (i + 1)" />
-          </ng-container>
+              <ng-template #addPhotoContent>
+                <!-- Contenido para un espacio vacío (añadir foto) -->
+                <ion-icon name="camera-outline"></ion-icon>
+                <ion-label>Añadir Foto</ion-label>
+              </ng-template>
+            </div>
 
-          <ng-template #addPhotoContent>
-            <!-- Contenido para un espacio vacío (añadir foto) -->
-            <ion-icon name="camera-outline"></ion-icon>
-            <ion-label>Añadir Foto</ion-label>
-          </ng-template>
+            <!-- Botón de eliminar, solo visible si la foto existe -->
+            <ion-button *ngIf="photosForDisplay[i]" fill="clear" color="danger" size="small" class="delete-photo-btn" (click)="deletePhoto(i, $event)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
         </div>
-
-        <!-- Botón de eliminar, solo visible si la foto existe -->
-        <ion-button *ngIf="photosForDisplay[i]" fill="clear" color="danger" size="small" class="delete-photo-btn" (click)="deletePhoto(i, $event)">
-          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-        </ion-button>
-      </div>
-    </div>
+      </ion-card-content>
+    </ion-card>
 
     <!-- Visor de imágenes a pantalla completa (Modal) -->
     <ion-modal [isOpen]="isViewerOpen" (didDismiss)="closeViewer()">

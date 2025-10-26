@@ -1,3 +1,14 @@
+.uppercase-input::part(native) {
+  text-transform: uppercase;
+}
+
+ion-card-header {
+  background-color: #0DA642; // El verde como en la sección productor
+  color: white;
+}
+
+
+
 ion-list-header {
   padding-bottom: 8px;
 }
@@ -6,7 +17,7 @@ ion-list-header {
   display: grid;
   grid-template-columns: 1fr 1fr; // 2 columnas como en productor-tab
   gap: 16px;
-  padding: 0 16px 16px;
+  padding: 0 0 16px; // El padding horizontal lo maneja ion-card-content
 }
 
 .photo-container {

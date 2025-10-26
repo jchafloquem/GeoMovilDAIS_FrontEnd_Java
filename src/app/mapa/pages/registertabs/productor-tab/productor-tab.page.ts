@@ -1,7 +1,24 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonInput, IonButton, IonIcon, IonSelect, IonSelectOption, IonItemDivider, IonLabel, AlertController } from '@ionic/angular/standalone';
+import {
+  AlertController,
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonContent,
+  IonIcon,
+  IonInput,
+  IonItem,
+  IonItemDivider,
+  IonLabel,
+  IonList,
+  IonSelect,
+  IonSelectOption,
+} from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { addIcons } from 'ionicons';
 import { search, cameraOutline, trashOutline } from 'ionicons/icons';
@@ -12,7 +29,25 @@ import { Capacitor } from '@capacitor/core';
   templateUrl: './productor-tab.page.html',
   styleUrls: ['./productor-tab.page.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonInput, IonButton, IonIcon, IonSelect, IonSelectOption, IonItemDivider, IonLabel]
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonButton,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardSubtitle,
+    IonCardContent,
+    IonContent,
+    IonIcon,
+    IonInput,
+    IonItem,
+    IonItemDivider,
+    IonLabel,
+    IonList,
+    IonSelect,
+    IonSelectOption,
+  ]
 })
 export class ProductorTabPage {
 

@@ -34,3 +34,7 @@ ion-list[lines="none"] ion-item {
     font-size: 18px;
   }
 }
+.uppercase-input::part(native) {
+  text-transform: uppercase;
+}
+
