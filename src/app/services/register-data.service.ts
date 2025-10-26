@@ -619,6 +619,28 @@ export class RegisterDataService {
     };
   }
 
+  /**
+   * Verifica si hay registros guardados localmente que están pendientes de sincronización.
+   * @returns `true` si hay al menos un registro pendiente, `false` en caso contrario.
+   */
+  public async hasPendingSyncRecords(): Promise<boolean> {
+    const { keys } = await Preferences.keys();
+    const recordKeys = keys.filter(k => k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_'));
+
+    for (const key of recordKeys) {
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        try {
+          const geojson = JSON.parse(value);
+          if (geojson.properties && (geojson.properties as any).syncStatus === 'pending') {
+            return true; // Se encontró al menos un registro pendiente
+          }
+        } catch (e) { /* Ignorar errores de parseo al solo verificar */ }
+      }
+    }
+    return false; // No se encontraron registros pendientes
+  }
+
   // --- Lógica de Fotos ---
 
   public async takePicture() {

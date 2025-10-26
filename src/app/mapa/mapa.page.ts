@@ -1,6 +1,7 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
 import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, IonButton } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
+import { App } from '@capacitor/app';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
 import {
@@ -28,12 +29,14 @@ import {
   cellularOutline,
   personAddOutline
 } from 'ionicons/icons';
+import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
+import { RegisterDataService } from 'src/app/services/register-data.service';
 
 
 // Declara L como una variable global para que TypeScript no se queje.
@@ -133,9 +136,10 @@ export class MapaPage implements OnDestroy {
     private alertController: AlertController,
     private navCtrl: NavController,
     private toastController: ToastController,
-    private zone: NgZone
+    private zone: NgZone,
+    private registerDataService: RegisterDataService
   ) {
-    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,mapOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
+    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,mapOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,exitOutline});
   }
 
   ionViewDidEnter() {
@@ -605,6 +609,45 @@ export class MapaPage implements OnDestroy {
     );
   }
 
+  async confirmAndExitApp() {
+    // 1. Verificar si hay un dibujo en curso
+    if (this.isDrawingPolygon || this.isDrawingLine) {
+      const alert = await this.alertController.create({
+        header: 'Dibujo en Curso',
+        message: 'Tiene un dibujo en curso. Si sale, el progreso se perderá. ¿Está seguro de que desea salir?',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          { text: 'Salir', handler: () => App.exitApp() }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+
+    // 2. Verificar si hay registros pendientes de sincronización
+    const hasPending = await this.registerDataService.hasPendingSyncRecords();
+    if (hasPending) {
+      const alert = await this.alertController.create({
+        header: 'Registros Pendientes',
+        message: 'Tiene registros guardados que aún no se han sincronizado. Se intentará sincronizar la próxima vez que inicie la app con internet. ¿Desea salir ahora?',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          { text: 'Salir', handler: () => App.exitApp() }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+
+    // 3. Si no hay nada pendiente, solo una confirmación simple
+    const alert = await this.alertController.create({
+      header: 'Confirmar Salida',
+      message: '¿Está seguro de que desea cerrar la aplicación?',
+      buttons: [{ text: 'Cancelar', role: 'cancel' }, { text: 'Salir', handler: () => App.exitApp() }]
+    });
+    await alert.present();
+  }
+
   navigateToRegisterData(geoJSON: any) {
     console.log('Polígono creado, navegando a la página de registro con:', geoJSON);
     this.navCtrl.navigateForward('/mapa/registerdata', {
@@ -617,6 +660,13 @@ export class MapaPage implements OnDestroy {
   async exportAllGeometries() {
     this.isLoading = true;
     try {
+      // Cargar los datos del profesional para incluirlos en la exportación
+      const { value: profileValue } = await Preferences.get({ key: 'userProfile' });
+      let professionalProfile = null;
+      if (profileValue) {
+        professionalProfile = JSON.parse(profileValue);
+      }
+
       const { keys } = await Preferences.keys();
       const geometryKeys = keys.filter(key =>
         key.startsWith('polygon_') ||
@@ -635,12 +685,56 @@ export class MapaPage implements OnDestroy {
       for (const key of geometryKeys) {
         const { value } = await Preferences.get({ key });
         if (value) {
+          // Parsear el GeoJSON para modificarlo
+          const geojson = JSON.parse(value);
+
+          // Añadir los datos del profesional si existen
+          if (professionalProfile && geojson.properties) {
+            geojson.properties.profesional_dni = professionalProfile.dni;
+            geojson.properties.profesional_nombres = professionalProfile.nombres;
+            geojson.properties.profesional_apellido_paterno = professionalProfile.apellidoPaterno;
+            geojson.properties.profesional_apellido_materno = professionalProfile.apellidoMaterno;
+            geojson.properties.profesional_celular = professionalProfile.celular;
+            geojson.properties.profesional_email = professionalProfile.email;
+          }
+
+          // Añadir área y perímetro/longitud calculados
+          if (geojson.geometry && geojson.properties) {
+            const geometryType = geojson.geometry.type;
+            const coords = geojson.geometry.coordinates;
+
+            if (geometryType === 'Polygon' && coords && coords.length > 0 && coords[0].length > 2) {
+              const latlngs: any[] = coords[0].map((c: any) => L.latLng(c[1], c[0]));
+              const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+              geojson.properties.area_ha = (areaM2 / 10000).toFixed(4);
+
+              let perimeter = 0;
+              for (let i = 0; i < latlngs.length - 1; i++) {
+                perimeter += latlngs[i].distanceTo(latlngs[i + 1]);
+              }
+              if (latlngs.length > 0 && latlngs[0].distanceTo(latlngs[latlngs.length - 1]) > 1) {
+                perimeter += latlngs[latlngs.length - 1].distanceTo(latlngs[0]);
+              }
+              geojson.properties.perimetro_m = perimeter.toFixed(2);
+            } else if (geometryType === 'LineString' && coords && coords.length > 1) {
+              const latlngs: any[] = coords.map((c: any) => L.latLng(c[1], c[0]));
+              let length = 0;
+              for (let i = 0; i < latlngs.length - 1; i++) {
+                length += latlngs[i].distanceTo(latlngs[i + 1]);
+              }
+              geojson.properties.longitud_m = length.toFixed(2);
+            }
+          }
+
+          // Convertir el objeto GeoJSON modificado de nuevo a un string
+          const dataToSave = JSON.stringify(geojson, null, 2); // pretty-print
+
           const fileName = `${key}.geojson`;
           const filePath = `${exportFolderName}/${fileName}`;
 
           await Filesystem.writeFile({
             path: filePath,
-            data: value,
+            data: dataToSave,
             directory: Directory.Documents,
             encoding: Encoding.UTF8,
             recursive: true // Crea la carpeta si no existe

@@ -34,6 +34,10 @@
         <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
         <ion-label>Limpiar Marcador GPS</ion-label>
       </ion-item>
+      <ion-item button (click)="confirmAndExitApp()">
+        <ion-icon name="exit-outline" slot="start" color="danger"></ion-icon>
+        <ion-label>Cerrar Aplicación</ion-label>
+      </ion-item>
     </ion-list>
   </ion-content>
 </ion-menu>
@@ -46,7 +50,7 @@
       </ion-buttons>
       <ion-title>
         <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
-        GeoDAIS Móvil
+        GeoDAIS
       </ion-title>
       <ion-buttons slot="end">
         <ion-button fill="clear" class="network-status-button">
