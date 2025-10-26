@@ -1,13 +1,13 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { ConnectionStatus, Network } from '@capacitor/network';
 import { ToastController, NavController, AlertController, LoadingController } from '@ionic/angular/standalone';
 import { BehaviorSubject } from 'rxjs';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
@@ -564,7 +564,7 @@ export class RegisterDataService {
       ubigeo_caserio: formData.ubigeo_caserio,
       fuente: formData.fuente,
       datum: formData.datum,
-      observaciones: formData.observaciones,
+      observaciones: (formData.observaciones || '').toUpperCase(),
       photos: this._savedPhotoUris.getValue(),
     };
 
