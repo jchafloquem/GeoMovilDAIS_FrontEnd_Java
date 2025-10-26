@@ -779,6 +779,19 @@ export class RegisterDataService {
         directory: Directory.Data
       });
 
+      // Guardar una copia en la carpeta pública 'GeoDAIS'
+      try {
+        await Filesystem.writeFile({
+          path: `GeoDAIS/${fileName}`,
+          data: fileData.data,
+          directory: Directory.Documents,
+          recursive: true
+        });
+        // No mostramos un toast aquí para no ser repetitivos con el de las otras fotos.
+      } catch (publicSaveError: any) {
+        console.error(`Error al guardar copia pública del DNI (${side}):`, publicSaveError.message);
+      }
+
       // Actualizamos el estado del formulario con el URI completo y correcto
       if (side === 'front') {
         currentFormData.dni_photo_front = savedFile.uri;
