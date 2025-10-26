@@ -1,0 +1,118 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="isProfileRegistered ? '/mapa' : '/login'"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isProfileRegistered ? 'Mi Perfil' : 'Registro de Perfil' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="register-container">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title class="ion-text-center">{{ isProfileRegistered ? 'Datos del Usuario' : 'Completa tu Perfil' }}</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <form [formGroup]="profileForm" (ngSubmit)="!isProfileRegistered && saveProfile()">
+          <ion-list>
+            <ion-item>
+              <ion-input
+                label="DNI"
+                labelPlacement="floating"
+                type="tel"
+                class="uppercase-input"
+                formControlName="dni"
+                placeholder="Ingresa tu DNI"
+                maxlength="8"
+                required
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Nombres"
+                labelPlacement="floating"
+                type="text"
+                class="uppercase-input"
+                formControlName="nombres"
+                placeholder="Ingresa tus nombres"
+                required
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Apellido Paterno"
+                labelPlacement="floating"
+                type="text"
+                class="uppercase-input"
+                formControlName="apellidoPaterno"
+                placeholder="Ingresa tu apellido paterno"
+                required
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Apellido Materno"
+                labelPlacement="floating"
+                type="text"
+                class="uppercase-input"
+                formControlName="apellidoMaterno"
+                placeholder="Ingresa tu apellido materno"
+                required
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Celular"
+                labelPlacement="floating"
+                type="tel"
+                formControlName="celular"
+                placeholder="Ej: 987654321"
+                required
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Correo Electrónico"
+                labelPlacement="floating"
+                type="email"
+                formControlName="email"
+                placeholder="tu@correo.com"
+                required
+              ></ion-input>
+            </ion-item>
+
+          </ion-list>
+
+          <!-- Botón para guardar el perfil por primera vez -->
+          <ion-button
+            *ngIf="!isProfileRegistered"
+            class="ion-margin-top"
+            expand="block"
+            type="submit"
+            color="primary"
+            [disabled]="profileForm.invalid"
+          >
+            Guardar Perfil
+          </ion-button>
+
+          <!-- Botón para volver al mapa si ya está registrado -->
+          <ion-button
+            *ngIf="isProfileRegistered"
+            class="ion-margin-top"
+            expand="block"
+            (click)="goToMap()"
+            color="secondary">
+            Volver al Mapa
+          </ion-button>
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

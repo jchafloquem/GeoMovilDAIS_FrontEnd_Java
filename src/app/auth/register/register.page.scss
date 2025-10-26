@@ -1,0 +1,33 @@
+ion-content {
+  --background: var(--ion-color-light, #f4f5f8);
+}
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+ion-card {
+  width: 100%;
+  max-width: 450px;
+  margin: 0 20px;
+}
+
+// Para pantallas más grandes
+@media (min-width: 490px) {
+  ion-card {
+    margin: 0;
+  }
+}
+
+.error-message {
+  font-size: 0.8em;
+  padding-top: 5px;
+}
+
+// Forzar a mayúsculas los campos de texto
+.uppercase-input::part(native) {
+  text-transform: uppercase;
+}

@@ -3,7 +3,31 @@ import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, 
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, addOutline, downloadOutline, globeOutline, imageOutline, layersOutline, locate, locationOutline, mapOutline, removeOutline, stopCircleOutline, trashOutline, walkOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline, wifiOutline, ellipseOutline, cellularOutline } from 'ionicons/icons';
+import {
+  addCircleOutline,
+  addOutline,
+  downloadOutline,
+  globeOutline,
+  imageOutline,
+  layersOutline,
+  locate,
+  locationOutline,
+  mapOutline,
+  removeOutline,
+  stopCircleOutline,
+  trashOutline,
+  walkOutline,
+  checkmarkCircleOutline,
+  createOutline,
+  shapesOutline,
+  add,
+  analyticsOutline,
+  listOutline,
+  wifiOutline,
+  ellipseOutline,
+  cellularOutline,
+  personAddOutline
+} from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
@@ -45,7 +69,27 @@ const iconYellow = L.icon({
   templateUrl: './mapa.page.html',
   styleUrls: ['./mapa.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonContent, IonHeader, IonTitle, IonToolbar, IonIcon, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, HttpClientModule, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, RouterLink, IonButton]
+  imports: [
+    CommonModule,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    IonIcon,
+    IonButtons,
+    IonFab,
+    IonFabButton,
+    IonLoading,
+    IonSpinner,
+    HttpClientModule,
+    IonMenu,
+    IonMenuButton,
+    IonList,
+    IonItem,
+    IonLabel,
+    RouterLink,
+    IonButton
+  ]
 })
 
 export class MapaPage implements OnDestroy {
@@ -91,7 +135,7 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone
   ) {
-    addIcons({ ellipseOutline, mapOutline, locationOutline, locate, trashOutline, globeOutline, addOutline, removeOutline, imageOutline, layersOutline, walkOutline, stopCircleOutline, addCircleOutline, downloadOutline, checkmarkCircleOutline, createOutline, shapesOutline, add, analyticsOutline, listOutline, wifiOutline, cellularOutline });
+    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,mapOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
 
   ionViewDidEnter() {
