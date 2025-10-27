@@ -978,6 +978,14 @@ export class MapaPage implements OnDestroy {
           return;
         }
         if (position) {
+          // --- FILTRO DE PRECISIÓN ---
+          // Si la precisión horizontal es mayor a 20 metros, ignoramos esta lectura.
+          // Puedes ajustar este valor según tus necesidades.
+          if (position.coords.accuracy > 20) {
+            console.warn(`Lectura de GPS descartada por baja precisión: ${position.coords.accuracy.toFixed(2)} m`);
+            return;
+          }
+
           const { latitude, longitude, altitude, accuracy, altitudeAccuracy, speed } = position.coords;
 
           this.gpsData = {
