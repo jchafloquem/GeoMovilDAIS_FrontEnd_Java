@@ -36,6 +36,7 @@ import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
+import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { AuthService } from 'src/app/services/auth.service';
 
@@ -690,6 +691,9 @@ export class MapaPage implements OnDestroy {
         professionalProfile = JSON.parse(profileValue);
       }
 
+      // Obtener el identificador único del dispositivo
+      const deviceId = await Device.getId();
+
       const { keys } = await Preferences.keys();
       const geometryKeys = keys.filter(key =>
         key.startsWith('polygon_') ||
@@ -724,6 +728,7 @@ export class MapaPage implements OnDestroy {
             geojson.properties.profesional_apellido_materno = professionalProfile.apellidoMaterno;
             geojson.properties.profesional_celular = professionalProfile.celular;
             geojson.properties.profesional_email = professionalProfile.email;
+
           }
 
           // Añadir área y perímetro/longitud calculados
@@ -751,6 +756,11 @@ export class MapaPage implements OnDestroy {
               }
               geojson.properties.longitud_m = length.toFixed(2);
             }
+          }
+
+          // Añadir el UUID del dispositivo al final de las propiedades
+          if (geojson.properties) {
+            geojson.properties.device_uuid = (deviceId as unknown as { uuid: string }).uuid;
           }
 
           // Clasificar la geometría en su grupo correspondiente
