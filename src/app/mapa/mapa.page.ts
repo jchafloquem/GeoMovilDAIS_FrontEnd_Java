@@ -37,6 +37,7 @@ import { RouterLink } from '@angular/router';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
 import { RegisterDataService } from 'src/app/services/register-data.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 
 // Declara L como una variable global para que TypeScript no se queje.
@@ -130,18 +131,40 @@ export class MapaPage implements OnDestroy {
   public isDrawingLine = false;
   public isOnline = true;
   public networkStatusChanged = false;
+  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default'; // Propiedad para almacenar el rol del usuario
 
+  // --- Getters de Permisos basados en Roles ---
+  get canDrawLines(): boolean {
+    // Solo el rol 'default' puede dibujar líneas
+    return this.userRole === 'default';
+  }
+
+  get canDrawPoints(): boolean {
+    // Los roles 'default' y 'point-polygon' pueden añadir puntos
+    return this.userRole === 'default' || this.userRole === 'point-polygon';
+  }
+
+  get canDrawPolygons(): boolean {
+    // Todos los roles pueden dibujar polígonos
+    return true;
+  }
   constructor(
     private http: HttpClient,
     private alertController: AlertController,
     private navCtrl: NavController,
     private toastController: ToastController,
     private zone: NgZone,
-    private registerDataService: RegisterDataService
+    private registerDataService: RegisterDataService,
+    private authService: AuthService // Inyectamos el AuthService
   ) {
     addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,mapOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,exitOutline});
   }
 
+  async ionViewWillEnter() {
+    // Obtenemos el rol del usuario cuando la página está a punto de entrar en la vista
+    this.userRole = await this.authService.getUserRole();
+    console.log('Rol del usuario en MapaPage:', this.userRole);
+  }
   ionViewDidEnter() {
     this.initializeNetworkListener();
     // Muestra un spinner inicial durante 5 segundos por estética

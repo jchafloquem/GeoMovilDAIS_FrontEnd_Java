@@ -21,17 +21,32 @@ export class AuthService {
       // --- MODO ONLINE ---
       try {
         const credential = await signInWithEmailAndPassword(this.auth, email, password);
-        // Guardamos las credenciales en el dispositivo después de un login exitoso
-        const credentialsToStore = { email, password };
+        // Determinamos el rol del usuario basado en el email
+        let role: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default';
+        const lowerCaseEmail = email.toLowerCase();
+        if (lowerCaseEmail === 'pirdais@devida.gob.pe') {
+          role = 'polygon-only';
+        } else if (lowerCaseEmail === 'cultivos@devida.gob.pe') {
+          role = 'other-crops';
+        } else if (lowerCaseEmail === 'acuavicola@devida.gob.pe') {
+          role = 'point-polygon';
+        }
+        // Guardamos las credenciales y el rol en el dispositivo después de un login exitoso
+        const credentialsToStore = { email, password, role };
         await Preferences.set({ key: CREDENTIALS_KEY, value: JSON.stringify(credentialsToStore) });
-        console.log('MODO ONLINE: Credenciales guardadas en el dispositivo.', credentialsToStore);
+        console.log('MODO ONLINE: Credenciales y rol guardados en el dispositivo.', credentialsToStore);
         return credential;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error de inicio de sesión en línea:', error);
         // Si falla el login online, por si acaso, limpiamos credenciales viejas
         await Preferences.remove({ key: CREDENTIALS_KEY });
         console.log('MODO ONLINE: Credenciales locales eliminadas por fallo en login.');
-        throw error; // Propagamos el error de Firebase
+        // Personalizamos el mensaje de error para credenciales inválidas
+        if (error.code === 'auth/invalid-credential') {
+          throw new Error('El correo o la contraseña son incorrectos. Por favor, verifica tus datos.');
+        }
+        // Para cualquier otro error, lanzamos un mensaje más genérico
+        throw new Error('Ocurrió un error al intentar iniciar sesión. Revisa tu conexión a internet.');
       }
     } else {
       // --- MODO OFFLINE ---
@@ -50,7 +65,7 @@ export class AuthService {
         return { offlineSuccess: true };
       } else {
         console.error('MODO OFFLINE: Las credenciales no coinciden.');
-        throw new Error('Credenciales incorrectas para el modo sin conexión.');
+        throw new Error('El correo o la contraseña son incorrectos. Por favor, verifica tus datos.');
       }
     }
   }
@@ -63,6 +78,17 @@ export class AuthService {
     // Luego, cerramos la sesión de Firebase.
     // Esto no da error si se ejecuta sin conexión.
     return signOut(this.auth);
+  }
+
+  async getUserRole(): Promise<'default' | 'polygon-only' | 'other-crops' | 'point-polygon'> {
+    const { value } = await Preferences.get({ key: CREDENTIALS_KEY });
+    if (value) {
+      const storedCredentials = JSON.parse(value);
+      // Si el rol está guardado, lo retornamos, si no, 'default'
+      return storedCredentials.role || 'default';
+    }
+    // Si no hay credenciales, el rol es 'default'
+    return 'default';
   }
 
 }

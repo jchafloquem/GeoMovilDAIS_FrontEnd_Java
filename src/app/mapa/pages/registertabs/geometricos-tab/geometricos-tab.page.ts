@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -19,6 +19,7 @@ import {
   IonTextarea,
 } from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { addIcons } from 'ionicons';
 import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline } from 'ionicons/icons';
 
@@ -47,14 +48,24 @@ import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline } from 'ion
     IonTextarea,
   ]
 })
-export class GeometricosTabPage {
+export class GeometricosTabPage implements OnInit {
+  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default';
+
   public geometryIcons: { [key: string]: string } = {
     'Polígono': 'map-outline',
     'Línea': 'analytics-outline',
     'Punto': 'ellipse-outline'
   };
 
-  constructor(public registerDataService: RegisterDataService) {
+  constructor(
+    public registerDataService: RegisterDataService,
+    private authService: AuthService
+  ) {
     addIcons({ mapOutline, analyticsOutline, ellipseOutline, shapesOutline });
+  }
+
+  async ngOnInit() {
+    this.userRole = await this.authService.getUserRole();
+    console.log('Rol en GeométricosTab:', this.userRole);
   }
 }
