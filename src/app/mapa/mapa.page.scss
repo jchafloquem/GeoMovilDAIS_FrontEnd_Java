@@ -26,11 +26,10 @@ ion-header {
   pointer-events: none;
 }
 ion-toolbar {
-  // La barra de herramientas sí debe ser interactiva.
-  pointer-events: auto;
-  --background: #0D9BD7;
   margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
   --padding-top: 35px;
+  pointer-events: auto;
+  --background: #0D9BD7;
   --padding-start: 5px;
   --padding-end: 5px;
   --padding-bottom: 5px;
@@ -372,39 +371,27 @@ ion-title {
 :host ::ng-deep {
   /* Ajuste para posicionar la escala de Leaflet sobre el panel GPS */
   .leaflet-bottom.leaflet-left {
-    bottom: 150px; // Lo subimos para que quede sobre el panel GPS
+    bottom: 140px; // Lo subimos para que quede sobre el panel GPS
     z-index: 2001; // Aseguramos que esté por encima del panel GPS
+    left: 4px;
 
     .leaflet-control-scale {
-      background: rgba(13, 155, 215, 0.7); // Mismo fondo que el panel GPS
+      background: rgba(13, 155, 215, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 4px;
+      border-radius: 2px;
       padding: 2px 5px;
       color: white;
-      text-shadow: 0 0 2px black;
+      border: none;
+      box-shadow: none;
     }
 
     .leaflet-control-scale-line {
-      /* Se quita el fondo para que el texto sea visible */
+      // El texto y la línea de la escala.
       background-color: transparent;
-      border: none;
+      border-color: white; // Hace que la línea de la escala sea blanca.
       box-shadow: none;
-      /* Se añade espacio inferior para separar el texto de la línea */
-      padding-bottom: 5px;
-      position: relative; /* Necesario para el pseudo-elemento ::after */
-      line-height: 1; /* Asegura que el texto no tenga espacio extra */
-    }
-
-    /* Se crea la línea visual usando un pseudo-elemento */
-    .leaflet-control-scale-line::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      height: 2px;
-      background-color: white;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+      color: white;
+      text-shadow: none; // ¡Esta es la línea clave que elimina la sombra blanca!
     }
   }
 

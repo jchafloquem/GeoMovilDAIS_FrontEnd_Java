@@ -10,7 +10,6 @@ import {
   IonContent,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
 } from '@ionic/angular/standalone';
 import { Preferences } from '@capacitor/preferences';
@@ -43,7 +42,6 @@ const USER_PROFILE_KEY = 'userProfile';
     IonContent,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
   ]
 })
