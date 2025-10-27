@@ -702,14 +702,19 @@ export class MapaPage implements OnDestroy {
         return;
       }
 
-      const exportFolderName = 'GeoMOVILDAIS_Export';
-      let filesWritten = 0;
+      // Objeto para agrupar las geometrías por tipo
+      const geometriesByType = {
+        polygons: [] as any[],
+        lines: [] as any[],
+        points: [] as any[]
+      };
 
       for (const key of geometryKeys) {
         const { value } = await Preferences.get({ key });
         if (value) {
           // Parsear el GeoJSON para modificarlo
           const geojson = JSON.parse(value);
+          const geometryType = geojson.geometry.type;
 
           // Añadir los datos del profesional si existen
           if (professionalProfile && geojson.properties) {
@@ -723,7 +728,6 @@ export class MapaPage implements OnDestroy {
 
           // Añadir área y perímetro/longitud calculados
           if (geojson.geometry && geojson.properties) {
-            const geometryType = geojson.geometry.type;
             const coords = geojson.geometry.coordinates;
 
             if (geometryType === 'Polygon' && coords && coords.length > 0 && coords[0].length > 2) {
@@ -749,25 +753,52 @@ export class MapaPage implements OnDestroy {
             }
           }
 
-          // Convertir el objeto GeoJSON modificado de nuevo a un string
-          const dataToSave = JSON.stringify(geojson, null, 2); // pretty-print
+          // Clasificar la geometría en su grupo correspondiente
+          if (geometryType.includes('Polygon')) {
+            geometriesByType.polygons.push(geojson);
+          } else if (geometryType.includes('LineString')) {
+            geometriesByType.lines.push(geojson);
+          } else if (geometryType.includes('Point')) {
+            geometriesByType.points.push(geojson);
+          }
+        }
+      }
 
-          const fileName = `${key}.geojson`;
+      // Ahora, escribir un archivo por cada tipo de geometría que tenga datos
+      const exportFolderName = 'GeoMOVILDAIS_Export';
+      let filesWritten = 0;
+
+      // Obtenemos la fecha actual para el nombre del archivo
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
+      for (const type in geometriesByType) {
+        const features = (geometriesByType as any)[type];
+        if (features.length > 0) {
+          const featureCollection = {
+            type: 'FeatureCollection',
+            features: features
+          };
+
+          const fileName = `${type}_${formattedDate}.geojson`; // Ej: polygons_2023-10-27.geojson
           const filePath = `${exportFolderName}/${fileName}`;
 
           await Filesystem.writeFile({
             path: filePath,
-            data: dataToSave,
+            data: JSON.stringify(featureCollection, null, 2), // pretty-print
             directory: Directory.Documents,
             encoding: Encoding.UTF8,
-            recursive: true // Crea la carpeta si no existe
+            recursive: true
           });
           filesWritten++;
         }
       }
 
       this.presentToast(
-        `${filesWritten} archivos exportados con éxito.\nBusque la carpeta '${exportFolderName}' en la carpeta 'Documentos' de su dispositivo.`,
+        `Exportación completada. ${filesWritten} archivo(s) guardado(s) en la carpeta '${exportFolderName}'.`,
         'success',
         'middle'
       );
