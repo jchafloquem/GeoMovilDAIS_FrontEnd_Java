@@ -1,6 +1,6 @@
 <ion-content [fullscreen]="true">
   <div class="login-container">
-    <ion-card>
+    <ion-card class="rounded-card">
       <ion-card-header>
         <ion-card-title class="ion-text-center">Bienvenido a GeoDAIS</ion-card-title>
         <ion-card-subtitle class="ion-text-center">Accede a tu cuenta</ion-card-subtitle>
@@ -9,13 +9,13 @@
         <form [formGroup]="formLogin" (ngSubmit)="login()">
           <ion-list>
             <ion-item>
-              <ion-input label="Email" labelPlacement="floating" type="email" name="email" formControlName="email" placeholder="tu@ejemplo.com"></ion-input>
+              <ion-input label="Email" labelPlacement="floating" type="email" name="email" formControlName="email" placeholder="correo@gmail.com"></ion-input>
             </ion-item>
             <ion-item>
               <ion-input label="Contraseña" labelPlacement="floating" type="password" name="password" formControlName="password" placeholder="Ingresa tu contraseña"></ion-input>
             </ion-item>
           </ion-list>
-          <ion-button expand="block" type="submit" color="primary" [disabled]="formLogin.invalid" class="ion-margin-top">Login</ion-button>
+          <ion-button expand="block" type="submit" [disabled]="formLogin.invalid" class="ion-margin-top login-button">INGRESAR</ion-button>
         </form>
       </ion-card-content>
     </ion-card>
