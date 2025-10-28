@@ -158,7 +158,7 @@ export class MapaPage implements OnDestroy {
     private registerDataService: RegisterDataService,
     private authService: AuthService // Inyectamos el AuthService
   ) {
-    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,mapOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,exitOutline});
+    addIcons({ personAddOutline, listOutline, downloadOutline, createOutline, globeOutline, trashOutline, mapOutline, cellularOutline, imageOutline, layersOutline, addOutline, removeOutline, locate, addCircleOutline, locationOutline, ellipseOutline, walkOutline, stopCircleOutline, checkmarkCircleOutline, shapesOutline, add, analyticsOutline, wifiOutline, exitOutline });
   }
 
   async ionViewWillEnter() {
@@ -282,7 +282,9 @@ export class MapaPage implements OnDestroy {
    */
   zoomToPeru() {
     if (this.map && this.peruLayer) {
-      this.map.fitBounds(this.peruLayer.getBounds());
+      this.map.fitBounds(this.peruLayer.getBounds(), {
+        paddingBottomRight: L.point(50, 150) // 50px padding derecho (mueve a la izq), 150px inferior (mueve arriba)
+      });
     }
   }
 
@@ -314,39 +316,41 @@ export class MapaPage implements OnDestroy {
     const maxZoom = minZoom + 2; // Descargar 2 niveles de zoom
 
     const confirmation = await this.alertController.create({
-        header: 'Confirmar Descarga',
-        message: `Se iniciará la descarga del área visible para los niveles de zoom ${minZoom} a ${maxZoom}. Esto puede tardar y consumir datos.`,
-        buttons: [
-            { text: 'Cancelar', role: 'cancel' },
-            { text: 'Aceptar', handler: async () => {
-                this.isLoading = true;
-                for (let z = minZoom; z <= maxZoom; z++) {
-                  const tiles = this.getTilesInBounds(bounds, z);
-                  console.log(`Zoom ${z}: ${tiles.length} teselas a descargar.`);
+      header: 'Confirmar Descarga',
+      message: `Se iniciará la descarga del área visible para los niveles de zoom ${minZoom} a ${maxZoom}. Esto puede tardar y consumir datos.`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Aceptar', handler: async () => {
+            this.isLoading = true;
+            for (let z = minZoom; z <= maxZoom; z++) {
+              const tiles = this.getTilesInBounds(bounds, z);
+              console.log(`Zoom ${z}: ${tiles.length} teselas a descargar.`);
 
-                  for (const tile of tiles) {
-                    // URL de la tesela (¡NO USAR CON GOOGLE!)
-                    const tileUrl = `https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`;
+              for (const tile of tiles) {
+                // URL de la tesela (¡NO USAR CON GOOGLE!)
+                const tileUrl = `https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png`;
 
-                    // Ruta local para guardar
-                    const localPath = `offline-tiles/${tile.z}/${tile.x}/${tile.y}.png`;
+                // Ruta local para guardar
+                const localPath = `offline-tiles/${tile.z}/${tile.x}/${tile.y}.png`;
 
-                    try {
-                      // Aquí iría la lógica real de descarga y guardado con Capacitor Filesystem
-                      // Por ahora, solo simulamos para no violar términos de servicio.
-                      console.log(`Simulando descarga y guardado: ${localPath}`);
-                      await new Promise(resolve => setTimeout(resolve, 10)); // Pequeña pausa
+                try {
+                  // Aquí iría la lógica real de descarga y guardado con Capacitor Filesystem
+                  // Por ahora, solo simulamos para no violar términos de servicio.
+                  console.log(`Simulando descarga y guardado: ${localPath}`);
+                  await new Promise(resolve => setTimeout(resolve, 10)); // Pequeña pausa
 
-                    } catch (error) {
-                      console.error(`Error descargando ${tileUrl}`, error);
-                    }
-                  }
+                } catch (error) {
+                  console.error(`Error descargando ${tileUrl}`, error);
                 }
-                this.isLoading = false;
-                const finalAlert = await this.alertController.create({ header: 'Éxito', message: 'Descarga (simulada) completada.', buttons: ['OK'] });
-                await finalAlert.present();
-            }}
-        ]
+              }
+            }
+            this.isLoading = false;
+            const finalAlert = await this.alertController.create({ header: 'Éxito', message: 'Descarga (simulada) completada.', buttons: ['OK'] });
+            await finalAlert.present();
+          }
+        }
+      ]
     });
     await confirmation.present();
   }
@@ -427,10 +431,10 @@ export class MapaPage implements OnDestroy {
     const tooltipContent = `Punto: ${pointNumber}<br>Dist: ${segmentDistance.toFixed(1)} m`;
 
     L.circleMarker(pointToAdd, {
-        color: '#ff0000',
-        radius: 5,
-        weight: 2,
-        fillOpacity: 0.8
+      color: '#ff0000',
+      radius: 5,
+      weight: 2,
+      fillOpacity: 0.8
     }).bindTooltip(tooltipContent, {
       permanent: true,
       direction: 'right',
@@ -728,18 +732,14 @@ export class MapaPage implements OnDestroy {
             geojson.properties.profesional_apellido_materno = professionalProfile.apellidoMaterno;
             geojson.properties.profesional_celular = professionalProfile.celular;
             geojson.properties.profesional_email = professionalProfile.email;
-
           }
-
           // Añadir área y perímetro/longitud calculados
           if (geojson.geometry && geojson.properties) {
             const coords = geojson.geometry.coordinates;
-
             if (geometryType === 'Polygon' && coords && coords.length > 0 && coords[0].length > 2) {
               const latlngs: any[] = coords[0].map((c: any) => L.latLng(c[1], c[0]));
               const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
               geojson.properties.area_ha = (areaM2 / 10000).toFixed(4);
-
               let perimeter = 0;
               for (let i = 0; i < latlngs.length - 1; i++) {
                 perimeter += latlngs[i].distanceTo(latlngs[i + 1]);
@@ -757,12 +757,10 @@ export class MapaPage implements OnDestroy {
               geojson.properties.longitud_m = length.toFixed(2);
             }
           }
-
           // Añadir el UUID del dispositivo al final de las propiedades
           if (geojson.properties) {
             geojson.properties.device_uuid = (deviceId as unknown as { uuid: string }).uuid;
           }
-
           // Clasificar la geometría en su grupo correspondiente
           if (geometryType.includes('Polygon')) {
             geometriesByType.polygons.push(geojson);
@@ -773,11 +771,9 @@ export class MapaPage implements OnDestroy {
           }
         }
       }
-
       // Ahora, escribir un archivo por cada tipo de geometría que tenga datos
       const exportFolderName = 'GeoMOVILDAIS_Export';
       let filesWritten = 0;
-
       // Obtenemos la fecha actual para el nombre del archivo
       const today = new Date();
       const year = today.getFullYear();
@@ -1022,7 +1018,7 @@ export class MapaPage implements OnDestroy {
 
   private initMap(): void {
     const map = L.map('map', {
-      center: [-9.19, -75.0152],
+      center: [-9.00, -70.0152],
       zoomControl: false,
       zoom: 10
     });
@@ -1062,7 +1058,7 @@ export class MapaPage implements OnDestroy {
 
     // Añadimos la capa de mapa por defecto
     this.satelliteLayer.addTo(map);
-    L.control.scale({position: 'bottomleft', metric: true, imperial: false, maxWidth: 100}).addTo(map);
+    L.control.scale({ position: 'bottomleft', metric: true, imperial: false, maxWidth: 100 }).addTo(map);
 
 
     // Inicializamos el FeatureGroup para los elementos dibujados
@@ -1106,7 +1102,9 @@ export class MapaPage implements OnDestroy {
           fillOpacity: 0 // No rellenar el polígono
         }
       }).addTo(map);
-      map.fitBounds(this.peruLayer.getBounds());
+      map.fitBounds(this.peruLayer.getBounds(), {
+        paddingBottomRight: L.point(50, 150) // 50px padding derecho (mueve a la izq), 150px inferior (mueve arriba)
+      });
       // Establecemos el zoom mínimo al que se ajusta el mapa para ver todo el país.
       map.setMinZoom(map.getZoom());
     });

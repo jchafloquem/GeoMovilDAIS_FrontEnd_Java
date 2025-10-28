@@ -19,30 +19,32 @@
 }
 
 ion-header {
-  // Hacemos el contenedor del header transparente para que el margen
-  // de la barra de herramientas sea visible, especialmente en iOS.
-  background: transparent;
-  // Evita que el header transparente bloquee interacciones con el mapa.
-  pointer-events: none;
+  // Al usar translucent="true" en el HTML, estos estilos ya no son necesarios.
+  // Ionic se encarga del posicionamiento y la interactividad.
 }
 ion-toolbar {
-  margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
-  --padding-top: 35px;
   pointer-events: auto;
   --background: #0D9BD7;
+  --min-height: 44px; /* Altura estándar en iOS, muy compacta */
   --padding-start: 5px;
   --padding-end: 5px;
-  --padding-bottom: 5px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+
+  // Aseguramos que el botón de menú sea blanco sobre el fondo azul.
+  ion-menu-button {
+    --color: white;
+  }
 }
 
 ion-title {
   // Con los ion-buttons en su sitio, el título se centra automáticamente.
   // Solo necesitamos centrar su contenido interno (icono y texto).
   position: static;
-  padding: 0;
+  padding: 0 10px; /* Añadimos padding horizontal para que no se pegue a los botones */
 
   // Estilos de fuente
-  font-size: 1.5em;
+  font-size: 1.2em; /* Reducimos un poco más para la nueva altura */
   font-weight: bold;
   color: white;
   // Centramos el título y el icono
@@ -50,9 +52,14 @@ ion-title {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  height: 100%; /* Ocupa toda la altura del toolbar para un centrado vertical perfecto */
 }
+/*
+  Posicionamos el primer botón (zoom extend) para que se alinee verticalmente
+  con el control de búsqueda de Leaflet (que tiene un top: 10px por defecto).
+*/
 .zoom-extend-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 10px);
+  top: 10px;
   right: 15px;
   margin-inline-end: 0;
   z-index: 1000;
@@ -84,11 +91,11 @@ ion-title {
 }
 
 .zoom-in-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 60px); /* Debajo de zoom-extend */
+  top: 60px; /* 10px (base) + 40px (alto) + 10px (gap) */
 }
 
 .zoom-out-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 110px); /* Debajo de zoom-in */
+  top: 110px; /* 60px + 50px */
 }
 
 .locate-btn-wrapper {
@@ -276,7 +283,7 @@ ion-title {
 }
 
 .download-map-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 160px); /* Debajo de zoom-out */
+  top: 160px; /* 110px + 50px */
   right: 15px;
   margin-inline-end: 0;
   z-index: 1000;
@@ -300,7 +307,7 @@ ion-title {
   box-shadow: none;
 }
 .edit-mode-btn-wrapper {
-  top: calc(var(--ion-safe-area-top, 0px) + 210px); /* Debajo de download */
+  top: 210px; /* 160px + 50px */
   right: 15px;
   margin-inline-end: 0;
   z-index: 1000;
