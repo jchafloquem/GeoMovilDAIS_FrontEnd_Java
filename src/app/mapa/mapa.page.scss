@@ -25,35 +25,28 @@ ion-header {
 ion-toolbar {
   pointer-events: auto;
   --background: #0D9BD7;
+    margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
   --min-height: 44px; /* Altura estándar en iOS, muy compacta */
   --padding-start: 5px;
   --padding-end: 5px;
   --padding-top: 0;
   --padding-bottom: 0;
-
   // Aseguramos que el botón de menú sea blanco sobre el fondo azul.
   ion-menu-button {
     --color: white;
   }
 }
-
 ion-title {
-  // Con los ion-buttons en su sitio, el título se centra automáticamente.
-  // Solo necesitamos centrar su contenido interno (icono y texto).
   position: static;
-  padding: 0 10px; /* Añadimos padding horizontal para que no se pegue a los botones */
-
-  // Estilos de fuente
-  font-size: 1.2em; /* Reducimos un poco más para la nueva altura */
+  padding: 0 10px;
+  font-size: 1.2em;
   font-weight: bold;
   color: white;
-  // Centramos el título y el icono
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 100%; /* Ocupa toda la altura del toolbar para un centrado vertical perfecto */
-
+  height: 100%;
 }
 /*
   Posicionamos el primer botón (zoom extend) para que se alinee verticalmente

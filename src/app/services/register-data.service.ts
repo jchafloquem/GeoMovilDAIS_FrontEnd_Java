@@ -698,9 +698,15 @@ export class RegisterDataService {
       this._photosForDisplay.next([...currentDisplayPhotos, Capacitor.convertFileSrc(savedFile.uri)]);
 
     } catch (error: any) {
-      const errorMessage = error.message || JSON.stringify(error);
-      console.error('Error al tomar la foto:', errorMessage);
-      await this.showToast(`Error: ${errorMessage}`, 'danger', 5000);
+      const rawErrorMessage = error.message || JSON.stringify(error);
+      console.error('Error al tomar la foto:', rawErrorMessage);
+
+      let displayMessage = `Error: ${rawErrorMessage}`; // Mensaje por defecto
+      if (rawErrorMessage.toLowerCase().includes('could not obtain location in time')) {
+        displayMessage = 'No se pudo obtener la ubicación GPS a tiempo. Intente en un lugar con mejor señal.';
+      }
+
+      await this.showToast(displayMessage, 'danger', 5000);
     } finally {
       await loading.dismiss();
     }

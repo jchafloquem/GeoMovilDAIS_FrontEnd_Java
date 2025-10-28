@@ -9,28 +9,25 @@ ion-toolbar {
   // La barra de herramientas sí debe ser interactiva.
   pointer-events: auto;
   --background: #0D9BD7;
-  margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
-  --padding-top: 35px;
+    margin: calc(var(--ion-safe-area-top, 0px) + 0px) 0px 0px;
+  --padding-top: 44px;
   --padding-start: 5px;
-  --padding-end: 5px;
-  --padding-bottom: 5px;
+  --padding-end: 0px;
+  --padding-bottom: 0px;
 }
 ion-title {
-  // Con los ion-buttons en su sitio, el título se centra automáticamente.
-  // Solo necesitamos centrar su contenido interno (icono y texto).
   position: static;
-  padding: 0;
-
-  // Estilos de fuente
-  font-size: 1.5em;
+  padding: 0 10;
+  font-size: 1.2em;
   font-weight: bold;
   color: white;
-  // Centramos el título y el icono
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  height: 100%;
 }
+
 .photo-thumbnail-container {
   position: relative;
   padding: 2px;
