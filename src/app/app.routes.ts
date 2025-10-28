@@ -14,6 +14,14 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/mapa.page').then( m => m.MapaPage)
   },
   {
+    path: 'skyplot',
+    loadComponent: () => import('./mapa/pages/skyplot/skyplot.page').then( m => m.SkyplotPage)
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./mapa/pages/about/about.page').then( m => m.AboutPage)
+  },
+  {
     // Ruta padre para las pestañas de registro
     path: 'mapa/registerdata',
     loadComponent: () => import('./mapa/pages/registertabs/registertabs/registertabs.page').then(m => m.RegistertabsPage),
@@ -58,10 +66,6 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'skyplot',
-    loadComponent: () => import('./mapa/pages/skyplot/skyplot.page').then( m => m.SkyplotPage)
-  },
-  {
     path: 'mapa/list',
     loadComponent: () => import('./mapa/pages/list/list.page').then( m => m.ListPage)
   },
@@ -70,4 +74,6 @@ export const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full',
   },
+
+
 ];

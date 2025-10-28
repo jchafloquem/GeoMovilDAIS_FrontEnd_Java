@@ -1,0 +1,14 @@
+ion-header {
+  background: transparent;
+  pointer-events: none;
+}
+ion-toolbar {
+  pointer-events: auto;
+  --background: #0D9BD7;
+  color: #fff;
+}
+.info-list {
+  ion-label, ion-note {
+    font-size: 0.875rem;
+  }
+}

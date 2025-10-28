@@ -1,34 +1,57 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
-import { AlertController, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, IonButtons, IonFab, IonFabButton, IonLoading, IonSpinner, NavController, ToastController, IonMenu, IonMenuButton, IonList, IonItem, IonLabel, IonButton } from '@ionic/angular/standalone';
+import {
+  AlertController,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonTitle,
+  IonToolbar,
+  IonButtons,
+  IonFab,
+  IonFabButton,
+  IonLoading,
+  IonSpinner,
+  NavController,
+  ToastController,
+  IonMenu,
+  IonMenuButton,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonButton,
+
+} from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { App } from '@capacitor/app';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { addIcons } from 'ionicons';
 import {
+  add,
   addCircleOutline,
   addOutline,
+  analyticsOutline,
+  cellularOutline,
+  checkmarkCircleOutline,
+  createOutline,
   downloadOutline,
+  ellipseOutline,
   globeOutline,
   imageOutline,
   layersOutline,
+  listOutline,
   locate,
   locationOutline,
   mapOutline,
+  personAddOutline,
+  planetOutline,
   removeOutline,
+  shapesOutline,
   stopCircleOutline,
   trashOutline,
   walkOutline,
-  checkmarkCircleOutline,
-  createOutline,
-  shapesOutline,
-  add,
-  analyticsOutline,
-  listOutline,
   wifiOutline,
-  ellipseOutline,
-  cellularOutline,
-  personAddOutline,
-  planetOutline // Icono alternativo para satélite, ya que 'satellite-outline' es de una versión más nueva.
+  informationCircleOutline
+
 } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
@@ -95,7 +118,8 @@ const iconYellow = L.icon({
     IonItem,
     IonLabel,
     RouterLink,
-    IonButton
+    IonButton,
+
   ]
 })
 
@@ -161,7 +185,7 @@ export class MapaPage implements OnDestroy {
     private gpsDataService: GpsDataService,
     private authService: AuthService // Inyectamos el AuthService
   ) {
-    addIcons({ personAddOutline, listOutline, downloadOutline, createOutline, globeOutline, trashOutline, mapOutline, cellularOutline, imageOutline, layersOutline, addOutline, removeOutline, locate, addCircleOutline, locationOutline, ellipseOutline, walkOutline, stopCircleOutline, checkmarkCircleOutline, shapesOutline, add, analyticsOutline, wifiOutline, exitOutline, planetOutline });
+    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,exitOutline});
   }
 
   async ionViewWillEnter() {
