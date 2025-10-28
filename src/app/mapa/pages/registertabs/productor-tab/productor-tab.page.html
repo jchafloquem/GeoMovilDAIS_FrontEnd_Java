@@ -41,9 +41,15 @@
           </ion-item>
 
           <ion-item>
-            <ion-input label="Celular" label-placement="stacked" type="tel"
+            <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*"
                        [ngModel]="formData.celular_participante"
-                       (ngModelChange)="formData.celular_participante = $event"></ion-input>
+                       (ngModelChange)="formData.celular_participante = $event"
+                       [disabled]="formData.celular_participante === 'NO TIENE'"
+                       required></ion-input>
+          </ion-item>
+          <ion-item lines="none">
+            <ion-checkbox [checked]="formData.celular_participante === 'NO TIENE'"
+                          (ionChange)="formData.celular_participante = $event.detail.checked ? 'NO TIENE' : ''">No tiene Celular</ion-checkbox>
           </ion-item>
 
           <ion-item>

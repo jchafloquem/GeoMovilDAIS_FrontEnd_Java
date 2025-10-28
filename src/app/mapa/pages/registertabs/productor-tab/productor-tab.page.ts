@@ -6,6 +6,7 @@ import {
   IonButton,
   IonCard,
   IonCardContent,
+  IonCheckbox,
   IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
@@ -47,6 +48,7 @@ import { Capacitor } from '@capacitor/core';
     IonList,
     IonSelect,
     IonSelectOption,
+    IonCheckbox, // <-- ¡Añade esta línea!
   ]
 })
 export class ProductorTabPage {
