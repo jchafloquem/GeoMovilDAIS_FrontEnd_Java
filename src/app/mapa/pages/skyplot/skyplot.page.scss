@@ -1,0 +1,55 @@
+ion-toolbar {
+  --background: #0D9BD7;
+  --color: white;
+}
+
+.info-card, .explanation-card {
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.info-card {
+  background: var(--ion-color-light);
+  ion-list {
+    background: transparent;
+    padding: 0;
+  }
+  ion-item {
+    --background: transparent;
+    --padding-start: 16px;
+    --inner-padding-end: 16px;
+  }
+  ion-label {
+    font-weight: 500;
+  }
+  ion-note {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--ion-color-primary);
+    transition: color 0.3s ease-in-out;
+  }
+
+  .quality-good {
+    color: var(--ion-color-success) !important;
+  }
+  .quality-medium {
+    color: var(--ion-color-warning) !important;
+  }
+  .quality-bad {
+    color: var(--ion-color-danger) !important;
+  }
+}
+
+.explanation-card {
+  background: var(--ion-color-light-tint);
+  padding: 16px;
+  h3 {
+    margin-top: 0;
+    color: var(--ion-color-primary);
+  }
+  p {
+    line-height: 1.5;
+    color: var(--ion-color-step-600, #666);
+  }
+}

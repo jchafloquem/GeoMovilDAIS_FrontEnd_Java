@@ -34,6 +34,7 @@ export const routes: Routes = [
         path: 'fotos',
         loadComponent: () => import('./mapa/pages/registertabs/fotos-tab/fotos-tab.page').then(m => m.FotosTabPage)
       },
+
       {
         path: '',
         redirectTo: 'productor',
@@ -54,6 +55,10 @@ export const routes: Routes = [
       { path: 'profesional-tab', loadComponent: () => import('./mapa/pages/registertabs/profesional-tab/profesional-tab.page').then( m => m.ProfesionalTabPage)},
       { path: '', redirectTo: 'productor', pathMatch: 'full' }
     ]
+  },
+  {
+    path: 'skyplot',
+    loadComponent: () => import('./mapa/pages/skyplot/skyplot.page').then( m => m.SkyplotPage)
   },
   {
     path: 'mapa/list',

@@ -53,6 +53,7 @@ ion-title {
   justify-content: center;
   gap: 8px;
   height: 100%; /* Ocupa toda la altura del toolbar para un centrado vertical perfecto */
+
 }
 /*
   Posicionamos el primer botón (zoom extend) para que se alinee verticalmente
@@ -469,6 +470,16 @@ ion-title {
   }
 }
 ion-toolbar ion-buttons[slot="end"] {
+  .skyplot-button {
+    --color: white;
+    // Aumenta el área táctil para que sea igual al botón de red
+    --padding-start: 8px;
+    --padding-end: 8px;
+
+    ion-icon {
+      font-size: 1.8rem; // Mismo tamaño que el icono de red
+    }
+  }
   .network-status-button {
     // Aumenta el área táctil del botón
     --padding-start: 8px;

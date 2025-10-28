@@ -53,6 +53,9 @@
         GeoDAIS
       </ion-title>
       <ion-buttons slot="end">
+        <ion-button fill="clear" class="skyplot-button" routerLink="/skyplot" title="Ver estado de (GPS)">
+          <ion-icon slot="icon-only" name="planet-outline"></ion-icon>
+        </ion-button>
         <ion-button fill="clear" class="network-status-button">
           <ion-icon slot="icon-only" name="cellular-outline" [color]="isOnline ? 'success' : 'danger'" title="Estado de la conexión" [class.status-changed]="networkStatusChanged"></ion-icon>
         </ion-button>

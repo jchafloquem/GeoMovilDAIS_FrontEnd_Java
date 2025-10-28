@@ -27,7 +27,8 @@ import {
   wifiOutline,
   ellipseOutline,
   cellularOutline,
-  personAddOutline
+  personAddOutline,
+  planetOutline // Icono alternativo para satélite, ya que 'satellite-outline' es de una versión más nueva.
 } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
@@ -38,6 +39,7 @@ import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
 import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
+import { GpsDataService } from 'src/app/services/gps-data.service';
 import { AuthService } from 'src/app/services/auth.service';
 
 
@@ -156,9 +158,10 @@ export class MapaPage implements OnDestroy {
     private toastController: ToastController,
     private zone: NgZone,
     private registerDataService: RegisterDataService,
+    private gpsDataService: GpsDataService,
     private authService: AuthService // Inyectamos el AuthService
   ) {
-    addIcons({ personAddOutline, listOutline, downloadOutline, createOutline, globeOutline, trashOutline, mapOutline, cellularOutline, imageOutline, layersOutline, addOutline, removeOutline, locate, addCircleOutline, locationOutline, ellipseOutline, walkOutline, stopCircleOutline, checkmarkCircleOutline, shapesOutline, add, analyticsOutline, wifiOutline, exitOutline });
+    addIcons({ personAddOutline, listOutline, downloadOutline, createOutline, globeOutline, trashOutline, mapOutline, cellularOutline, imageOutline, layersOutline, addOutline, removeOutline, locate, addCircleOutline, locationOutline, ellipseOutline, walkOutline, stopCircleOutline, checkmarkCircleOutline, shapesOutline, add, analyticsOutline, wifiOutline, exitOutline, planetOutline });
   }
 
   async ionViewWillEnter() {
@@ -1002,6 +1005,9 @@ export class MapaPage implements OnDestroy {
             accH: accuracy ? parseFloat(accuracy.toFixed(4)) : 0,
             accV: altitudeAccuracy ? parseFloat(altitudeAccuracy.toFixed(2)) : 0,
           };
+
+          // Enviamos los datos actualizados al servicio compartido
+          this.gpsDataService.updateGpsData(this.gpsData);
 
           // Si los marcadores existen, actualizamos su posición
           if (this.userCircle && this.pulseCircle) {

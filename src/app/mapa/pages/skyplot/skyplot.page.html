@@ -1,0 +1,42 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/mapa"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Estado del GPS</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="info-card">
+    <ion-list lines="full">
+      <ion-item>
+        <ion-label>Latitud</ion-label>
+        <ion-note slot="end">{{ gpsData.lat | number:'1.6-6' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Longitud</ion-label>
+        <ion-note slot="end">{{ gpsData.lng | number:'1.6-6' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Altitud (msnm)</ion-label>
+        <ion-note slot="end">{{ gpsData.alt | number:'1.2-2' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Velocidad (m/s)</ion-label>
+        <ion-note slot="end">{{ gpsData.vel | number:'1.2-2' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Precisión Horizontal (m)</ion-label>
+        <ion-note slot="end" [ngClass]="{
+          'quality-good': gpsData.accH !== null && gpsData.accH < 5,
+          'quality-medium': gpsData.accH !== null && gpsData.accH >= 5 && gpsData.accH <= 10,
+          'quality-bad': gpsData.accH !== null && gpsData.accH > 10
+        }">{{ gpsData.accH | number:'1.2-2' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Precisión Vertical (m)</ion-label>
+        <ion-note slot="end">{{ gpsData.accV | number:'1.2-2' }}</ion-note>
+      </ion-item>
+    </ion-list>
+  </div>
