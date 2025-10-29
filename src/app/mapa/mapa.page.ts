@@ -50,9 +50,7 @@ import {
   trashOutline,
   walkOutline,
   wifiOutline,
-  informationCircleOutline
-
-} from 'ionicons/icons';
+  informationCircleOutline, mailOutline } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -85,8 +83,18 @@ const iconDefault = L.icon({
 });
 
 const iconYellow = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconUrl: 'assets/images/marker-icon-yellow.png',
+  shadowUrl: 'assets/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+
+const iconGreen = L.icon({
+  iconUrl: 'assets/images/marker-icon-green.png',
+  shadowUrl: 'assets/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -185,13 +193,12 @@ export class MapaPage implements OnDestroy {
     private gpsDataService: GpsDataService,
     private authService: AuthService // Inyectamos el AuthService
   ) {
-    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,exitOutline});
+    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,mailOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
 
   async ionViewWillEnter() {
     // Obtenemos el rol del usuario cuando la página está a punto de entrar en la vista
     this.userRole = await this.authService.getUserRole();
-    console.log('Rol del usuario en MapaPage:', this.userRole);
   }
   ionViewDidEnter() {
     this.initializeNetworkListener();
@@ -352,7 +359,6 @@ export class MapaPage implements OnDestroy {
             this.isLoading = true;
             for (let z = minZoom; z <= maxZoom; z++) {
               const tiles = this.getTilesInBounds(bounds, z);
-              console.log(`Zoom ${z}: ${tiles.length} teselas a descargar.`);
 
               for (const tile of tiles) {
                 // URL de la tesela (¡NO USAR CON GOOGLE!)
@@ -364,11 +370,9 @@ export class MapaPage implements OnDestroy {
                 try {
                   // Aquí iría la lógica real de descarga y guardado con Capacitor Filesystem
                   // Por ahora, solo simulamos para no violar términos de servicio.
-                  console.log(`Simulando descarga y guardado: ${localPath}`);
                   await new Promise(resolve => setTimeout(resolve, 10)); // Pequeña pausa
 
                 } catch (error) {
-                  console.error(`Error descargando ${tileUrl}`, error);
                 }
               }
             }
@@ -433,7 +437,6 @@ export class MapaPage implements OnDestroy {
 
   addPolygonPoint() {
     if (!this.crosshairMarker) {
-      console.warn('No se puede añadir punto, la ubicación aún no está disponible.');
       return;
     }
 
@@ -473,7 +476,6 @@ export class MapaPage implements OnDestroy {
   private async startDrawingByWalking() {
     // Si no tenemos una ubicación GPS inicial, no podemos empezar a dibujar.
     if (!this.gpsData.lat) {
-      console.error('No se pudo iniciar el modo de dibujo: ubicación GPS no disponible.');
       // Revertimos el estado del botón para que el usuario pueda intentarlo de nuevo.
       this.isDrawingPolygon = false;
       return;
@@ -525,7 +527,6 @@ export class MapaPage implements OnDestroy {
       // 6. Ahora, iniciar el seguimiento continuo para actualizar la posición de la mira
       this.watchId = await Geolocation.watchPosition(watchOptions, (position, err) => {
         if (err || !position) {
-          console.error('Error en watchPosition', err);
           this.toggleDrawingMode(); // Detener si hay un error de GPS
           return;
         }
@@ -547,7 +548,6 @@ export class MapaPage implements OnDestroy {
         this.map.panTo(newPoint);
       });
     } catch (e) {
-      console.error('No se pudo iniciar el modo de dibujo. Verifique los permisos de ubicación.', e);
       // Si falla (ej. permisos denegados), revertir el estado y limpiar
       if (this.isDrawingPolygon) {
         this.toggleDrawingMode();
@@ -575,7 +575,7 @@ export class MapaPage implements OnDestroy {
         this.gpsData.lat = lastKnownPosition.lat;
         this.gpsData.lng = lastKnownPosition.lng;
       }
-      this.navigateToRegisterData(polygon.toGeoJSON());
+      this.registerDataService.createDraftAndNavigate(polygon.toGeoJSON());
     } else {
       this.presentToast('Dibujo cancelado: se necesitan al menos 3 puntos.', 'warning');
     }
@@ -611,7 +611,7 @@ export class MapaPage implements OnDestroy {
         this.gpsData.lat = lastKnownPosition.lat;
         this.gpsData.lng = lastKnownPosition.lng;
       }
-      this.navigateToRegisterData(line.toGeoJSON());
+      this.registerDataService.createDraftAndNavigate(line.toGeoJSON());
     } else {
       this.presentToast('Dibujo cancelado: se necesitan al menos 2 puntos para una línea.', 'warning');
     }
@@ -644,8 +644,7 @@ export class MapaPage implements OnDestroy {
       }
     };
 
-    console.log('Punto creado, navegando a la página de registro con:', pointGeoJSON);
-    this.navigateToRegisterData(pointGeoJSON);
+    await this.registerDataService.createDraftAndNavigate(pointGeoJSON);
   }
 
   toggleEditMode() {
@@ -701,15 +700,6 @@ export class MapaPage implements OnDestroy {
       buttons: [{ text: 'Cancelar', role: 'cancel' }, { text: 'Salir', handler: () => App.exitApp() }]
     });
     await alert.present();
-  }
-
-  navigateToRegisterData(geoJSON: any) {
-    console.log('Polígono creado, navegando a la página de registro con:', geoJSON);
-    this.navCtrl.navigateForward('/mapa/registerdata', {
-      state: {
-        geojson: geoJSON
-      }
-    });
   }
 
   async exportAllGeometries() {
@@ -837,7 +827,6 @@ export class MapaPage implements OnDestroy {
       );
 
     } catch (error: any) {
-      console.error('Error al exportar archivos:', error);
       const alert = await this.alertController.create({
         header: 'Error de Exportación',
         message: `No se pudieron guardar los archivos. Asegúrese de que la aplicación tenga permisos para acceder al almacenamiento.\n\nError: ${error.message}`,
@@ -874,18 +863,32 @@ export class MapaPage implements OnDestroy {
 
           const geometryLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
+              const isDraft = feature.properties?.status === 'draft';
               const isPolygon = feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon';
               const isLine = feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
 
+              // Prioridad 1: Si es un borrador, siempre verde.
+              if (isDraft) {
+                return {
+                  color: '#2dd36f', // Verde iónico 'success'
+                  weight: 3,
+                  opacity: 0.8,
+                  fillColor: '#2dd36f',
+                  fillOpacity: 0.3
+                };
+              }
+
+              // Prioridad 2: Si está en modo edición (y no es borrador), amarillo.
               if (isPolygon) {
                 return {
-                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7', // Amarillo para editar, azul normal
+                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7',
                   weight: 3,
                   opacity: 0.7,
                   fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
                   fillOpacity: this.isEditingMode ? 0.4 : 0.2
                 };
               }
+
               if (isLine) {
                 return {
                   color: this.isEditingMode ? '#ffc409' : '#0D9BD7',
@@ -893,25 +896,29 @@ export class MapaPage implements OnDestroy {
                   opacity: 0.7
                 };
               }
-              return {}; // Estilo por defecto para otros tipos (como puntos)
+              return {}; // Estilo por defecto para otros tipos
             },
-            pointToLayer: (_feature: any, latlng: any) => {
-              const iconToUse = this.isEditingMode ? iconYellow : iconDefault;
+            pointToLayer: (feature: any, latlng: any) => {
+              const isDraft = feature.properties?.status === 'draft';
+              // Verde para borradores, amarillo para edición, azul por defecto.
+              const iconToUse = isDraft ? iconGreen : (this.isEditingMode ? iconYellow : iconDefault);
               return L.marker(latlng, { icon: iconToUse });
             },
             onEachFeature: (feature: any, layer: any) => {
               const name = feature.properties?.name || (feature.geometry.type === 'Point' ? 'Punto sin nombre' : 'Polígono sin nombre');
+              const isDraft = feature.properties?.status === 'draft';
 
-              if (this.isEditingMode) {
-                // MODO EDICIÓN: El clic en el polígono navega directamente a la edición.
-                layer.bindTooltip(`Tocar para editar: <strong>${name}</strong>`, { permanent: false, sticky: true });
+              // Un borrador siempre es editable, o si el modo edición general está activo.
+              if (isDraft || this.isEditingMode) {
+                const tooltipText = isDraft ? `Tocar para completar: <strong>${name}</strong>` : `Tocar para editar: <strong>${name}</strong>`;
+                layer.bindTooltip(tooltipText, { permanent: false, sticky: true });
 
                 layer.on('click', (e: any) => {
                   L.DomEvent.stop(e);
                   this.editGeometryInfo(key);
                 });
               } else {
-                // MODO NORMAL: Muestra un popup con información, sin botón de editar.
+                // MODO NORMAL (no edición, no borrador): Muestra un popup con información.
                 if (feature.properties) {
                   const popupContent = `
                     <strong>${name}</strong>
@@ -925,7 +932,6 @@ export class MapaPage implements OnDestroy {
           });
           this.drawnItems.addLayer(geometryLayer);
         } catch (e) {
-          console.error(`Error al procesar la geometría guardada (key: ${key})`, e);
         }
       }
     }
@@ -951,7 +957,6 @@ export class MapaPage implements OnDestroy {
    */
   async findAndCenterUser() {
     if (!this.map || this.gpsData.lat === null) {
-      console.warn('Datos de ubicación aún no disponibles.');
       return;
     }
 
@@ -993,7 +998,6 @@ export class MapaPage implements OnDestroy {
 
       this.map.setView([lat, lng], 18);
     } catch (error) {
-      console.error('Error en la localización manual', error);
       // Aquí podrías mostrar una alerta al usuario
     } finally {
       this.isLoading = false;
@@ -1007,7 +1011,6 @@ export class MapaPage implements OnDestroy {
         timeout: 10000,
       }, (position, err) => {
         if (err) {
-          console.error('Error en el seguimiento de la ubicación:', err);
           return;
         }
         if (position) {
@@ -1015,7 +1018,6 @@ export class MapaPage implements OnDestroy {
           // Si la precisión horizontal es mayor a 20 metros, ignoramos esta lectura.
           // Puedes ajustar este valor según tus necesidades.
           if (position.coords.accuracy > 20) {
-            console.warn(`Lectura de GPS descartada por baja precisión: ${position.coords.accuracy.toFixed(2)} m`);
             return;
           }
 
@@ -1042,7 +1044,6 @@ export class MapaPage implements OnDestroy {
         }
       });
     } catch (error) {
-      console.error('No se pudo iniciar el seguimiento de la ubicación', error);
     }
   }
 
@@ -1114,11 +1115,9 @@ export class MapaPage implements OnDestroy {
     map.on(L.Draw.Event.CREATED, (event: any) => {
       const layer = event.layer;
       this.drawnItems?.addLayer(layer);
-      console.log('Feature created:', layer.toGeoJSON());
     });
 
     map.on(L.Draw.Event.DELETED, (event: any) => {
-      console.log('Features deleted:', event.layers.toGeoJSON());
     });
 
     // Cargamos y añadimos el límite de Departamentos desde el archivo GeoJSON

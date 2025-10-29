@@ -1,3 +1,13 @@
+ion-header {
+  background: transparent;
+  pointer-events: none;
+}
+ion-toolbar {
+  pointer-events: auto;
+  --background: var(--ion-color-primary);
+  color: #fff;
+}
+
 ion-content {
   --background: var(--ion-color-light, #f4f5f8);
 }

@@ -66,6 +66,5 @@ export class GeometricosTabPage implements OnInit {
 
   async ngOnInit() {
     this.userRole = await this.authService.getUserRole();
-    console.log('Rol en GeométricosTab:', this.userRole);
   }
 }

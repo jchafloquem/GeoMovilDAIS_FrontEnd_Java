@@ -1,13 +1,15 @@
 <ion-menu contentId="main-content-map" type="overlay">
   <ion-header>
-    <ion-toolbar>
-      <ion-title>Menú de Opciones</ion-title>
+    <ion-toolbar color="primary">
+      <ion-title>
+        Menú de Opciones
+      </ion-title>
     </ion-toolbar>
   </ion-header>
   <ion-content>
     <ion-list>
       <ion-item button routerLink="/register">
-        <ion-icon name="person-add-outline" slot="start" color="secondary"></ion-icon>
+        <ion-icon name="person-add-outline" slot="start" color="primary"></ion-icon>
         <ion-label>Registrar mi perfil</ion-label>
       </ion-item>
       <ion-item button [routerLink]="['/mapa/list']">
@@ -15,27 +17,31 @@
         <ion-label>Ver registros guardados</ion-label>
       </ion-item>
       <ion-item button (click)="exportAllGeometries()">
-        <ion-icon name="download-outline" slot="start" color="success"></ion-icon>
+        <ion-icon name="download-outline" slot="start" color="primary"></ion-icon>
         <ion-label>Exportar geometrías</ion-label>
       </ion-item>
       <ion-item button (click)="toggleEditMode()">
-        <ion-icon name="create-outline" slot="start" [color]="isEditingMode ? 'warning' : 'medium'"></ion-icon>
+        <ion-icon name="create-outline" slot="start" [color]="isEditingMode ? 'warning' : 'primary'"></ion-icon>
         <ion-label>{{ isEditingMode ? 'Desactivar edición' : 'Activar edición' }}</ion-label>
       </ion-item>
       <ion-item button (click)="startDownloadProcess()">
-        <ion-icon name="download-outline" slot="start" color="medium"></ion-icon>
+        <ion-icon name="download-outline" slot="start" color="primary"></ion-icon>
         <ion-label>Descargar mapa (Demo)</ion-label>
       </ion-item>
       <ion-item button (click)="zoomToPeru()">
-        <ion-icon name="globe-outline" slot="start" color="medium"></ion-icon>
+        <ion-icon name="globe-outline" slot="start" color="primary"></ion-icon>
         <ion-label>Ver todo el país</ion-label>
       </ion-item>
       <ion-item button (click)="clearLocation()">
         <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
         <ion-label>Limpiar marcador GPS</ion-label>
       </ion-item>
+      <ion-item button [routerLink]="['/send-email']" detail="false">
+        <ion-icon name="mail-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Enviar por correo</ion-label>
+      </ion-item>
       <ion-item button [routerLink]="['/about']" detail="false">
-        <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+        <ion-icon name="information-circle-outline" slot="start" color="primary"></ion-icon>
         <ion-label>Acerca de</ion-label>
       </ion-item>
       <ion-item button (click)="confirmAndExitApp()">
@@ -48,7 +54,7 @@
 
 <div class="ion-page" id="main-content-map">
   <ion-header>
-    <ion-toolbar>
+    <ion-toolbar color="primary">
       <ion-buttons slot="start">
         <ion-menu-button></ion-menu-button>
       </ion-buttons>

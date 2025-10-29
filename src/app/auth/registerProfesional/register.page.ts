@@ -104,7 +104,6 @@ export class RegisterPage implements OnInit {
       this.router.navigateByUrl('/mapa', { replaceUrl: true }); // Redirige al mapa y previene volver atrás
 
     } catch (error: any) {
-      console.error('Error al guardar el perfil:', error);
       this.showToast('Ocurrió un error al guardar tu perfil.');
     } finally {
       loading.dismiss();

@@ -51,6 +51,19 @@ interface GeoJsonProperties {
   photos: string[];
   createdAt?: string;
   updatedAt?: string;
+  status?: 'draft' | 'pending';
+}
+
+/**
+ * Define la estructura de los datos que se mostrarán en la lista de registros.
+ */
+export interface SavedRecordSummary {
+  key: string;
+  name: string;
+  type: string;
+  icon: string;
+  createdAt: string;
+  thumbnail?: string;
 }
 
 @Injectable({
@@ -149,7 +162,6 @@ export class RegisterDataService {
   }
 
   private async syncPendingProductorData() {
-    console.log('Iniciando proceso de sincronización de registros pendientes...');
     const { keys } = await Preferences.keys();
     const recordKeys = keys.filter(k => k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_'));
     let syncedCount = 0;
@@ -164,7 +176,6 @@ export class RegisterDataService {
 
         // Condición: El registro está marcado como pendiente de sincronización.
         if (properties && (properties as any).syncStatus === 'pending') {
-          console.log(`Registro ${key} con DNI ${properties.dni} necesita sincronización.`);
           const fetchedData = await this.fetchProductorDataForSync(properties.dni);
 
           if (fetchedData) {
@@ -175,7 +186,6 @@ export class RegisterDataService {
             delete (properties as any).syncStatus; // Elimina el flag de pendiente
             await Preferences.set({ key, value: JSON.stringify(geojson) });
             syncedCount++;
-            console.log(`Registro ${key} sincronizado y guardado.`);
 
             // Si el usuario está viendo este registro, actualizamos la UI en tiempo real
             if (this._editKey.getValue() === key) {
@@ -184,14 +194,11 @@ export class RegisterDataService {
           }
         }
       } catch (error) {
-        console.error(`Error procesando la sincronización para la clave ${key}:`, error);
       }
     }
 
     if (syncedCount > 0) {
       await this.showToast(`${syncedCount} registro(s) ha(n) sido sincronizado(s) con éxito.`, 'success');
-    } else {
-      console.log('No hay registros pendientes de sincronización.');
     }
   }
 
@@ -201,7 +208,6 @@ export class RegisterDataService {
     if (key) {
       // MODO EDICIÓN
       this._editKey.next(key);
-      console.log('Modo edición por URL. Clave:', key);
       const { value } = await Preferences.get({ key });
       if (value) {
         const geojson = JSON.parse(value);
@@ -215,7 +221,6 @@ export class RegisterDataService {
           }
         }
       } else {
-        console.error('No se encontró el polígono para la clave:', key);
         await this.showToast('Error: No se pudo cargar el polígono para editar.', 'danger');
         this.navCtrl.navigateBack('/mapa');
       }
@@ -224,9 +229,7 @@ export class RegisterDataService {
       const geojson = navigationState.geojson;
       this._geojson.next(geojson);
       this.calculateGeometryData();
-      console.log('Modo creación de nuevo polígono.');
     } else {
-      console.warn('Página de registro abierta sin GeoJSON para crear o clave para editar.');
     }
   }
 
@@ -344,7 +347,6 @@ export class RegisterDataService {
           reniecSuccess = true;
         }
       } catch (err: any) {
-        console.error('Error al consultar RENIEC:', err.message || err);
       }
 
       try {
@@ -369,7 +371,6 @@ export class RegisterDataService {
           midagriSuccess = true;
         }
       } catch (midagriError: any) {
-        console.error('Error al consultar MIDAGRI:', midagriError.message || midagriError);
       }
 
       let toastMessage = '';
@@ -438,7 +439,6 @@ export class RegisterDataService {
         reniecSuccess = true;
       }
     } catch (err) {
-      console.error(`Sync Error (RENIEC) for DNI ${dni}:`, err);
     }
 
     try {
@@ -461,7 +461,6 @@ export class RegisterDataService {
         midagriSuccess = true;
       }
     } catch (err) {
-      console.error(`Sync Error (MIDAGRI) for DNI ${dni}:`, err);
     }
 
     if (!reniecSuccess) {
@@ -522,7 +521,6 @@ export class RegisterDataService {
 
     const geojson = this._geojson.getValue();
     if (!geojson) {
-      console.error('No hay GeoJSON para guardar.');
       return;
     }
 
@@ -577,6 +575,13 @@ export class RegisterDataService {
       (newProperties as any).syncStatus = 'pending';
     }
 
+    // Si estamos editando un borrador, eliminamos el estado 'draft' al guardar los datos completos.
+    if (newProperties.status === 'draft') {
+      delete newProperties.status;
+    }
+
+
+
     if (isEditing) {
       newProperties.updatedAt = new Date().toISOString();
     } else {
@@ -591,6 +596,103 @@ export class RegisterDataService {
       'success'
     );
     this.navCtrl.navigateBack('/mapa');
+  }
+
+  /**
+   * Obtiene todos los registros guardados y los devuelve ordenados por fecha de creación, del más nuevo al más antiguo.
+   */
+  public async getSortedSavedRecords(): Promise<SavedRecordSummary[]> {
+    const { keys } = await Preferences.keys();
+    const recordKeys = keys.filter(k =>
+      k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_')
+    );
+
+    // Ordenamos las claves por el timestamp que contienen, en orden descendente.
+    recordKeys.sort((a, b) => {
+      const timeA = parseInt(a.split('_')[1] || '0', 10);
+      const timeB = parseInt(b.split('_')[1] || '0', 10);
+      return timeB - timeA; // El más grande (reciente) primero
+    });
+
+    const records: SavedRecordSummary[] = [];
+    for (const key of recordKeys) {
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        try {
+          const geojson = JSON.parse(value);
+          const props = geojson.properties || {};
+          const geometryType = geojson.geometry?.type || 'Unknown';
+
+          let thumbnailUrl: string | undefined = undefined;
+          if (props.photos && props.photos.length > 0) {
+            thumbnailUrl = Capacitor.convertFileSrc(props.photos[0]);
+          }
+
+          records.push({
+            key: key,
+            name: props.name || 'Registro sin nombre',
+            type: geometryType,
+            icon: this.getIconForType(geometryType),
+            createdAt: props.createdAt ? new Date(props.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible',
+            thumbnail: thumbnailUrl
+          });
+        } catch (e) {
+        }
+      }
+    }
+    return records;
+  }
+
+  /**
+   * Devuelve el nombre del ícono correspondiente al tipo de geometría.
+   * @param type El tipo de geometría (e.g., 'Polygon', 'Point').
+   */
+  private getIconForType(type: string): string {
+    if (type.includes('Polygon')) return 'shapes-outline';
+    if (type.includes('LineString')) return 'analytics-outline';
+    if (type.includes('Point')) return 'location-outline';
+    return 'help-circle-outline';
+  }
+
+  /**
+   * Elimina un registro guardado de Preferences.
+   * @param key La clave del registro a eliminar.
+   */
+  public async deleteRecord(key: string): Promise<void> {
+    // Por ahora, solo elimina de Preferences.
+    // En el futuro, podría necesitar eliminar fotos asociadas del sistema de archivos.
+    const { value } = await Preferences.get({ key });
+    // Aquí iría la lógica para eliminar las fotos del filesystem si es necesario.
+    await Preferences.remove({ key });
+  }
+
+  /**
+   * Guarda una geometría como un borrador inmediatamente después de ser creada en el mapa
+   * y navega a la página de registro para completar los datos.
+   * @param geojson El objeto GeoJSON de la nueva geometría.
+   */
+  public async createDraftAndNavigate(geojson: any) {
+    if (!geojson || !geojson.geometry) {
+      await this.showToast('Error al crear la geometría. Inténtalo de nuevo.', 'danger');
+      return;
+    }
+
+    const geometryType = geojson.geometry.type.toLowerCase();
+    let keyPrefix = 'polygon';
+    if (geometryType.includes('point')) keyPrefix = 'point';
+    else if (geometryType.includes('linestring')) keyPrefix = 'linestring';
+
+    const key = `${keyPrefix}_${new Date().getTime()}`;
+
+    // Asignamos propiedades mínimas para el borrador
+    geojson.properties = {
+      name: 'NUEVO REGISTRO (PENDIENTE)',
+      createdAt: new Date().toISOString(),
+      status: 'draft', // Marcamos como borrador
+    };
+
+    await Preferences.set({ key, value: JSON.stringify(geojson) });
+    this.navCtrl.navigateForward(`/mapa/registerdata/${key}`);
   }
 
   /**
@@ -689,7 +791,6 @@ export class RegisterDataService {
         });
         await this.showToast('Copia de la foto guardada en la galería.', 'success');
       } catch (publicSaveError: any) {
-        console.error('Error al guardar en almacenamiento público:', publicSaveError.message);
       }
 
       const currentSavedUris = this._savedPhotoUris.getValue();
@@ -699,7 +800,6 @@ export class RegisterDataService {
 
     } catch (error: any) {
       const rawErrorMessage = error.message || JSON.stringify(error);
-      console.error('Error al tomar la foto:', rawErrorMessage);
 
       let displayMessage = `Error: ${rawErrorMessage}`; // Mensaje por defecto
       if (rawErrorMessage.toLowerCase().includes('could not obtain location in time')) {
@@ -726,7 +826,6 @@ export class RegisterDataService {
             try {
               await Filesystem.deleteFile({ path: uriToDelete });
             } catch (e) {
-              console.warn('No se pudo eliminar el archivo:', uriToDelete, e);
             }
             uris.splice(index, 1);
             displayPhotos.splice(index, 1);
@@ -774,7 +873,6 @@ export class RegisterDataService {
           // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
           await Filesystem.deleteFile({ path: existingUri });
         } catch (e) {
-          console.warn('No se pudo eliminar el archivo DNI anterior:', existingUri, e);
         }
       }
 
@@ -795,7 +893,6 @@ export class RegisterDataService {
         });
         // No mostramos un toast aquí para no ser repetitivos con el de las otras fotos.
       } catch (publicSaveError: any) {
-        console.error(`Error al guardar copia pública del DNI (${side}):`, publicSaveError.message);
       }
 
       // Actualizamos el estado del formulario con el URI completo y correcto
@@ -809,10 +906,8 @@ export class RegisterDataService {
     } catch (error: any) {
       const errorMessage = error.message || JSON.stringify(error);
       if (errorMessage.toLowerCase().includes('user cancelled')) {
-        console.log('Cámara cancelada por el usuario.');
         return; // No mostrar error si el usuario cancela
       }
-      console.error('Error al tomar la foto del DNI:', errorMessage);
       await this.showToast(`Error: ${errorMessage}`, 'danger', 5000);
     } finally {
       await loading.dismiss();
@@ -828,7 +923,6 @@ export class RegisterDataService {
         // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
         await Filesystem.deleteFile({ path: uriToDelete });
       } catch (e) {
-        console.warn('No se pudo eliminar el archivo DNI:', uriToDelete, e);
       }
 
       if (side === 'front') {
@@ -919,7 +1013,6 @@ export class RegisterDataService {
     // Si ya existen datos de ubicación, no volvemos a buscarlos para evitar el toast.
     const existingData = this._formData.getValue();
     if (existingData.ubigeo_departamento || existingData.ubigeo_provincia || existingData.ubigeo_distrito) {
-      console.log('Datos de ubicación ya existen, se omite la búsqueda automática.');
       return;
     }
 
@@ -941,7 +1034,6 @@ export class RegisterDataService {
         const center = L.polygon(latlngs).getBounds().getCenter();
         point = { x: center.lng, y: center.lat };
       } else {
-        console.warn('Tipo de geometría no soportado para autocompletar ubigeo:', geometry.type);
         return;
       }
     }
@@ -1005,7 +1097,6 @@ export class RegisterDataService {
       }
 
     } catch (error: any) {
-      console.error('Error al autocompletar ubicación:', error);
       await this.showToast(`No se pudo autocompletar la ubicación: ${error.message || 'Error de red'}`, 'warning');
     }
   }
@@ -1072,7 +1163,6 @@ export class RegisterDataService {
     // La fecha de ion-datetime viene en formato ISO 8601 (ej: "2006-01-01T00:00:00")
     const birthDate = new Date(birthDateString);
     if (isNaN(birthDate.getTime())) {
-      console.error('Fecha de nacimiento inválida:', birthDateString);
       return false;
     }
 

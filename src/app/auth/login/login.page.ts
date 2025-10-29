@@ -70,14 +70,11 @@ export class LoginPage {
 
       // Comprobamos si el resultado tiene la propiedad 'offlineSuccess'
       if (result && 'offlineSuccess' in result) {
-        console.log('Login offline exitoso');
         this.router.navigateByUrl('/mapa', { replaceUrl: true });
       } else {
-        console.log('Login online exitoso:', result);
         this.router.navigateByUrl('/mapa', { replaceUrl: true });
       }
     } catch (error: any) {
-      console.error('Error en el login:', error);
       this.showToast(error.message);
     } finally {
       loading.dismiss();

@@ -1,5 +1,5 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button [defaultHref]="isProfileRegistered ? '/mapa' : '/login'"></ion-back-button>
     </ion-buttons>
@@ -96,8 +96,8 @@
             class="ion-margin-top"
             expand="block"
             type="submit"
-            color="primary"
             [disabled]="profileForm.invalid"
+            color="primary"
           >
             Guardar Perfil
           </ion-button>
@@ -108,7 +108,7 @@
             class="ion-margin-top"
             expand="block"
             (click)="goToMap()"
-            color="secondary">
+            color="primary">
             Volver al Mapa
           </ion-button>
         </form>

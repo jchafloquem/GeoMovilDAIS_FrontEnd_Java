@@ -95,7 +95,6 @@ export class ProductorTabPage {
   async checkAndProceed() {
     const validation = this.registerDataService.isProductorTabValid();
     if (validation.isValid) {
-      console.log('Datos del productor válidos para guardar offline.');
       // Aquí iría la lógica para pasar a la siguiente pestaña o guardar.
     } else {
       // Usamos un toast para notificar del primer campo faltante de forma menos intrusiva.

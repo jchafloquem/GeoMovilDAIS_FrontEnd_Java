@@ -34,13 +34,10 @@ export class AuthService {
         // Guardamos las credenciales y el rol en el dispositivo después de un login exitoso
         const credentialsToStore = { email, password, role };
         await Preferences.set({ key: CREDENTIALS_KEY, value: JSON.stringify(credentialsToStore) });
-        console.log('MODO ONLINE: Credenciales y rol guardados en el dispositivo.', credentialsToStore);
         return credential;
       } catch (error: any) {
-        console.error('Error de inicio de sesión en línea:', error);
         // Si falla el login online, por si acaso, limpiamos credenciales viejas
         await Preferences.remove({ key: CREDENTIALS_KEY });
-        console.log('MODO ONLINE: Credenciales locales eliminadas por fallo en login.');
         // Personalizamos el mensaje de error para credenciales inválidas
         if (error.code === 'auth/invalid-credential') {
           throw new Error('El correo o la contraseña son incorrectos. Por favor, verifica tus datos.');
@@ -50,21 +47,15 @@ export class AuthService {
       }
     } else {
       // --- MODO OFFLINE ---
-      console.log('MODO OFFLINE: Intentando iniciar sesión sin conexión.');
       const { value } = await Preferences.get({ key: CREDENTIALS_KEY });
       if (!value) {
-        console.error('MODO OFFLINE: No se encontraron credenciales guardadas.');
         throw new Error('No hay credenciales guardadas. Necesitas iniciar sesión una vez con conexión a internet.');
       }
 
       const storedCredentials = JSON.parse(value);
-      console.log('MODO OFFLINE: Comparando credenciales ingresadas con las guardadas:', { email, password }, storedCredentials);
       if (storedCredentials.email === email && storedCredentials.password === password) {
-        console.log('Inicio de sesión sin conexión exitoso.');
-        // Devolvemos un objeto especial para indicar que el login offline fue correcto
         return { offlineSuccess: true };
       } else {
-        console.error('MODO OFFLINE: Las credenciales no coinciden.');
         throw new Error('El correo o la contraseña son incorrectos. Por favor, verifica tus datos.');
       }
     }
@@ -73,7 +64,6 @@ export class AuthService {
   async logout() {
     // Primero, eliminamos las credenciales locales para invalidar el login offline
     await Preferences.remove({ key: CREDENTIALS_KEY });
-    console.log('LOGOUT: Credenciales locales eliminadas.');
 
     // Luego, cerramos la sesión de Firebase.
     // Esto no da error si se ejecuta sin conexión.
