@@ -79,47 +79,4 @@ export class ApiService {
       throw new Error(`Error al consultar MIDAGRI: ${error.message || 'Error desconocido'}`); // Propagar el error
     }
   }
-
-  async enviarGeoJsonPorSendGrid(destinatario: string, asunto: string, cuerpo: string, geojsonObject: any, nombreArchivo: string): Promise<boolean> {
-    // IMPORTANTE: Reemplaza esto con tu API Key de SendGrid.
-    // Para producción, es mejor guardar esto en las variables de entorno.
-    const sendgridApiKey = 'TU_API_KEY_DE_SENDGRID';
-
-    // La API de SendGrid requiere que el contenido del archivo esté en formato Base64.
-    const geojsonString = JSON.stringify(geojsonObject);
-    const geojsonBase64 = btoa(geojsonString); // btoa() convierte un string a Base64
-
-    const options = {
-      url: 'https://api.sendgrid.com/v3/mail/send',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sendgridApiKey}`
-      },
-      data: {
-        personalizations: [{ to: [{ email: destinatario }] }],
-        from: { email: 'tu-email-verificado@dominio.com' }, // ¡Usa tu email verificado en SendGrid!
-        subject: asunto,
-        content: [{ type: 'text/plain', value: cuerpo }],
-        attachments: [{
-          content: geojsonBase64,
-          filename: nombreArchivo,
-          type: 'application/json',
-          disposition: 'attachment'
-        }]
-      }
-    };
-
-    try {
-      const response: HttpResponse = await CapacitorHttp.post(options);
-      // SendGrid devuelve 202 Accepted si la petición fue aceptada para envío.
-      if (response.status === 202) {
-        return true;
-      } else {
-        // Si el estado no es 202, algo salió mal. Logueamos la respuesta de SendGrid.
-        return false;
-      }
-    } catch (error) {
-      return false;
-    }
-  }
 }

@@ -89,7 +89,8 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "app:build:production"
+              "buildTarget": "GeoMovilDAIS:build:development",
+              "hmr": false
             },
             "development": {
               "buildTarget": "app:build:development"

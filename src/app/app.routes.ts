@@ -18,10 +18,6 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/pages/skyplot/skyplot.page').then( m => m.SkyplotPage)
   },
   {
-    path: 'send-email',
-    loadComponent: () => import('./mapa/pages/send-email/send-email.page').then( m => m.SendEmailPage)
-  },
-  {
     path: 'about',
     loadComponent: () => import('./mapa/pages/about/about.page').then( m => m.AboutPage)
   },
