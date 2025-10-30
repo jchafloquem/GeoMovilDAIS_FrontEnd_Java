@@ -1,0 +1,8 @@
+<div class="legend-container" *ngIf="legendData">
+  <h6>Estado de los registros</h6>
+  <div *ngFor="let item of legendItems" class="legend-item">
+    <i [style.background]="item.color"></i>
+    <span>{{ item.label }}</span>
+    <span class="count">({{ legendData[item.key] }})</span>
+  </div>
+</div>

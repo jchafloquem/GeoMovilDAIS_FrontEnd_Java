@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa/mapa.page').then( m => m.MapaPage)
   },
   {
+    path: 'legend',
+    loadComponent: () => import('./mapa/pages/legend/legend.page').then( m => m.LegendPage)
+  },
+  {
     path: 'skyplot',
     loadComponent: () => import('./mapa/pages/skyplot/skyplot.page').then( m => m.SkyplotPage)
   },

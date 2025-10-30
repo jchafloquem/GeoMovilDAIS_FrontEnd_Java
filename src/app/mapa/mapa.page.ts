@@ -62,6 +62,8 @@ import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { GpsDataService } from 'src/app/services/gps-data.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { LegendDataService, LegendCounts } from 'src/app/services/legend-data.service';
+import { LegendPage } from './pages/legend/legend.page';
 
 
 // Declara L como una variable global para que TypeScript no se queje.
@@ -127,6 +129,7 @@ const iconGreen = L.icon({
     IonLabel,
     RouterLink,
     IonButton,
+    LegendPage,
 
   ]
 })
@@ -191,7 +194,8 @@ export class MapaPage implements OnDestroy {
     private zone: NgZone,
     private registerDataService: RegisterDataService,
     private gpsDataService: GpsDataService,
-    private authService: AuthService // Inyectamos el AuthService
+    private authService: AuthService, // Inyectamos el AuthService
+    private legendDataService: LegendDataService
   ) {
     addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,mailOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
@@ -730,22 +734,7 @@ export class MapaPage implements OnDestroy {
 
           // Definimos la condición de "incompleto"
           const isDraftOrPending = props.status === 'draft' || props.syncStatus === 'pending';
-          const isDataMissing = !(
-            props.updatedAt &&
-            props.dni &&
-            props.tipo_productor &&
-            props.celular_participante &&
-            props.dni_photo_front &&
-            props.dni_photo_back &&
-            props.tipo_cultivo &&
-            props.fecha_nacimiento &&
-            props.ubigeo_oficina_zonal &&
-            props.ubigeo_departamento &&
-            props.ubigeo_provincia &&
-            props.ubigeo_distrito &&
-            props.photos && props.photos.length >= 2 &&
-            props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
-          );
+          const isDataMissing = this.isRecordIncomplete(props);
 
           if (isDraftOrPending || isDataMissing) {
             const geometryType = geojson.geometry.type;
@@ -909,6 +898,27 @@ export class MapaPage implements OnDestroy {
     }
   }
 
+  private isRecordIncomplete(properties: any): boolean {
+    const props = properties || {};
+    // Un registro se considera incompleto si le faltan datos clave.
+    // La negación (!) al principio invierte el resultado: si todo existe, devuelve false (no incompleto).
+    return !(
+      props.updatedAt &&
+      props.dni &&
+      props.tipo_productor &&
+      props.celular_participante &&
+      props.dni_photo_front &&
+      props.dni_photo_back &&
+      props.tipo_cultivo &&
+      props.fecha_nacimiento &&
+      props.ubigeo_oficina_zonal &&
+      props.ubigeo_departamento &&
+      props.ubigeo_provincia &&
+      props.ubigeo_distrito &&
+      props.photos && props.photos.length >= 2 &&
+      props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
+    );
+  }
   private editGeometryInfo(key: string) {
     if (!key) return;
     // Navegamos a la ruta de edición, pasando la clave como parámetro en la URL.
@@ -920,6 +930,13 @@ export class MapaPage implements OnDestroy {
 
   private async loadSavedGeometries() {
     if (!this.drawnItems) return;
+    this.drawnItems.clearLayers(); // Limpiamos para evitar duplicados al recargar
+
+    const counts: LegendCounts = {
+      complete: 0,
+      pending: 0,
+      draft: 0,
+    };
 
     // 1. Obtener todas las claves de Preferences
     const { keys } = await Preferences.keys();
@@ -931,25 +948,27 @@ export class MapaPage implements OnDestroy {
       if (value) {
         try {
           const geojson = JSON.parse(value);
+          const props = geojson.properties || {};
+          const isDraft = props.status === 'draft';
+          const isPendingSync = props.syncStatus === 'pending';
+          const isDataMissing = this.isRecordIncomplete(props);
+
+          // --- Lógica de conteo centralizada ---
+          if (isDraft) {
+            counts.draft++;
+          } else if (isDataMissing || isPendingSync) {
+            counts.pending++;
+          } else {
+            counts.complete++;
+          }
 
           const geometryLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
               const props = feature.properties || {};
               const isDraft = props.status === 'draft';
               const isPendingSync = props.syncStatus === 'pending';
+              const isDataMissing = this.isRecordIncomplete(props);
               const isPolygon = feature.geometry.type.includes('Polygon');
-
-              // Replicamos la validación detallada de la función de exportar para consistencia.
-              // Un registro está incompleto si le faltan datos, incluso si no es un 'borrador'.
-              const isDataMissing = !(
-                props.updatedAt && props.dni && props.tipo_productor &&
-                props.celular_participante && props.dni_photo_front &&
-                props.dni_photo_back && props.tipo_cultivo &&
-                props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
-                props.ubigeo_departamento && props.ubigeo_provincia &&
-                props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
-                props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
-              );
 
               let color = '#2dd36f'; // Verde (completo) por defecto
 
@@ -979,17 +998,7 @@ export class MapaPage implements OnDestroy {
               const props = feature.properties || {};
               const isDraft = props.status === 'draft';
               const isPendingSync = props.syncStatus === 'pending';
-
-              // Replicamos la validación detallada de la función de exportar para consistencia.
-              const isDataMissing = !(
-                props.updatedAt && props.dni && props.tipo_productor &&
-                props.celular_participante && props.dni_photo_front &&
-                props.dni_photo_back && props.tipo_cultivo &&
-                props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
-                props.ubigeo_departamento && props.ubigeo_provincia &&
-                props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
-                props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
-              );
+              const isDataMissing = this.isRecordIncomplete(props);
 
               let color = '#2dd36f'; // Verde (completo) por defecto
 
@@ -1039,6 +1048,9 @@ export class MapaPage implements OnDestroy {
         }
       }
     }
+
+    // 3. Actualizar el servicio con los conteos finales para que la leyenda los reciba
+    this.legendDataService.updateCounts(counts);
   }
 
   async presentToast(

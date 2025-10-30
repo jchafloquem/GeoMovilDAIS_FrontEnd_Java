@@ -1,0 +1,47 @@
+:host {
+  position: absolute;
+  bottom: 175px; /* Ajustar para que esté sobre la escala y el panel GPS */
+  left: 8px;
+  z-index: 2002; /* Por encima de la escala y el panel GPS */
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.legend-container {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  color: #333;
+}
+
+h6 {
+  margin: 0 0 8px;
+  font-size: 10px;
+  text-align: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  font-size: 9px;
+  line-height: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  i {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+
+  .count {
+    margin-left: auto;
+    padding-left: 8px;
+    font-weight: bold;
+  }
+}
