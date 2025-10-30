@@ -64,6 +64,7 @@ export interface SavedRecordSummary {
   icon: string;
   createdAt: string;
   thumbnail?: string;
+  statusColor: 'danger' | 'warning' | 'success'; // Rojo, Ambar, Verde
 }
 
 @Injectable({
@@ -291,9 +292,6 @@ export class RegisterDataService {
     currentData.datum = properties.datum || 'WGS-84';
     currentData.observaciones = properties.observaciones || '';
 
-    if (!currentData.nombres && properties.name) {
-      currentData.nombres = properties.name;
-    }
     this._formData.next(currentData);
   }
 
@@ -509,8 +507,16 @@ export class RegisterDataService {
     }
 
     // Campos obligatorios solo si hay conexión a internet
-    if (this.isOnline && !formData.nombres) {
-      missingFields.push('Nombres del productor');
+    if (this.isOnline) {
+      if (!formData.nombres || formData.nombres === 'PENDIENTE' || formData.nombres === 'NO ENCONTRADO') {
+        missingFields.push('Nombres del productor (búsqueda por DNI)');
+      }
+      // Añadimos la validación de los datos de ubicación que se autocompletan.
+      // Si estos datos faltan, el usuario debe esperar a que terminen de cargar.
+      if (!formData.ubigeo_oficina_zonal) missingFields.push('Oficina Zonal (espere autocompletado)');
+      if (!formData.ubigeo_departamento) missingFields.push('Departamento (espere autocompletado)');
+      if (!formData.ubigeo_provincia) missingFields.push('Provincia (espere autocompletado)');
+      if (!formData.ubigeo_distrito) missingFields.push('Distrito (espere autocompletado)');
     }
 
     if (missingFields.length > 0) {
@@ -566,20 +572,25 @@ export class RegisterDataService {
       photos: this._savedPhotoUris.getValue(),
     };
 
-    // Si estamos offline y los nombres están vacíos, es un registro pendiente.
-    if (!this.isOnline && !formData.nombres) {
-      newProperties.name = 'PENDIENTE DE SINCRONIZACIÓN';
-      newProperties.nombres = 'PENDIENTE';
-      newProperties.apellido_paterno = '';
-      newProperties.apellido_materno = '';
-      (newProperties as any).syncStatus = 'pending';
-    }
-
     // Si estamos editando un borrador, eliminamos el estado 'draft' al guardar los datos completos.
     if (newProperties.status === 'draft') {
       delete newProperties.status;
     }
 
+    // Lógica de estado (Pendiente vs Completo) basada únicamente en la conexión
+    if (!this.isOnline) {
+      // Si guardamos sin conexión, SIEMPRE es un registro pendiente de sincronización.
+      (newProperties as any).syncStatus = 'pending';
+      newProperties.name = `PENDIENTE (DNI: ${formData.dni || 'S/N'})`;
+      // Forzamos los campos de nombres a un estado pendiente para la sincronización, ignorando la entrada manual.
+      newProperties.nombres = 'PENDIENTE';
+      newProperties.apellido_paterno = '';
+      newProperties.apellido_materno = '';
+    } else {
+      // Si guardamos con conexión, nos aseguramos de que el registro no esté marcado como pendiente.
+      // Esto es crucial al editar un registro que estaba pendiente y ahora se completa online.
+      delete (newProperties as any).syncStatus;
+    }
 
 
     if (isEditing) {
@@ -602,45 +613,86 @@ export class RegisterDataService {
    * Obtiene todos los registros guardados y los devuelve ordenados por fecha de creación, del más nuevo al más antiguo.
    */
   public async getSortedSavedRecords(): Promise<SavedRecordSummary[]> {
+    // 1. Obtener todas las claves de registros.
     const { keys } = await Preferences.keys();
     const recordKeys = keys.filter(k =>
       k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_')
     );
 
-    // Ordenamos las claves por el timestamp que contienen, en orden descendente.
-    recordKeys.sort((a, b) => {
-      const timeA = parseInt(a.split('_')[1] || '0', 10);
-      const timeB = parseInt(b.split('_')[1] || '0', 10);
-      return timeB - timeA; // El más grande (reciente) primero
-    });
-
-    const records: SavedRecordSummary[] = [];
+    // 2. Cargar todos los registros en un array intermedio para poder ordenarlos por sus propiedades.
+    const allRecords: { key: string, geojson: any }[] = [];
     for (const key of recordKeys) {
       const { value } = await Preferences.get({ key });
       if (value) {
         try {
           const geojson = JSON.parse(value);
-          const props = geojson.properties || {};
-          const geometryType = geojson.geometry?.type || 'Unknown';
-
-          let thumbnailUrl: string | undefined = undefined;
-          if (props.photos && props.photos.length > 0) {
-            thumbnailUrl = Capacitor.convertFileSrc(props.photos[0]);
-          }
-
-          records.push({
-            key: key,
-            name: props.name || 'Registro sin nombre',
-            type: geometryType,
-            icon: this.getIconForType(geometryType),
-            createdAt: props.createdAt ? new Date(props.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible',
-            thumbnail: thumbnailUrl
-          });
+          allRecords.push({ key, geojson });
         } catch (e) {
         }
       }
     }
-    return records;
+
+    // 3. Ordenar el array con la nueva lógica de prioridad.
+    allRecords.sort((a, b) => {
+      const propsA = a.geojson.properties || {};
+      const propsB = b.geojson.properties || {};
+
+      const isA_Incomplete = propsA.status === 'draft' || propsA.syncStatus === 'pending';
+      const isB_Incomplete = propsB.status === 'draft' || propsB.syncStatus === 'pending';
+
+      // Asignar un "score" de prioridad: 0 para incompletos, 1 para completos.
+      const scoreA = isA_Incomplete ? 0 : 1;
+      const scoreB = isB_Incomplete ? 0 : 1;
+
+      // Primero, ordenar por estado (incompletos primero).
+      if (scoreA !== scoreB) {
+        return scoreA - scoreB;
+      }
+
+      // Si el estado es el mismo, ordenar por fecha (el más nuevo primero).
+      const timeA = parseInt(a.key.split('_')[1] || '0', 10);
+      const timeB = parseInt(b.key.split('_')[1] || '0', 10);
+      return timeB - timeA;
+    });
+
+    // 4. Mapear los registros ya ordenados al formato final que necesita la vista.
+    return allRecords.map(record => {
+      const props = record.geojson.properties || {};
+      const geometryType = record.geojson.geometry?.type || 'Unknown';
+      const thumbnailUrl = (props.photos && props.photos.length > 0) ? Capacitor.convertFileSrc(props.photos[0]) : undefined;
+
+      // --- Lógica para determinar el color del estado ---
+      let statusColor: 'danger' | 'warning' | 'success' = 'success'; // Verde por defecto
+      const isDraft = props.status === 'draft';
+      const isPendingSync = props.syncStatus === 'pending';
+      // Replicamos la validación detallada para consistencia visual en la lista.
+      const isDataMissing = !(
+        props.updatedAt && props.dni && props.tipo_productor &&
+        props.celular_participante && props.dni_photo_front &&
+        props.dni_photo_back && props.tipo_cultivo &&
+        props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
+        props.ubigeo_departamento && props.ubigeo_provincia &&
+        props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
+        props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
+      );
+
+      if (isDraft) {
+        statusColor = 'danger'; // Rojo
+      } else if (isPendingSync || isDataMissing) {
+        statusColor = 'warning'; // Ambar
+      }
+      // --- Fin de la lógica de estado ---
+
+      return {
+        key: record.key,
+        name: props.name || 'Registro sin nombre',
+        type: geometryType,
+        icon: this.getIconForType(geometryType),
+        createdAt: props.createdAt ? new Date(props.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible',
+        thumbnail: thumbnailUrl,
+        statusColor: statusColor
+      };
+    });
   }
 
   /**

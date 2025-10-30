@@ -705,6 +705,92 @@ export class MapaPage implements OnDestroy {
   async exportAllGeometries() {
     this.isLoading = true;
     try {
+      // 1. Clasificar todos los registros en 'completos' e 'incompletos' en una sola pasada.
+      const { keys: allKeys } = await Preferences.keys();
+      const geometryKeys = allKeys.filter(key =>
+        key.startsWith('polygon_') ||
+        key.startsWith('point_') ||
+        key.startsWith('linestring_')
+      );
+
+      const completeRecordsToExport: any[] = [];
+      const incompleteCounts = {
+        polygons: 0,
+        lines: 0,
+        points: 0,
+      };
+
+      for (const key of geometryKeys) {
+        const { value } = await Preferences.get({ key });
+        if (!value) continue;
+
+        try {
+          const geojson = JSON.parse(value);
+          const props = geojson.properties || {};
+
+          // Definimos la condición de "incompleto"
+          const isDraftOrPending = props.status === 'draft' || props.syncStatus === 'pending';
+          const isDataMissing = !(
+            props.updatedAt &&
+            props.dni &&
+            props.tipo_productor &&
+            props.celular_participante &&
+            props.dni_photo_front &&
+            props.dni_photo_back &&
+            props.tipo_cultivo &&
+            props.fecha_nacimiento &&
+            props.ubigeo_oficina_zonal &&
+            props.ubigeo_departamento &&
+            props.ubigeo_provincia &&
+            props.ubigeo_distrito &&
+            props.photos && props.photos.length >= 2 &&
+            props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
+          );
+
+          if (isDraftOrPending || isDataMissing) {
+            const geometryType = geojson.geometry.type;
+            if (geometryType.includes('Polygon')) {
+              incompleteCounts.polygons++;
+            } else if (geometryType.includes('LineString')) {
+              incompleteCounts.lines++;
+            } else if (geometryType.includes('Point')) {
+              incompleteCounts.points++;
+            }
+          } else {
+            completeRecordsToExport.push(geojson); // Solo los completos se añaden a la lista de exportación
+          }
+        } catch (e) {
+          // Si un registro no se puede parsear, se considera incompleto y se cuenta por su clave.
+          if (key.startsWith('polygon_')) {
+            incompleteCounts.polygons++;
+          } else if (key.startsWith('linestring_')) {
+            incompleteCounts.lines++;
+          } else if (key.startsWith('point_')) {
+            incompleteCounts.points++;
+          }
+        }
+      }
+
+      // 2. Si hay incompletos, mostrar advertencia y detener.
+      const totalIncomplete = incompleteCounts.polygons + incompleteCounts.lines + incompleteCounts.points;
+      if (totalIncomplete > 0) {
+        const messageParts: string[] = [];
+        if (incompleteCounts.polygons > 0) messageParts.push(`${incompleteCounts.polygons} polígono(s)`);
+        if (incompleteCounts.lines > 0) messageParts.push(`${incompleteCounts.lines} línea(s)`);
+        if (incompleteCounts.points > 0) messageParts.push(`${incompleteCounts.points} punto(s)`);
+
+        const detailMessage = messageParts.join(', ');
+        this.presentToast(`Tiene geometrías por completar (${detailMessage}). Solo se pueden exportar registros completos (verdes).`, 'warning', 'middle');
+        return;
+      }
+
+      // 3. Si no hay registros completos para exportar, informar y detener.
+      if (completeRecordsToExport.length === 0) {
+        this.presentToast('No hay geometrías completas para exportar.', 'warning', 'middle');
+        return;
+      }
+
+      // 4. Proceder con la exportación usando SOLO la lista de registros completos.
       // Cargar los datos del profesional para incluirlos en la exportación
       const { value: profileValue } = await Preferences.get({ key: 'userProfile' });
       let professionalProfile = null;
@@ -715,18 +801,6 @@ export class MapaPage implements OnDestroy {
       // Obtener el identificador único del dispositivo
       const deviceId = await Device.getId();
 
-      const { keys } = await Preferences.keys();
-      const geometryKeys = keys.filter(key =>
-        key.startsWith('polygon_') ||
-        key.startsWith('point_') ||
-        key.startsWith('linestring_')
-      );
-
-      if (geometryKeys.length === 0) {
-        this.presentToast('No hay geometrías para exportar.', 'warning', 'middle');
-        return;
-      }
-
       // Objeto para agrupar las geometrías por tipo
       const geometriesByType = {
         polygons: [] as any[],
@@ -734,11 +808,8 @@ export class MapaPage implements OnDestroy {
         points: [] as any[]
       };
 
-      for (const key of geometryKeys) {
-        const { value } = await Preferences.get({ key });
-        if (value) {
-          // Parsear el GeoJSON para modificarlo
-          const geojson = JSON.parse(value);
+      for (const geojson of completeRecordsToExport) {
+        if (geojson) {
           const geometryType = geojson.geometry.type;
 
           // Añadir los datos del profesional si existen
@@ -868,12 +939,24 @@ export class MapaPage implements OnDestroy {
               const isPendingSync = props.syncStatus === 'pending';
               const isPolygon = feature.geometry.type.includes('Polygon');
 
+              // Replicamos la validación detallada de la función de exportar para consistencia.
+              // Un registro está incompleto si le faltan datos, incluso si no es un 'borrador'.
+              const isDataMissing = !(
+                props.updatedAt && props.dni && props.tipo_productor &&
+                props.celular_participante && props.dni_photo_front &&
+                props.dni_photo_back && props.tipo_cultivo &&
+                props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
+                props.ubigeo_departamento && props.ubigeo_provincia &&
+                props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
+                props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
+              );
+
               let color = '#2dd36f'; // Verde (completo) por defecto
 
               if (isDraft) {
                 color = '#eb445a'; // Rojo (borrador, solo geometría)
-              } else if (isPendingSync) {
-                color = '#ffc409'; // Ambar (pendiente de sincronización)
+              } else if (isPendingSync || isDataMissing) {
+                color = '#ffc409'; // Ambar (pendiente de sincronización o con datos faltantes)
               }
 
               if (isPolygon) {
@@ -897,11 +980,22 @@ export class MapaPage implements OnDestroy {
               const isDraft = props.status === 'draft';
               const isPendingSync = props.syncStatus === 'pending';
 
+              // Replicamos la validación detallada de la función de exportar para consistencia.
+              const isDataMissing = !(
+                props.updatedAt && props.dni && props.tipo_productor &&
+                props.celular_participante && props.dni_photo_front &&
+                props.dni_photo_back && props.tipo_cultivo &&
+                props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
+                props.ubigeo_departamento && props.ubigeo_provincia &&
+                props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
+                props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
+              );
+
               let color = '#2dd36f'; // Verde (completo) por defecto
 
               if (isDraft) {
                 color = '#eb445a'; // Rojo (borrador)
-              } else if (isPendingSync) {
+              } else if (isPendingSync || isDataMissing) {
                 color = '#ffc409'; // Ambar (pendiente)
               }
 
