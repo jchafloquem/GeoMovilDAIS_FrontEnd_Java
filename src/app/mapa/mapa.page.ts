@@ -1053,6 +1053,48 @@ export class MapaPage implements OnDestroy {
     this.legendDataService.updateCounts(counts);
   }
 
+  private async startLocationWatch() {
+    try {
+      this.locationWatchId = await Geolocation.watchPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }, (position, err) => {
+        if (err) {
+          return;
+        }
+        if (position) {
+          // --- FILTRO DE PRECISIÓN ---
+          // Si la precisión horizontal es mayor a 20 metros, ignoramos esta lectura.
+          // Puedes ajustar este valor según tus necesidades.
+          if (position.coords.accuracy > 20) {
+            return;
+          }
+
+          const { latitude, longitude, altitude, accuracy, altitudeAccuracy, speed } = position.coords;
+
+          this.gpsData = {
+            lat: latitude ? parseFloat(latitude.toFixed(4)) : 0,
+            lng: longitude ? parseFloat(longitude.toFixed(4)) : 0,
+            alt: altitude ? parseFloat(altitude.toFixed(4)) : 0,
+            vel: speed ? parseFloat(speed.toFixed(2)) : 0,
+            accH: accuracy ? parseFloat(accuracy.toFixed(4)) : 0,
+            accV: altitudeAccuracy ? parseFloat(altitudeAccuracy.toFixed(2)) : 0,
+          };
+
+          // Enviamos los datos actualizados al servicio compartido
+          this.gpsDataService.updateGpsData(this.gpsData);
+
+          // Si los marcadores existen, actualizamos su posición
+          if (this.userCircle && this.pulseCircle) {
+            const newLatLng = L.latLng(latitude, longitude);
+            this.userCircle.setLatLng(newLatLng);
+            this.pulseCircle.setLatLng(newLatLng);
+          }
+        }
+      });
+    } catch (error) {
+    }
+  }
   async presentToast(
     message: string,
     color: 'success' | 'warning' | 'danger' | 'primary' | 'medium',
@@ -1120,48 +1162,7 @@ export class MapaPage implements OnDestroy {
     }
   }
 
-  private async startLocationWatch() {
-    try {
-      this.locationWatchId = await Geolocation.watchPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }, (position, err) => {
-        if (err) {
-          return;
-        }
-        if (position) {
-          // --- FILTRO DE PRECISIÓN ---
-          // Si la precisión horizontal es mayor a 20 metros, ignoramos esta lectura.
-          // Puedes ajustar este valor según tus necesidades.
-          if (position.coords.accuracy > 20) {
-            return;
-          }
 
-          const { latitude, longitude, altitude, accuracy, altitudeAccuracy, speed } = position.coords;
-
-          this.gpsData = {
-            lat: latitude ? parseFloat(latitude.toFixed(4)) : 0,
-            lng: longitude ? parseFloat(longitude.toFixed(4)) : 0,
-            alt: altitude ? parseFloat(altitude.toFixed(4)) : 0,
-            vel: speed ? parseFloat(speed.toFixed(2)) : 0,
-            accH: accuracy ? parseFloat(accuracy.toFixed(4)) : 0,
-            accV: altitudeAccuracy ? parseFloat(altitudeAccuracy.toFixed(2)) : 0,
-          };
-
-          // Enviamos los datos actualizados al servicio compartido
-          this.gpsDataService.updateGpsData(this.gpsData);
-
-          // Si los marcadores existen, actualizamos su posición
-          if (this.userCircle && this.pulseCircle) {
-            const newLatLng = L.latLng(latitude, longitude);
-            this.userCircle.setLatLng(newLatLng);
-            this.pulseCircle.setLatLng(newLatLng);
-          }
-        }
-      });
-    } catch (error) {
-    }
-  }
 
   private initMap(): void {
     const map = L.map('map', {
