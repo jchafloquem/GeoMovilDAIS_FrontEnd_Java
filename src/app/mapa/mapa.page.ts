@@ -863,46 +863,56 @@ export class MapaPage implements OnDestroy {
 
           const geometryLayer = L.geoJSON(geojson, {
             style: (feature: any) => {
-              const isDraft = feature.properties?.status === 'draft';
-              const isPolygon = feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon';
-              const isLine = feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+              const props = feature.properties || {};
+              const isDraft = props.status === 'draft';
+              const isPendingSync = props.syncStatus === 'pending';
+              const isPolygon = feature.geometry.type.includes('Polygon');
 
-              // Prioridad 1: Si es un borrador, siempre verde.
+              let color = '#2dd36f'; // Verde (completo) por defecto
+
               if (isDraft) {
-                return {
-                  color: '#2dd36f', // Verde iónico 'success'
-                  weight: 3,
-                  opacity: 0.8,
-                  fillColor: '#2dd36f',
-                  fillOpacity: 0.3
-                };
+                color = '#eb445a'; // Rojo (borrador, solo geometría)
+              } else if (isPendingSync) {
+                color = '#ffc409'; // Ambar (pendiente de sincronización)
               }
 
-              // Prioridad 2: Si está en modo edición (y no es borrador), amarillo.
               if (isPolygon) {
                 return {
-                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7',
+                  color: color,
                   weight: 3,
-                  opacity: 0.7,
-                  fillColor: this.isEditingMode ? '#ffc409' : '#0D9BD7',
-                  fillOpacity: this.isEditingMode ? 0.4 : 0.2
+                  opacity: 0.8,
+                  fillColor: color,
+                  fillOpacity: 0.3
                 };
-              }
-
-              if (isLine) {
+              } else { // Para LineString
                 return {
-                  color: this.isEditingMode ? '#ffc409' : '#0D9BD7',
+                  color: color,
                   weight: 3,
                   opacity: 0.7
                 };
               }
-              return {}; // Estilo por defecto para otros tipos
             },
             pointToLayer: (feature: any, latlng: any) => {
-              const isDraft = feature.properties?.status === 'draft';
-              // Verde para borradores, amarillo para edición, azul por defecto.
-              const iconToUse = isDraft ? iconGreen : (this.isEditingMode ? iconYellow : iconDefault);
-              return L.marker(latlng, { icon: iconToUse });
+              const props = feature.properties || {};
+              const isDraft = props.status === 'draft';
+              const isPendingSync = props.syncStatus === 'pending';
+
+              let color = '#2dd36f'; // Verde (completo) por defecto
+
+              if (isDraft) {
+                color = '#eb445a'; // Rojo (borrador)
+              } else if (isPendingSync) {
+                color = '#ffc409'; // Ambar (pendiente)
+              }
+
+              return L.circleMarker(latlng, {
+                radius: 8,
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+              });
             },
             onEachFeature: (feature: any, layer: any) => {
               const name = feature.properties?.name || (feature.geometry.type === 'Point' ? 'Punto sin nombre' : 'Polígono sin nombre');
