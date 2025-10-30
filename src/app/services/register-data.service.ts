@@ -849,6 +849,22 @@ export class RegisterDataService {
     await loading.present();
 
     try {
+      const currentFormData = this._formData.getValue();
+      const productorDni = currentFormData.dni;
+      const recordKey = this._editKey.getValue();
+
+      if (!productorDni || productorDni.length !== 8) {
+        await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos antes de tomar la foto.', 'warning');
+        return;
+      }
+
+      if (!recordKey) {
+        // Esto no debería ocurrir en el flujo normal, pero es una salvaguarda.
+        await this.showToast('Error: No se pudo identificar el registro actual. Intente de nuevo.', 'danger');
+        return;
+      }
+
+
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -863,10 +879,9 @@ export class RegisterDataService {
         path: image.path
       });
 
-      const fileName = `dni_${side}_${new Date().getTime()}.jpeg`;
+      const fileName = `dni_${side}_${productorDni}_${recordKey}.jpeg`;
 
       // Si ya existe una foto para este lado, la eliminamos primero
-      const currentFormData = this._formData.getValue();
       const existingUri = side === 'front' ? currentFormData.dni_photo_front : currentFormData.dni_photo_back;
       if (existingUri) {
         try {
