@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      "appId": "c2c3015c",
+      "native": {
+        "ios": {
+          "path": "ios"
+        }
+      }
+    }
+  ]
+}
+
