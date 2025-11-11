@@ -1123,7 +1123,7 @@ export class RegisterDataService {
       geometryType: 'esriGeometryPoint',
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
-      outFields: 'OFICINA_ZO',
+      outFields: 'nombre',
       returnGeometry: 'false',
       f: 'json'
     });
@@ -1150,7 +1150,7 @@ export class RegisterDataService {
       // Process Zonal Office Response
       if (zonalResponse.status === 200 && zonalResponse.data && zonalResponse.data.features && zonalResponse.data.features.length > 0) {
         const attributes = zonalResponse.data.features[0].attributes;
-        currentFormData.ubigeo_oficina_zonal = attributes.OFICINA_ZO || 'FUERA DE LA OFICINA ZONAL';
+        currentFormData.ubigeo_oficina_zonal = attributes.nombre || 'FUERA DE LA OFICINA ZONAL';
       } else {
         currentFormData.ubigeo_oficina_zonal = 'FUERA DE LA OFICINA ZONAL';
       }
