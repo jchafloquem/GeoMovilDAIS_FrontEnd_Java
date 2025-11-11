@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "553060227607",
+    "project_id": "geomovildais",
+    "storage_bucket": "geomovildais.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553060227607:android:c4a014d3281bb7ce0cda52",
+        "android_client_info": {
+          "package_name": "com.dais.geomovil"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "553060227607-vgij62eiild74r4vvriub8pl8crjml60.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dais.geomovil",
+            "certificate_hash": "7268190ce6bc5d5621e5b81d0aa6f5dc8b4978d9"
+          }
+        },
+        {
+          "client_id": "553060227607-46u50bu29odqbn10s3kcj1incubilmhr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4Fu6GCGAAIxmP7Zx-5_RpJ1RA5b5U-mQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "553060227607-46u50bu29odqbn10s3kcj1incubilmhr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

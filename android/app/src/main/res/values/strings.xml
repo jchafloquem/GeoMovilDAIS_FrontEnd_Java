@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GeoMovilDAIS</string>
+    <string name="title_activity_main">GeoMovilDAIS</string>
+    <string name="package_name">com.dais.geomovil</string>
+    <string name="custom_url_scheme">com.dais.geomovil</string>
+</resources>
