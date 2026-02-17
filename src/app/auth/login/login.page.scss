@@ -1,6 +1,6 @@
 // Opcional: Darle un fondo a la página para que la tarjeta resalte
 ion-content {
-  --background: url('/assets/img/login.jpg') no-repeat center center / cover;
+  --background: url('/assets/img/login.png') no-repeat center center / cover;
 }
 .login-container {
   display: flex;
@@ -17,7 +17,7 @@ ion-card {
   margin: 0 20px;
 }
 ion-card.rounded-card {
-  --border-radius: 16px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(5px); /* Efecto de desenfoque para lo que está detrás */
   overflow: hidden;

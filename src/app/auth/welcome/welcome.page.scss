@@ -1,0 +1,26 @@
+ion-content {
+  // Mantenemos la protección automática del sistema
+  --ion-safe-area-top: env(safe-area-inset-top);
+
+  .main-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100%;
+
+    /* Calculamos: El espacio de la cámara (notch) + 50px de margen extra.
+       Esto garantiza que en teléfonos con o sin notch, siempre baje 50px
+       desde donde termina la zona prohibida.
+    */
+    padding-top: calc(var(--ion-safe-area-top) + 50px);
+  }
+}
+
+.logo-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    // Quitamos márgenes internos para que el control sea exacto desde el wrapper
+    padding: 0;
+}
