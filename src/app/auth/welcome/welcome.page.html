@@ -1,25 +1,65 @@
 <ion-content [fullscreen]="true" class="ion-padding">
   <div class="main-wrapper">
     <div class="logo-container">
-        <ion-img
-          src="/assets/img/logoapp.png"
-          alt="Logo DEVIDA"
-          style="max-width: 180px;"
-        ></ion-img>
+      <ion-img
+        src="/assets/img/logoapp.png"
+        alt="Logo DEVIDA"
+        style="max-width: 180px"
+      ></ion-img>
     </div>
-    <div class="welcome-image-container" style="margin-bottom: 20px;">
-        <ion-img
-          src="/assets/img/welcome.png"
-          alt="Imagen DEVIDA"
-          style="max-width: 250px;"
-        ></ion-img>
+    <div class="welcome-image-container" style="margin-bottom: 20px">
+      <ion-img
+        src="/assets/img/welcome.png"
+        alt="Imagen DEVIDA"
+        style="max-width: 250px"
+      ></ion-img>
     </div>
-    <h1 style="text-align: center; font-size: 2em; margin-bottom: 10px;">GeoDAIS Movil</h1>
-    <h6 style="text-align: center; margin-bottom: 15px;">Realiza levantamiento en campo en tu celular</h6>
-    <h6 style="text-align: center; margin-bottom: 20px;">v1.0.0</h6>
-    <div class="login-container" style="display: flex; flex-direction: column; align-items: center;">
-      <ion-button routerLink="/register" style="margin-bottom: 10px; width: 200px;">Registrarse</ion-button>
-      <ion-button routerLink="/login" style="width: 200px;">Iniciar Sesión</ion-button>
-      </div>
+    <h1
+      style="
+        text-align: center;
+        font-size: 2em;
+        margin-bottom: 10px;
+        width: 100%;
+      "
+    >
+      <b>GeoDAIS Movil</b>
+    </h1>
+    <p
+      style="
+        text-align: justify;
+        margin-bottom: 15px;
+        width: 100%;
+        font-size: 0.85em;
+        padding-left: 20px;
+        padding-right: 20px;
+      "
+    >
+      Realiza el levantamiento de información en campo directamente desde tu
+      celular, registrando datos y evidencias en tiempo real de manera ágil,
+      precisa y organizada.
+    </p>
+    <p
+      style="
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+        font-size: 0.7em;
+      "
+    >
+      v1.0.0
+    </p>
+
+    <div>
+      <ion-button
+        style="margin-bottom: 10px; width: 100%; border-radius: 250px; height: 50px;"
+        routerLink="/"
+        color="light"
+
+        >Registrarse</ion-button
+      >
+      <ion-button routerLink="/login" style="width: 100%; border-radius: 200px; height: 50px;"
+        >Iniciar Sesión</ion-button
+      >
+    </div>
   </div>
 </ion-content>
