@@ -15,8 +15,8 @@
         <ion-list lines="none">
           <ion-item>
             <ion-select label="Tipo de Cultivo" label-placement="stacked" interface="action-sheet" placeholder="Seleccione un cultivo"
-                        [ngModel]="formData.tipo_cultivo"
-                        (ngModelChange)="formData.tipo_cultivo = $event">
+                        [ngModel]="formData.TIPO_CULTIVO"
+                        (ngModelChange)="formData.TIPO_CULTIVO = $event">
               <!-- Opciones para roles 'default' y 'polygon-only' (todos menos 'other-crops') -->
               <ion-select-option *ngIf="userRole !== 'other-crops'" value="CACAO">CACAO</ion-select-option>
               <ion-select-option *ngIf="userRole !== 'other-crops'" value="CAFE">CAFÉ</ion-select-option>
@@ -29,41 +29,41 @@
           </ion-item>
           <ion-item>
             <ion-input label="Oficina Zonal" label-placement="stacked"
-                       [ngModel]="formData.ubigeo_oficina_zonal"
-                       (ngModelChange)="formData.ubigeo_oficina_zonal = $event"
+                       [ngModel]="formData.UBIGEO_OFICINA_ZONAL"
+                       (ngModelChange)="formData.UBIGEO_OFICINA_ZONAL = $event"
                        class="uppercase-input"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Departamento" label-placement="stacked"
-                       [ngModel]="formData.ubigeo_departamento"
-                       (ngModelChange)="formData.ubigeo_departamento = $event"
+                       [ngModel]="formData.UBIGEO_DEPARTAMENTO"
+                       (ngModelChange)="formData.UBIGEO_DEPARTAMENTO = $event"
                        class="uppercase-input"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Provincia" label-placement="stacked"
-                       [ngModel]="formData.ubigeo_provincia"
-                       (ngModelChange)="formData.ubigeo_provincia = $event"
+                       [ngModel]="formData.UBIGEO_PROVINCIA"
+                       (ngModelChange)="formData.UBIGEO_PROVINCIA = $event"
                        class="uppercase-input"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Distrito" label-placement="stacked"
-                       [ngModel]="formData.ubigeo_distrito"
-                       (ngModelChange)="formData.ubigeo_distrito = $event"
+                       [ngModel]="formData.UBIGEO_DISTRITO"
+                       (ngModelChange)="formData.UBIGEO_DISTRITO = $event"
                        class="uppercase-input"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Caserío" label-placement="stacked"
-                       [ngModel]="formData.ubigeo_caserio"
-                       (ngModelChange)="formData.ubigeo_caserio = $event"
+                       [ngModel]="formData.UBIGEO_CASERIO"
+                       (ngModelChange)="formData.UBIGEO_CASERIO = $event"
                        class="uppercase-input"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Fuente" label-placement="stacked" [readonly]="true"
-                       [ngModel]="formData.fuente"></ion-input>
+                       [ngModel]="formData.FUENTE"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Datum" label-placement="stacked" [readonly]="true"
-                       [ngModel]="formData.datum"></ion-input>
+                       [ngModel]="formData.DATUM"></ion-input>
           </ion-item>
           <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
             <ion-label>
@@ -92,8 +92,8 @@
           <ion-item>
             <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
                           placeholder="Añada notas adicionales aquí..."
-                          [ngModel]="formData.observaciones"
-                          (ngModelChange)="formData.observaciones = $event"
+                          [ngModel]="formData.OBSERVACIONES"
+                          (ngModelChange)="formData.OBSERVACIONES = $event"
                           class="uppercase-input"></ion-textarea>
           </ion-item>
         </ion-list>

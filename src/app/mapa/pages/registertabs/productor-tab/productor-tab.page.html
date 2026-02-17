@@ -8,54 +8,54 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
-            <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8"
-                       [ngModel]="formData.dni"
-                       (ngModelChange)="formData.dni = $event"></ion-input>
-            <ion-button slot="end" (click)="searchDni()" [disabled]="!formData.dni || formData.dni.length !== 8">
+            <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8" name="DNI"
+                       [ngModel]="formData.DNI"
+                       (ngModelChange)="formData.DNI = $event"></ion-input>
+            <ion-button slot="end" (click)="searchDni()" [disabled]="!formData.DNI || formData.DNI.length !== 8">
               <ion-icon name="search" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Nombres" label-placement="stacked"
-                       [ngModel]="formData.nombres"
-                       (ngModelChange)="formData.nombres = $event"></ion-input>
+            <ion-input label="Nombres" label-placement="stacked" name="NOMBRES"
+                       [ngModel]="formData.NOMBRES"
+                       (ngModelChange)="formData.NOMBRES = $event"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Apellido Paterno" label-placement="stacked"
-                       [ngModel]="formData.apellido_paterno"
-                       (ngModelChange)="formData.apellido_paterno = $event"></ion-input>
+            <ion-input label="Apellido Paterno" label-placement="stacked" name="APELLIDO_PATERNO"
+                       [ngModel]="formData.APELLIDO_PATERNO"
+                       (ngModelChange)="formData.APELLIDO_PATERNO = $event"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Apellido Materno" label-placement="stacked"
-                       [ngModel]="formData.apellido_materno"
-                       (ngModelChange)="formData.apellido_materno = $event"></ion-input>
+            <ion-input label="Apellido Materno" label-placement="stacked" name="APELLIDO_MATERNO"
+                       [ngModel]="formData.APELLIDO_MATERNO"
+                       (ngModelChange)="formData.APELLIDO_MATERNO = $event"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Fecha de Nacimiento" label-placement="stacked" type="date"
-                       [ngModel]="formData.fecha_nacimiento"
-                       (ngModelChange)="formData.fecha_nacimiento = $event"></ion-input>
+            <ion-input label="Fecha de Nacimiento" label-placement="stacked" type="date" name="FECHA_NACIMIENTO"
+                       [ngModel]="formData.FECHA_NACIMIENTO"
+                       (ngModelChange)="formData.FECHA_NACIMIENTO = $event"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*"
-                       [ngModel]="formData.celular_participante"
-                       (ngModelChange)="formData.celular_participante = $event"
-                       [disabled]="formData.celular_participante === 'NO TIENE'"
+            <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE"
+                       [ngModel]="formData.CELULAR_PARTICIPANTE"
+                       (ngModelChange)="formData.CELULAR_PARTICIPANTE = $event"
+                       [disabled]="formData.CELULAR_PARTICIPANTE === 'NO TIENE'"
                        required></ion-input>
           </ion-item>
           <ion-item lines="none">
-            <ion-checkbox [checked]="formData.celular_participante === 'NO TIENE'"
-                          (ionChange)="formData.celular_participante = $event.detail.checked ? 'NO TIENE' : ''">No tiene Celular</ion-checkbox>
+            <ion-checkbox [checked]="formData.CELULAR_PARTICIPANTE === 'NO TIENE'"
+                          (ionChange)="formData.CELULAR_PARTICIPANTE = $event.detail.checked ? 'NO TIENE' : ''">No tiene Celular</ion-checkbox>
           </ion-item>
 
           <ion-item>
-            <ion-select label="Tipo de Productor" label-placement="stacked" interface="action-sheet" placeholder="Seleccione una opción"
-                        [ngModel]="formData.tipo_productor"
-                        (ngModelChange)="formData.tipo_productor = $event">
+            <ion-select label="Tipo de Productor" label-placement="stacked" interface="action-sheet" placeholder="Seleccione una opción" name="TIPO_PRODUCTOR"
+                        [ngModel]="formData.TIPO_PRODUCTOR"
+                        (ngModelChange)="formData.TIPO_PRODUCTOR = $event">
               <ion-select-option value="SOCIO">SOCIO</ion-select-option>
               <ion-select-option value="SOCIO-PARTICIPANTE">SOCIO-PARTICIPANTE</ion-select-option>
               <ion-select-option value="PARTICIPANTE">PARTICIPANTE</ion-select-option>
@@ -71,22 +71,22 @@
             <!-- DNI Anverso -->
             <div class="dni-photo-container">
               <div class="photo-box" (click)="takeDniPhoto('front')">
-                <img *ngIf="formData.dni_photo_front" [src]="getCapacitorFileSrc(formData.dni_photo_front)" alt="DNI Anverso" />
-                <ion-icon *ngIf="!formData.dni_photo_front" name="camera-outline"></ion-icon>
-                <ion-label *ngIf="!formData.dni_photo_front">Anverso</ion-label>
+                <img *ngIf="formData.RUTA_DNI_FRONT" [src]="getCapacitorFileSrc(formData.RUTA_DNI_FRONT)" alt="DNI Anverso" />
+                <ion-icon *ngIf="!formData.RUTA_DNI_FRONT" name="camera-outline"></ion-icon>
+                <ion-label *ngIf="!formData.RUTA_DNI_FRONT">Anverso</ion-label>
               </div>
-              <ion-button *ngIf="formData.dni_photo_front" fill="clear" color="danger" size="small" class="delete-dni-btn" (click)="deleteDniPhoto('front', $event)">
+              <ion-button *ngIf="formData.RUTA_DNI_FRONT" fill="clear" color="danger" size="small" class="delete-dni-btn" (click)="deleteDniPhoto('front', $event)">
                 <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
               </ion-button>
             </div>
             <!-- DNI Reverso -->
             <div class="dni-photo-container">
               <div class="photo-box" (click)="takeDniPhoto('back')">
-                <img *ngIf="formData.dni_photo_back" [src]="getCapacitorFileSrc(formData.dni_photo_back)" alt="DNI Reverso" />
-                <ion-icon *ngIf="!formData.dni_photo_back" name="camera-outline"></ion-icon>
-                <ion-label *ngIf="!formData.dni_photo_back">Reverso</ion-label>
+                <img *ngIf="formData.RUTA_DNI_BACK" [src]="getCapacitorFileSrc(formData.RUTA_DNI_BACK)" alt="DNI Reverso" />
+                <ion-icon *ngIf="!formData.RUTA_DNI_BACK" name="camera-outline"></ion-icon>
+                <ion-label *ngIf="!formData.RUTA_DNI_BACK">Reverso</ion-label>
               </div>
-              <ion-button *ngIf="formData.dni_photo_back" fill="clear" color="danger" size="small" class="delete-dni-btn" (click)="deleteDniPhoto('back', $event)">
+              <ion-button *ngIf="formData.RUTA_DNI_BACK" fill="clear" color="danger" size="small" class="delete-dni-btn" (click)="deleteDniPhoto('back', $event)">
                 <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
               </ion-button>
             </div>

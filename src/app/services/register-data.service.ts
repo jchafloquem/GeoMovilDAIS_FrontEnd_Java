@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
+import { Device } from '@capacitor/device';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
@@ -20,38 +21,49 @@ export interface ValidationResult {
 
 // Reutilizamos la interfaz de propiedades
 interface GeoJsonProperties {
-  name: string;
-  dni: string;
-  nombres: string;
-  apellido_paterno: string;
-  apellido_materno: string;
-  fecha_nacimiento: string;
-  celular_participante: string;
-  txt_codigoautogenerado: string;
-  fec_registro: string;
-  txt_actagraria: string;
-  num_superficie: string;
-  txt_regtenencia: string;
-  txt_sexo: string;
-  txt_departamento: string;
-  txt_provincia: string;
-  txt_distrito: string;
-  tipo_productor: string;
-  dni_photo_front: string;
-  dni_photo_back: string;
-  tipo_cultivo: string;
-  ubigeo_oficina_zonal: string;
-  ubigeo_departamento: string;
-  ubigeo_provincia: string;
-  ubigeo_distrito: string;
-  ubigeo_caserio: string;
-  fuente: string;
-  datum: string;
-  observaciones: string;
-  photos: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  // Mapeo a la estructura de la base de datos
+  INTERNAL_KEY?: string;
+  FECHA_CREACION_REGISTRO?: string;
+  FECHA_ACTUALIZACION_REGISTRO?: string;
+  DNI: string;
+  NOMBRES: string;
+  APELLIDO_PATERNO: string;
+  APELLIDO_MATERNO: string;
+  NOMBRE_COMPLETO: string;
+  FECHA_NACIMIENTO: string;
+  CELULAR_PARTICIPANTE: string;
+  TIPO_PRODUCTOR: string;
+  TIPO_CULTIVO: string;
+  OBSERVACIONES: string;
+  CODIGO_AUTOGENERADO_MIDAGRI: string;
+  FECHA_REGISTRO_MIDAGRI: string;
+  ACTIVIDAD_AGRARIA: string;
+  SUPERFICIE_MIDAGRI: string | null;
+  REGIMEN_TENENCIA: string;
+  SEXO: string;
+  TXT_DEPARTAMENTO: string;
+  TXT_PROVINCIA: string;
+  TXT_DISTRITO: string;
+  UBIGEO_OFICINA_ZONAL: string;
+  UBIGEO_DEPARTAMENTO: string;
+  UBIGEO_PROVINCIA: string;
+  UBIGEO_DISTRITO: string;
+  UBIGEO_CASERIO: string;
+  PROFESIONAL_DNI: string;
+  PROFESIONAL_NOMBRES: string;
+  PROFESIONAL_APELLIDO_PATERNO: string;
+  PROFESIONAL_APELLIDO_MATERNO: string;
+  PROFESIONAL_CELULAR: string;
+  PROFESIONAL_EMAIL: string;
+  FUENTE: string;
+  DATUM: string;
+  DEVICE_UUID: string;
+  RUTA_FOTOS: string[];
+  RUTA_DNI_FRONT: string;
+  RUTA_DNI_BACK: string;
+  // Campos de estado de la app
   status?: 'draft' | 'pending';
+  syncStatus?: 'pending';
 }
 
 /**
@@ -66,6 +78,8 @@ export interface SavedRecordSummary {
   thumbnail?: string;
   statusColor: 'danger' | 'warning' | 'success'; // Rojo, Ambar, Verde
 }
+
+const USER_PROFILE_KEY = 'userProfile';
 
 @Injectable({
   providedIn: 'root'
@@ -86,39 +100,41 @@ export class RegisterDataService {
 
   private readonly _savedPhotoUris = new BehaviorSubject<string[]>([]);
 
-  private readonly _formData = new BehaviorSubject({
-    dni: '',
-    nombres: '',
-    apellido_paterno: '',
-    apellido_materno: '',
-    fecha_nacimiento: '',
-    celular_participante: '',
-    txt_codigoautogenerado: '',
-    fec_registro: '',
-    txt_actagraria: '',
-    num_superficie: '',
-    txt_regtenencia: '',
-    txt_sexo: '',
-    txt_departamento: '',
-    txt_provincia: '',
-    txt_distrito: '',
-    perimetro: '',
-    area: '',
-    altitud: '',
-    centroide: '',
-    tipo_productor: '',
-    geometryTypeLabel: '',
-    dni_photo_front: '',
-    dni_photo_back: '',
-    tipo_cultivo: '',
-    ubigeo_oficina_zonal: '',
-    ubigeo_departamento: '',
-    ubigeo_provincia: '',
-    ubigeo_distrito: '',
-    ubigeo_caserio: '',
-    fuente: 'DEVIDA',
-    datum: 'WGS-84',
-    observaciones: '',
+  // ESTRUCTURA ALINEADA CON GeoJsonProperties para eliminar mapeos.
+  private readonly _formData = new BehaviorSubject<Partial<GeoJsonProperties & {
+    perimetro: string,
+    area: string,
+    altitud: string,
+    centroide: string,
+    geometryTypeLabel: string,
+  }>>({
+    DNI: '',
+    NOMBRES: '',
+    APELLIDO_PATERNO: '',
+    APELLIDO_MATERNO: '',
+    FECHA_NACIMIENTO: '',
+    CELULAR_PARTICIPANTE: '',
+    CODIGO_AUTOGENERADO_MIDAGRI: '',
+    FECHA_REGISTRO_MIDAGRI: '',
+    ACTIVIDAD_AGRARIA: '',
+    SUPERFICIE_MIDAGRI: '',
+    REGIMEN_TENENCIA: '',
+    SEXO: '',
+    TXT_DEPARTAMENTO: '',
+    TXT_PROVINCIA: '',
+    TXT_DISTRITO: '',
+    TIPO_PRODUCTOR: '',
+    TIPO_CULTIVO: '',
+    UBIGEO_OFICINA_ZONAL: '',
+    UBIGEO_DEPARTAMENTO: '',
+    UBIGEO_PROVINCIA: '',
+    UBIGEO_DISTRITO: '',
+    UBIGEO_CASERIO: '',
+    FUENTE: 'DEVIDA',
+    DATUM: 'WGS-84',
+    OBSERVACIONES: '',
+    RUTA_DNI_FRONT: '',
+    RUTA_DNI_BACK: '',
   });
   readonly formData$ = this._formData.asObservable();
 
@@ -152,11 +168,11 @@ export class RegisterDataService {
       this.isOnline = status.connected;
       // Usamos NgZone para asegurar que los cambios se reflejen en la UI
       this.zone.run(async () => {
-        if (this.isOnline) { // Transición de offline a online
-          await this.showToast('Conexión recuperada. Iniciando sincronización...', 'success');
+        if (this.isOnline) {
+          await this.showToast('Conexión recuperada. Iniciando sincronización...', 'success', 'middle');
           this.syncPendingProductorData();
-        } else { // Transición de online a offline
-          await this.showToast('Estás sin conexión. Se guardarán los datos localmente.', 'warning');
+        } else {
+          await this.showToast('Estás sin conexión. Se guardarán los datos localmente.', 'warning', 'middle');
         }
       });
     });
@@ -177,13 +193,15 @@ export class RegisterDataService {
 
         // Condición: El registro está marcado como pendiente de sincronización.
         if (properties && (properties as any).syncStatus === 'pending') {
-          const fetchedData = await this.fetchProductorDataForSync(properties.dni);
+          // CORRECCIÓN: Usar el nuevo método centralizado y desestructurar la respuesta.
+          const { data: fetchedData } = await this._fetchExternalProductorData(properties.DNI);
 
-          if (fetchedData) {
+          // CORRECCIÓN: El nuevo método devuelve un objeto, por lo que verificamos si tiene contenido.
+          if (fetchedData && Object.keys(fetchedData).length > 0) {
             // Fusionar los datos nuevos con los existentes y guardar
             Object.assign(properties, fetchedData);
-            properties.name = `${properties.nombres || ''} ${properties.apellido_paterno || ''} ${properties.apellido_materno || ''}`.trim();
-            properties.updatedAt = new Date().toISOString();
+            properties.NOMBRE_COMPLETO = `${properties.NOMBRES || ''} ${properties.APELLIDO_PATERNO || ''} ${properties.APELLIDO_MATERNO || ''}`.trim();
+            properties.FECHA_ACTUALIZACION_REGISTRO = new Date().toISOString();
             delete (properties as any).syncStatus; // Elimina el flag de pendiente
             await Preferences.set({ key, value: JSON.stringify(geojson) });
             syncedCount++;
@@ -199,7 +217,7 @@ export class RegisterDataService {
     }
 
     if (syncedCount > 0) {
-      await this.showToast(`${syncedCount} registro(s) ha(n) sido sincronizado(s) con éxito.`, 'success');
+      await this.showToast(`${syncedCount} registro(s) ha(n) sido sincronizado(s) con éxito.`, 'success', 'middle');
     }
   }
 
@@ -216,13 +234,13 @@ export class RegisterDataService {
         this.calculateGeometryData();
         if (geojson?.properties) {
           this.loadFormDataFromProperties(geojson.properties);
-          if (geojson.properties.photos && Array.isArray(geojson.properties.photos)) {
-            this._savedPhotoUris.next(geojson.properties.photos);
+          if (geojson.properties.RUTA_FOTOS && Array.isArray(geojson.properties.RUTA_FOTOS)) {
+            this._savedPhotoUris.next(geojson.properties.RUTA_FOTOS);
             await this.loadPhotosForDisplay();
           }
         }
       } else {
-        await this.showToast('Error: No se pudo cargar el polígono para editar.', 'danger');
+        await this.showToast('Error: No se pudo cargar el polígono para editar.', 'danger', 'middle');
         this.navCtrl.navigateBack('/mapa');
       }
     } else if (navigationState && navigationState.geojson) {
@@ -240,77 +258,72 @@ export class RegisterDataService {
     this._photosForDisplay.next([]);
     this._savedPhotoUris.next([]);
     this._formData.next({
-      dni: '', nombres: '', apellido_paterno: '', apellido_materno: '',
-      fecha_nacimiento: '', celular_participante: '', txt_codigoautogenerado: '',
-      fec_registro: '', txt_actagraria: '',
-      num_superficie: '', txt_regtenencia: '', txt_sexo: '',
-      txt_departamento: '', txt_provincia: '', txt_distrito: '',
+      // CORRECCIÓN: Usar la estructura de datos correcta de GeoJsonProperties
+      DNI: '',
+      NOMBRES: '',
+      APELLIDO_PATERNO: '',
+      APELLIDO_MATERNO: '',
+      FECHA_NACIMIENTO: '',
+      CELULAR_PARTICIPANTE: '',
+      CODIGO_AUTOGENERADO_MIDAGRI: '',
+      FECHA_REGISTRO_MIDAGRI: '',
+      ACTIVIDAD_AGRARIA: '',
+      SUPERFICIE_MIDAGRI: null,
+      REGIMEN_TENENCIA: '',
+      SEXO: '',
+      TXT_DEPARTAMENTO: '',
+      TXT_PROVINCIA: '',
+      TXT_DISTRITO: '',
+      TIPO_PRODUCTOR: '',
+      TIPO_CULTIVO: '',
+      UBIGEO_OFICINA_ZONAL: '',
+      UBIGEO_DEPARTAMENTO: '',
+      UBIGEO_PROVINCIA: '',
+      UBIGEO_DISTRITO: '',
+      UBIGEO_CASERIO: '',
+      FUENTE: 'DEVIDA',
+      DATUM: 'WGS-84',
+      OBSERVACIONES: '',
+      RUTA_DNI_FRONT: '',
+      RUTA_DNI_BACK: '',
+      // Resetear campos de geometría calculados
       perimetro: '', area: '', altitud: '', centroide: '',
       geometryTypeLabel: '',
-      tipo_productor: '',
-      dni_photo_front: '',
-      dni_photo_back: '',
-      tipo_cultivo: '',
-      ubigeo_oficina_zonal: '',
-      ubigeo_departamento: '',
-      ubigeo_provincia: '',
-      ubigeo_distrito: '',
-      ubigeo_caserio: '',
-      fuente: 'DEVIDA',
-      datum: 'WGS-84',
-      observaciones: '',
     });
   }
 
   private loadFormDataFromProperties(properties: any) {
-    const currentData = this._formData.getValue();
-    currentData.dni = properties.dni || '';
-    currentData.nombres = properties.nombres || '';
-    currentData.apellido_paterno = properties.apellido_paterno || '';
-    currentData.apellido_materno = properties.apellido_materno || '';
-    currentData.fecha_nacimiento = properties.fecha_nacimiento || '';
-    currentData.celular_participante = properties.celular_participante || '';
-    currentData.txt_codigoautogenerado = properties.txt_codigoautogenerado || '';
-    currentData.fec_registro = properties.fec_registro || '';
-    currentData.txt_actagraria = properties.txt_actagraria || '';
-    currentData.num_superficie = properties.num_superficie || '';
-    currentData.txt_regtenencia = properties.txt_regtenencia || '';
-    currentData.txt_sexo = properties.txt_sexo || '';
-    currentData.txt_departamento = properties.txt_departamento || '';
-    currentData.txt_provincia = properties.txt_provincia || '';
-    currentData.txt_distrito = properties.txt_distrito || '';
-    currentData.tipo_productor = properties.tipo_productor || '';
-    currentData.dni_photo_front = properties.dni_photo_front || '';
-    currentData.dni_photo_back = properties.dni_photo_back || '';
-    currentData.tipo_cultivo = properties.tipo_cultivo || '';
-    currentData.ubigeo_oficina_zonal = properties.ubigeo_oficina_zonal || '';
-    currentData.ubigeo_departamento = properties.ubigeo_departamento || '';
-    currentData.ubigeo_provincia = properties.ubigeo_provincia || '';
-    currentData.ubigeo_distrito = properties.ubigeo_distrito || '';
-    currentData.ubigeo_caserio = properties.ubigeo_caserio || '';
-    currentData.fuente = properties.fuente || 'DEVIDA';
-    currentData.datum = properties.datum || 'WGS-84';
-    currentData.observaciones = properties.observaciones || '';
+    // Al tener la misma estructura, la carga es directa.
+    // Se mantienen los valores de geometría que ya estaban en el formulario.
+    const currentForm = this._formData.getValue();
+    const newFormData = {
+      ...properties,
+      perimetro: currentForm.perimetro,
+      area: currentForm.area,
+      altitud: currentForm.altitud,
+      centroide: currentForm.centroide,
+      geometryTypeLabel: currentForm.geometryTypeLabel,
+    };
 
-    this._formData.next(currentData);
+    this._formData.next(newFormData);
   }
 
   // --- Lógica de Negocio (extraída de registerdata.page.ts) ---
 
   public async searchDni(isSync: boolean = false) {
     const currentFormData = this._formData.getValue();
-    if (!currentFormData.dni || currentFormData.dni.length !== 8) {
-      await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos.', 'warning');
+    if (!currentFormData.DNI || currentFormData.DNI.length !== 8) { // DNI is not in currentFormData
+      await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos.', 'warning', 'top');
       return;
     }
 
     // --- NUEVA LÓGICA OFFLINE ---
     if (!this.isOnline) {
-      await this.showToast('Sin conexión. Nombres y apellidos se completarán al recuperar internet.', 'tertiary');
+      await this.showToast('Sin conexión. Nombres y apellidos se completarán al recuperar internet.', 'tertiary', 'top');
       // Limpiamos los datos por si había una búsqueda anterior para forzar la sincronización
-      currentFormData.nombres = '';
-      currentFormData.apellido_paterno = '';
-      currentFormData.apellido_materno = '';
+      currentFormData.NOMBRES = '';
+      currentFormData.APELLIDO_PATERNO = '';
+      currentFormData.APELLIDO_MATERNO = '';
       this._formData.next(currentFormData);
       return; // Salimos del método para no hacer la llamada a la API
     }
@@ -320,98 +333,14 @@ export class RegisterDataService {
     if (loading) await loading.present();
 
     try {
-      currentFormData.nombres = '';
-      currentFormData.apellido_paterno = '';
-      currentFormData.apellido_materno = '';
-      currentFormData.txt_codigoautogenerado = '';
-      currentFormData.fec_registro = '';
-      currentFormData.txt_actagraria = '';
-      currentFormData.num_superficie = '';
-      currentFormData.txt_regtenencia = '';
-      currentFormData.txt_sexo = '';
-      currentFormData.txt_departamento = '';
-      currentFormData.txt_provincia = '';
-      currentFormData.txt_distrito = '';
-
-      let reniecSuccess = false;
-      let midagriSuccess = false;
-
-      try {
-        const reniecData: ReniecResponse | null = await this.apiService.getReniecData(currentFormData.dni);
-        if (reniecData) {
-          currentFormData.nombres = (reniecData.first_name || '').toUpperCase();
-          currentFormData.apellido_paterno = (reniecData.first_last_name || '').toUpperCase();
-          currentFormData.apellido_materno = (reniecData.second_last_name || '').toUpperCase();
-          reniecSuccess = true;
-        }
-      } catch (err: any) {
-      }
-
-      try {
-        const productor: MidagriProductor | null = await this.apiService.getMidagriData(currentFormData.dni);
-        if (productor) {
-          currentFormData.txt_codigoautogenerado = productor.txt_codigoautogenerado || '';
-          if (productor.fec_registro) {
-            const date = new Date(productor.fec_registro);
-            if (!isNaN(date.getTime())) {
-              currentFormData.fec_registro = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-            } else {
-              currentFormData.fec_registro = productor.fec_registro;
-            }
-          }
-          currentFormData.txt_actagraria = productor.txt_actagraria || '';
-          currentFormData.num_superficie = productor.num_superficie || '';
-          currentFormData.txt_regtenencia = productor.txt_regtenencia || '';
-          currentFormData.txt_sexo = productor.txt_sexo || '';
-          currentFormData.txt_departamento = productor.txt_departamento || '';
-          currentFormData.txt_provincia = productor.txt_provincia || '';
-          currentFormData.txt_distrito = productor.txt_distrito || '';
-          midagriSuccess = true;
-        }
-      } catch (midagriError: any) {
-      }
-
-      let toastMessage = '';
-      let toastColor = 'danger';
-
-      if (reniecSuccess && midagriSuccess) {
-        toastMessage = 'Datos de RENIEC y MIDAGRI cargados.';
-        toastColor = 'success';
-      } else if (reniecSuccess) {
-        toastMessage = 'Datos de RENIEC cargados. No se encontraron en MIDAGRI.';
-        toastColor = 'warning';
-      } else if (midagriSuccess) {
-        toastMessage = 'Datos de MIDAGRI cargados. No se encontraron en RENIEC.';
-        toastColor = 'warning';
-      } else {
-        toastMessage = 'DNI no encontrado en ninguna de las fuentes.';
-        toastColor = 'danger';
-      }
-
-      // Rellenar campos si las búsquedas fallaron
-      if (!reniecSuccess) {
-        currentFormData.nombres = 'NO ENCONTRADO';
-        currentFormData.apellido_paterno = 'NO ENCONTRADO';
-        currentFormData.apellido_materno = 'NO ENCONTRADO';
-      }
-      if (!midagriSuccess) {
-        currentFormData.txt_codigoautogenerado = 'NO REGISTRA';
-        currentFormData.fec_registro = 'NO REGISTRA';
-        currentFormData.txt_actagraria = 'NO REGISTRA';
-        currentFormData.num_superficie = 'NO REGISTRA';
-        currentFormData.txt_regtenencia = 'NO REGISTRA';
-        currentFormData.txt_sexo = 'NO REGISTRA';
-        currentFormData.txt_departamento = 'NO REGISTRA';
-        currentFormData.txt_provincia = 'NO REGISTRA';
-        currentFormData.txt_distrito = 'NO REGISTRA';
-      }
+      const { data, message, color } = await this._fetchExternalProductorData(currentFormData.DNI!);
 
       // Actualiza el estado del formulario una sola vez con todos los datos consolidados
-      this._formData.next(currentFormData);
+      this._formData.next({ ...currentFormData, ...data });
 
       // Solo mostramos el toast si NO es una sincronización automática
       if (!isSync) {
-        await this.showToast(toastMessage, toastColor as any);
+        await this.showToast(message, color, 'middle');
       }
 
     } finally {
@@ -419,9 +348,14 @@ export class RegisterDataService {
     }
   }
 
-  private async fetchProductorDataForSync(dni: string): Promise<Partial<GeoJsonProperties> | null> {
+  /**
+   * Centraliza la lógica de búsqueda de datos de productor en RENIEC y MIDAGRI.
+   * @param dni El DNI a consultar.
+   * @returns Un objeto con los datos encontrados y la información para el toast.
+   */
+  private async _fetchExternalProductorData(dni: string): Promise<{ data: Partial<GeoJsonProperties>, message: string, color: 'success' | 'warning' | 'danger' }> {
     if (!this.isOnline || !dni || dni.length !== 8) {
-      return null;
+      return { data: {}, message: 'Búsqueda no realizada (sin conexión o DNI inválido)', color: 'warning' };
     }
 
     const fetchedData: Partial<GeoJsonProperties> = {};
@@ -431,9 +365,9 @@ export class RegisterDataService {
     try {
       const reniecData = await this.apiService.getReniecData(dni);
       if (reniecData) {
-        fetchedData.nombres = (reniecData.first_name || '').toUpperCase();
-        fetchedData.apellido_paterno = (reniecData.first_last_name || '').toUpperCase();
-        fetchedData.apellido_materno = (reniecData.second_last_name || '').toUpperCase();
+        fetchedData.NOMBRES = (reniecData.first_name || 'NO ENCONTRADO').toUpperCase();
+        fetchedData.APELLIDO_PATERNO = (reniecData.first_last_name || 'NO ENCONTRADO').toUpperCase();
+        fetchedData.APELLIDO_MATERNO = (reniecData.second_last_name || 'NO ENCONTRADO').toUpperCase();
         reniecSuccess = true;
       }
     } catch (err) {
@@ -442,43 +376,58 @@ export class RegisterDataService {
     try {
       const productor = await this.apiService.getMidagriData(dni);
       if (productor) {
-        fetchedData.txt_codigoautogenerado = productor.txt_codigoautogenerado || '';
+        fetchedData.CODIGO_AUTOGENERADO_MIDAGRI = productor.txt_codigoautogenerado || '';
         if (productor.fec_registro) {
           const date = new Date(productor.fec_registro);
-          fetchedData.fec_registro = !isNaN(date.getTime())
-            ? `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
-            : productor.fec_registro;
+          // Usar formato ISO para consistencia
+          fetchedData.FECHA_REGISTRO_MIDAGRI = !isNaN(date.getTime()) ? date.toISOString() : productor.fec_registro;
         }
-        fetchedData.txt_actagraria = productor.txt_actagraria || '';
-        fetchedData.num_superficie = productor.num_superficie || '';
-        fetchedData.txt_regtenencia = productor.txt_regtenencia || '';
-        fetchedData.txt_sexo = productor.txt_sexo || '';
-        fetchedData.txt_departamento = productor.txt_departamento || '';
-        fetchedData.txt_provincia = productor.txt_provincia || '';
-        fetchedData.txt_distrito = productor.txt_distrito || '';
+        fetchedData.ACTIVIDAD_AGRARIA = productor.txt_actagraria || '';
+        fetchedData.SUPERFICIE_MIDAGRI = productor.num_superficie || null;
+        fetchedData.REGIMEN_TENENCIA = productor.txt_regtenencia || '';
+        fetchedData.SEXO = productor.txt_sexo || '';
+        fetchedData.TXT_DEPARTAMENTO = productor.txt_departamento || '';
+        fetchedData.TXT_PROVINCIA = productor.txt_provincia || '';
+        fetchedData.TXT_DISTRITO = productor.txt_distrito || '';
         midagriSuccess = true;
       }
     } catch (err) {
     }
 
     if (!reniecSuccess) {
-      fetchedData.nombres = 'NO ENCONTRADO';
-      fetchedData.apellido_paterno = 'NO ENCONTRADO';
-      fetchedData.apellido_materno = 'NO ENCONTRADO';
+      fetchedData.NOMBRES = 'NO ENCONTRADO';
+      fetchedData.APELLIDO_PATERNO = 'NO ENCONTRADO';
+      fetchedData.APELLIDO_MATERNO = 'NO ENCONTRADO';
     }
     if (!midagriSuccess) {
-      fetchedData.txt_codigoautogenerado = 'NO REGISTRA';
-      fetchedData.fec_registro = 'NO REGISTRA';
-      fetchedData.txt_actagraria = 'NO REGISTRA';
-      fetchedData.num_superficie = 'NO REGISTRA';
-      fetchedData.txt_regtenencia = 'NO REGISTRA';
-      fetchedData.txt_sexo = 'NO REGISTRA';
-      fetchedData.txt_departamento = 'NO REGISTRA';
-      fetchedData.txt_provincia = 'NO REGISTRA';
-      fetchedData.txt_distrito = 'NO REGISTRA';
+      // Asegurarse de que los campos queden vacíos o nulos si no se encuentran
+      fetchedData.CODIGO_AUTOGENERADO_MIDAGRI = fetchedData.CODIGO_AUTOGENERADO_MIDAGRI ?? '';
+      fetchedData.FECHA_REGISTRO_MIDAGRI = fetchedData.FECHA_REGISTRO_MIDAGRI ?? '';
+      fetchedData.ACTIVIDAD_AGRARIA = fetchedData.ACTIVIDAD_AGRARIA ?? '';
+      fetchedData.SUPERFICIE_MIDAGRI = fetchedData.SUPERFICIE_MIDAGRI ?? null;
+      fetchedData.REGIMEN_TENENCIA = fetchedData.REGIMEN_TENENCIA ?? '';
+      fetchedData.SEXO = fetchedData.SEXO ?? '';
+      fetchedData.TXT_DEPARTAMENTO = fetchedData.TXT_DEPARTAMENTO ?? '';
+      fetchedData.TXT_PROVINCIA = fetchedData.TXT_PROVINCIA ?? '';
+      fetchedData.TXT_DISTRITO = fetchedData.TXT_DISTRITO ?? '';
     }
 
-    return fetchedData;
+    let message = '', color: 'success' | 'warning' | 'danger' = 'danger';
+    if (reniecSuccess && midagriSuccess) {
+      message = 'Datos de RENIEC y MIDAGRI cargados.';
+      color = 'success';
+    } else if (reniecSuccess) {
+      message = 'Datos de RENIEC cargados. No se encontraron en MIDAGRI.';
+      color = 'warning';
+    } else if (midagriSuccess) {
+      message = 'Datos de MIDAGRI cargados. No se encontraron en RENIEC.';
+      color = 'warning';
+    } else {
+      message = 'DNI no encontrado en ninguna de las fuentes.';
+      color = 'danger';
+    }
+
+    return { data: fetchedData, message, color };
   }
 
   public async saveData() {
@@ -487,17 +436,17 @@ export class RegisterDataService {
     // --- Validación de Campos Obligatorios ---
     const missingFields = [];
     // Campos siempre obligatorios
-    if (!formData.dni) missingFields.push('DNI del productor');
-    if (!formData.tipo_productor) missingFields.push('Tipo de Productor');
-    if (!formData.celular_participante) missingFields.push('Número de celular');
-    if (!formData.dni_photo_front) missingFields.push('Foto frontal del DNI');
-    if (!formData.dni_photo_back) missingFields.push('Foto posterior del DNI');
-    if (!formData.tipo_cultivo) missingFields.push('Tipo de Cultivo');
+    if (!formData.DNI) missingFields.push('DNI del productor');
+    if (!formData.TIPO_PRODUCTOR) missingFields.push('Tipo de Productor');
+    if (!formData.CELULAR_PARTICIPANTE) missingFields.push('Número de celular');
+    if (!formData.RUTA_DNI_FRONT) missingFields.push('Foto frontal del DNI');
+    if (!formData.RUTA_DNI_BACK) missingFields.push('Foto posterior del DNI');
+    if (!formData.TIPO_CULTIVO) missingFields.push('Tipo de Cultivo');
 
     // Validación de fecha de nacimiento
-    if (!formData.fecha_nacimiento) {
+    if (!formData.FECHA_NACIMIENTO) {
       missingFields.push('Fecha de nacimiento');
-    } else if (!this.isOfLegalAge(formData.fecha_nacimiento)) {
+    } else if (!this.isOfLegalAge(formData.FECHA_NACIMIENTO)) {
       missingFields.push('El productor debe ser mayor de 18 años');
     }
 
@@ -508,20 +457,20 @@ export class RegisterDataService {
 
     // Campos obligatorios solo si hay conexión a internet
     if (this.isOnline) {
-      if (!formData.nombres || formData.nombres === 'PENDIENTE' || formData.nombres === 'NO ENCONTRADO') {
+      if (!formData.NOMBRES || formData.NOMBRES === 'PENDIENTE' || formData.NOMBRES === 'NO ENCONTRADO') {
         missingFields.push('Nombres del productor (búsqueda por DNI)');
       }
       // Añadimos la validación de los datos de ubicación que se autocompletan.
       // Si estos datos faltan, el usuario debe esperar a que terminen de cargar.
-      if (!formData.ubigeo_oficina_zonal) missingFields.push('Oficina Zonal (espere autocompletado)');
-      if (!formData.ubigeo_departamento) missingFields.push('Departamento (espere autocompletado)');
-      if (!formData.ubigeo_provincia) missingFields.push('Provincia (espere autocompletado)');
-      if (!formData.ubigeo_distrito) missingFields.push('Distrito (espere autocompletado)');
+      if (!formData.UBIGEO_OFICINA_ZONAL) missingFields.push('Oficina Zonal (espere autocompletado)');
+      if (!formData.UBIGEO_DEPARTAMENTO) missingFields.push('Departamento (espere autocompletado)');
+      if (!formData.UBIGEO_PROVINCIA) missingFields.push('Provincia (espere autocompletado)');
+      if (!formData.UBIGEO_DISTRITO) missingFields.push('Distrito (espere autocompletado)');
     }
 
     if (missingFields.length > 0) {
       // Mostramos un toast con el primer campo faltante para guiar al usuario.
-      await this.showToast(`Falta completar: ${missingFields[0]}`, 'warning');
+      await this.showToast(`Falta completar: ${missingFields[0]}`, 'warning', 'top');
       return;
     }
 
@@ -537,55 +486,44 @@ export class RegisterDataService {
     else if (geometryType.includes('linestring')) keyPrefix = 'linestring';
 
     const key = isEditing ? this._editKey.getValue()! : `${keyPrefix}_${new Date().getTime()}`;
-    let fullName = `${formData.nombres} ${formData.apellido_paterno} ${formData.apellido_materno}`.trim();
+    const fullName = `${formData.NOMBRES || ''} ${formData.APELLIDO_PATERNO || ''} ${formData.APELLIDO_MATERNO || ''}`.trim();
 
-    const newProperties: GeoJsonProperties = {
-      ...geojson.properties,
-      name: fullName,
-      dni: formData.dni,
-      nombres: formData.nombres,
-      apellido_paterno: formData.apellido_paterno,
-      apellido_materno: formData.apellido_materno,
-      fecha_nacimiento: formData.fecha_nacimiento,
-      celular_participante: formData.celular_participante,
-      txt_codigoautogenerado: formData.txt_codigoautogenerado,
-      fec_registro: formData.fec_registro,
-      txt_actagraria: formData.txt_actagraria,
-      num_superficie: formData.num_superficie,
-      txt_regtenencia: formData.txt_regtenencia,
-      txt_sexo: formData.txt_sexo,
-      txt_departamento: formData.txt_departamento,
-      txt_provincia: formData.txt_provincia,
-      txt_distrito: formData.txt_distrito,
-      tipo_productor: formData.tipo_productor,
-      dni_photo_front: formData.dni_photo_front,
-      dni_photo_back: formData.dni_photo_back,
-      tipo_cultivo: formData.tipo_cultivo,
-      ubigeo_oficina_zonal: formData.ubigeo_oficina_zonal,
-      ubigeo_departamento: formData.ubigeo_departamento,
-      ubigeo_provincia: formData.ubigeo_provincia,
-      ubigeo_distrito: formData.ubigeo_distrito,
-      ubigeo_caserio: formData.ubigeo_caserio,
-      fuente: formData.fuente,
-      datum: formData.datum,
-      observaciones: (formData.observaciones || '').toUpperCase(),
-      photos: this._savedPhotoUris.getValue(),
+    // Obtener datos del profesional y del dispositivo
+    const deviceId = await Device.getId();
+    const { value: profileValue } = await Preferences.get({ key: USER_PROFILE_KEY });
+    const professionalProfile = profileValue ? JSON.parse(profileValue) : {};
+
+    // Construimos las propiedades directamente desde el formData estandarizado
+    const newProperties: Partial<GeoJsonProperties> = {
+      ...formData,
+      INTERNAL_KEY: key,
+      NOMBRE_COMPLETO: fullName,
+      OBSERVACIONES: (formData.OBSERVACIONES || '').toUpperCase(),
+      PROFESIONAL_DNI: professionalProfile.dni || null,
+      PROFESIONAL_NOMBRES: professionalProfile.nombres || null,
+      PROFESIONAL_APELLIDO_PATERNO: professionalProfile.apellidoPaterno || null,
+      PROFESIONAL_APELLIDO_MATERNO: professionalProfile.apellidoMaterno || null,
+      PROFESIONAL_CELULAR: professionalProfile.celular || null,
+      PROFESIONAL_EMAIL: professionalProfile.email || null,
+      DEVICE_UUID: deviceId.identifier,
+      RUTA_FOTOS: this._savedPhotoUris.getValue()
     };
 
     // Si estamos editando un borrador, eliminamos el estado 'draft' al guardar los datos completos.
-    if (newProperties.status === 'draft') {
+    if (geojson.properties?.status === 'draft') {
       delete newProperties.status;
     }
 
-    // Lógica de estado (Pendiente vs Completo) basada únicamente en la conexión
-    if (!this.isOnline) {
-      // Si guardamos sin conexión, SIEMPRE es un registro pendiente de sincronización.
-      (newProperties as any).syncStatus = 'pending';
-      newProperties.name = `PENDIENTE (DNI: ${formData.dni || 'S/N'})`;
+    // Lógica de estado PENDIENTE mejorada
+    const isDataIncompleteForSync = !newProperties.NOMBRES || newProperties.NOMBRES === 'PENDIENTE' || newProperties.NOMBRES === 'NO ENCONTRADO';
+    if (!this.isOnline && isDataIncompleteForSync) {
+      // Solo marcar como pendiente si estamos offline Y los datos de RENIEC/MIDAGRI faltan.
+      newProperties.syncStatus = 'pending';
+      newProperties.NOMBRE_COMPLETO = `PENDIENTE (DNI: ${formData.DNI || 'S/N'})`;
       // Forzamos los campos de nombres a un estado pendiente para la sincronización, ignorando la entrada manual.
-      newProperties.nombres = 'PENDIENTE';
-      newProperties.apellido_paterno = '';
-      newProperties.apellido_materno = '';
+      if (!newProperties.NOMBRES) newProperties.NOMBRES = 'PENDIENTE';
+      if (!newProperties.APELLIDO_PATERNO) newProperties.APELLIDO_PATERNO = '';
+      if (!newProperties.APELLIDO_MATERNO) newProperties.APELLIDO_MATERNO = '';
     } else {
       // Si guardamos con conexión, nos aseguramos de que el registro no esté marcado como pendiente.
       // Esto es crucial al editar un registro que estaba pendiente y ahora se completa online.
@@ -594,9 +532,10 @@ export class RegisterDataService {
 
 
     if (isEditing) {
-      newProperties.updatedAt = new Date().toISOString();
+      newProperties.FECHA_CREACION_REGISTRO = geojson.properties?.FECHA_CREACION_REGISTRO;
+      newProperties.FECHA_ACTUALIZACION_REGISTRO = new Date().toISOString();
     } else {
-      newProperties.createdAt = new Date().toISOString();
+      newProperties.FECHA_CREACION_REGISTRO = new Date().toISOString();
     }
     geojson.properties = newProperties;
 
@@ -604,9 +543,180 @@ export class RegisterDataService {
 
     await this.showToast(
       isEditing ? 'Información actualizada con éxito' : 'Registro guardado con éxito',
-      'success'
+      'success', 'middle'
     );
     this.navCtrl.navigateBack('/mapa');
+  }
+
+  /**
+   * Orquesta el proceso completo de envío de registros completos al backend.
+   * Esta función reemplaza la lógica que estaba en el componente mapa.page.
+   */
+  public async sendAllCompletedRecords(): Promise<{ successCount: number, errorCount: number, total: number }> {
+    if (!this.isOnline) {
+      await this.showToast("Necesita conexión a internet para enviar los datos a DEVIDA.", "warning", "middle");
+      return { successCount: 0, errorCount: 0, total: 0 };
+    }
+
+    const allRecords = await this.getAllRawRecords();
+    const recordsToSend = allRecords.filter(rec => this.isRecordComplete(rec.properties));
+
+    if (recordsToSend.length === 0) {
+      await this.showToast("No hay registros completos (verdes) para enviar.", "warning", "middle");
+      return { successCount: 0, errorCount: 0, total: 0 };
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    const loading = await this.loadingController.create({
+      message: `Enviando 0 de ${recordsToSend.length} registros...`,
+      spinner: "crescent"
+    });
+    await loading.present();
+
+    for (let i = 0; i < recordsToSend.length; i++) {
+      const record = recordsToSend[i];
+      loading.message = `Enviando ${i + 1} de ${recordsToSend.length}...`;
+
+      try {
+        // 1. Preparar la geometría en formato WKT
+        const wktGeometry = this.geometryToWkt(record.geometry);
+
+        // 2. Construir un payload LIMPIO para la API, mapeando explícitamente solo los campos necesarios.
+        // Esto previene que se envíen campos antiguos o temporales del frontend.
+        const props = record.properties as GeoJsonProperties;
+        const payload = {
+          DNI: props.DNI,
+          NOMBRES: props.NOMBRES,
+          APELLIDO_PATERNO: props.APELLIDO_PATERNO,
+          APELLIDO_MATERNO: props.APELLIDO_MATERNO,
+          NOMBRE_COMPLETO: props.NOMBRE_COMPLETO,
+          FECHA_NACIMIENTO: props.FECHA_NACIMIENTO,
+          CELULAR_PARTICIPANTE: props.CELULAR_PARTICIPANTE,
+          TIPO_PRODUCTOR: props.TIPO_PRODUCTOR,
+          TIPO_CULTIVO: props.TIPO_CULTIVO,
+          OBSERVACIONES: props.OBSERVACIONES,
+          CODIGO_AUTOGENERADO_MIDAGRI: props.CODIGO_AUTOGENERADO_MIDAGRI,
+          FECHA_REGISTRO_MIDAGRI: props.FECHA_REGISTRO_MIDAGRI,
+          ACTIVIDAD_AGRARIA: props.ACTIVIDAD_AGRARIA,
+          SUPERFICIE_MIDAGRI: props.SUPERFICIE_MIDAGRI,
+          REGIMEN_TENENCIA: props.REGIMEN_TENENCIA,
+          SEXO: props.SEXO,
+          TXT_DEPARTAMENTO: props.TXT_DEPARTAMENTO,
+          TXT_PROVINCIA: props.TXT_PROVINCIA,
+          TXT_DISTRITO: props.TXT_DISTRITO,
+          UBIGEO_OFICINA_ZONAL: props.UBIGEO_OFICINA_ZONAL,
+          UBIGEO_DEPARTAMENTO: props.UBIGEO_DEPARTAMENTO,
+          UBIGEO_PROVINCIA: props.UBIGEO_PROVINCIA,
+          UBIGEO_DISTRITO: props.UBIGEO_DISTRITO,
+          UBIGEO_CASERIO: props.UBIGEO_CASERIO,
+          PROFESIONAL_DNI: props.PROFESIONAL_DNI,
+          PROFESIONAL_NOMBRES: props.PROFESIONAL_NOMBRES,
+          PROFESIONAL_APELLIDO_PATERNO: props.PROFESIONAL_APELLIDO_PATERNO,
+          PROFESIONAL_APELLIDO_MATERNO: props.PROFESIONAL_APELLIDO_MATERNO,
+          PROFESIONAL_CELULAR: props.PROFESIONAL_CELULAR,
+          PROFESIONAL_EMAIL: props.PROFESIONAL_EMAIL,
+          FUENTE: props.FUENTE,
+          DATUM: props.DATUM,
+          DEVICE_UUID: props.DEVICE_UUID,
+          RUTA_FOTOS: props.RUTA_FOTOS,
+          RUTA_DNI_FRONT: props.RUTA_DNI_FRONT,
+          RUTA_DNI_BACK: props.RUTA_DNI_BACK,
+          geometria: wktGeometry
+        };
+
+        // 3. Enviar el registro individual
+        const response = await this.apiService.enviarRegistroIndividual(payload);
+
+        if (response.status >= 200 && response.status < 300) {
+          successCount++;
+          // Opcional: Marcar el registro como enviado o eliminarlo de `Preferences`
+          // Por ahora, lo dejamos para que el usuario pueda reenviarlo si es necesario.
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        errorCount++;
+        // Loguear el error para depuración
+        console.error(`Error al enviar el registro ${record.properties.INTERNAL_KEY}:`, error);
+      }
+    }
+
+    await loading.dismiss();
+
+    // Informar al usuario del resultado
+    const message = `Envío finalizado. Éxitos: ${successCount}, Fallos: ${errorCount}.`;
+    await this.showToast(message, errorCount > 0 ? 'warning' : 'success', 'middle', 4000);
+
+    return { successCount, errorCount, total: recordsToSend.length };
+  }
+
+  /**
+   * Valida si un registro tiene todos los campos obligatorios para ser enviado.
+   * Esta es la fuente de verdad para la validación.
+   * @param props Las propiedades del registro GeoJSON.
+   */
+  public isRecordComplete(props: Partial<GeoJsonProperties>): boolean {
+    if (!props) return false;
+
+    const isDraft = props.status === 'draft';
+    const isPendingSync = props.syncStatus === 'pending';
+
+    if (isDraft || isPendingSync) return false;
+
+    return !!(
+      props.DNI && props.TIPO_PRODUCTOR &&
+      props.CELULAR_PARTICIPANTE && props.RUTA_DNI_FRONT &&
+      props.RUTA_DNI_BACK && props.TIPO_CULTIVO &&
+      props.FECHA_NACIMIENTO && this.isOfLegalAge(props.FECHA_NACIMIENTO) &&
+      props.UBIGEO_OFICINA_ZONAL && props.UBIGEO_DEPARTAMENTO &&
+      props.UBIGEO_PROVINCIA && props.UBIGEO_DISTRITO &&
+      props.RUTA_FOTOS && props.RUTA_FOTOS.length >= 2 &&
+      props.NOMBRES && props.NOMBRES !== 'PENDIENTE' && props.NOMBRES !== 'NO ENCONTRADO'
+    );
+  }
+
+  /**
+   * Convierte un objeto de geometría GeoJSON a su representación WKT (Well-Known Text).
+   */
+  private geometryToWkt(geometry: { type: string, coordinates: any }): string | null {
+    if (!geometry || !geometry.coordinates) return null;
+
+    const coordToString = (coords: any[]) => coords.join(' ');
+
+    switch (geometry.type) {
+      case 'Point':
+        return `POINT Z (${geometry.coordinates.join(' ')})`;
+      case 'LineString':
+        return `LINESTRING (${geometry.coordinates.map(coordToString).join(', ')})`;
+      case 'Polygon':
+        const ring = geometry.coordinates[0].map(coordToString).join(', ');
+        return `POLYGON ((${ring}))`;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Obtiene todos los registros guardados en su formato GeoJSON crudo.
+   * @returns Una promesa que resuelve a un array de GeoJSON Features.
+   */
+  public async getAllRawRecords(): Promise<any[]> {
+    const { keys } = await Preferences.keys();
+    const recordKeys = keys.filter(k =>
+      k.startsWith('polygon_') || k.startsWith('point_') || k.startsWith('linestring_')
+    );
+
+    const allRecords: any[] = [];
+    for (const key of recordKeys) {
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        try {
+          allRecords.push(JSON.parse(value));
+        } catch (e) { /* Ignorar registros corruptos */ }
+      }
+    }
+    return allRecords;
   }
 
   /**
@@ -659,22 +769,13 @@ export class RegisterDataService {
     return allRecords.map(record => {
       const props = record.geojson.properties || {};
       const geometryType = record.geojson.geometry?.type || 'Unknown';
-      const thumbnailUrl = (props.photos && props.photos.length > 0) ? Capacitor.convertFileSrc(props.photos[0]) : undefined;
+      const thumbnailUrl = (props.RUTA_FOTOS && props.RUTA_FOTOS.length > 0) ? Capacitor.convertFileSrc(props.RUTA_FOTOS[0]) : undefined;
 
       // --- Lógica para determinar el color del estado ---
       let statusColor: 'danger' | 'warning' | 'success' = 'success'; // Verde por defecto
       const isDraft = props.status === 'draft';
       const isPendingSync = props.syncStatus === 'pending';
-      // Replicamos la validación detallada para consistencia visual en la lista.
-      const isDataMissing = !(
-        props.updatedAt && props.dni && props.tipo_productor &&
-        props.celular_participante && props.dni_photo_front &&
-        props.dni_photo_back && props.tipo_cultivo &&
-        props.fecha_nacimiento && props.ubigeo_oficina_zonal &&
-        props.ubigeo_departamento && props.ubigeo_provincia &&
-        props.ubigeo_distrito && props.photos && props.photos.length >= 2 &&
-        props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
-      );
+      const isDataMissing = !this.isRecordComplete(props);
 
       if (isDraft) {
         statusColor = 'danger'; // Rojo
@@ -685,10 +786,10 @@ export class RegisterDataService {
 
       return {
         key: record.key,
-        name: props.name || 'Registro sin nombre',
+        name: props.NOMBRE_COMPLETO || 'Registro sin nombre',
         type: geometryType,
         icon: this.getIconForType(geometryType),
-        createdAt: props.createdAt ? new Date(props.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible',
+        createdAt: props.FECHA_CREACION_REGISTRO ? new Date(props.FECHA_CREACION_REGISTRO).toLocaleDateString('es-PE') : 'Fecha no disponible',
         thumbnail: thumbnailUrl,
         statusColor: statusColor
       };
@@ -724,7 +825,7 @@ export class RegisterDataService {
    * @param geojson El objeto GeoJSON de la nueva geometría.
    */
   public async createDraftAndNavigate(geojson: any) {
-    if (!geojson || !geojson.geometry) {
+    if (!geojson || !geojson.geometry) { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Error al crear la geometría. Inténtalo de nuevo.', 'danger');
       return;
     }
@@ -738,8 +839,8 @@ export class RegisterDataService {
 
     // Asignamos propiedades mínimas para el borrador
     geojson.properties = {
-      name: 'NUEVO REGISTRO (PENDIENTE)',
-      createdAt: new Date().toISOString(),
+      NOMBRE_COMPLETO: 'NUEVO REGISTRO (PENDIENTE)',
+      FECHA_CREACION_REGISTRO: new Date().toISOString(),
       status: 'draft', // Marcamos como borrador
     };
 
@@ -754,16 +855,16 @@ export class RegisterDataService {
     const data = this._formData.getValue();
     const missing: string[] = [];
 
-    if (!data.dni || data.dni.length !== 8) missing.push('DNI (8 dígitos)');
-    if (!data.tipo_productor) missing.push('Tipo de productor');
-    if (!data.celular_participante) missing.push('Número de celular');
-    if (!data.dni_photo_front) missing.push('Foto frontal del DNI');
-    if (!data.dni_photo_back) missing.push('Foto posterior del DNI');
+    if (!data.DNI || data.DNI.length !== 8) missing.push('DNI (8 dígitos)');
+    if (!data.TIPO_PRODUCTOR) missing.push('Tipo de productor');
+    if (!data.CELULAR_PARTICIPANTE) missing.push('Número de celular');
+    if (!data.RUTA_DNI_FRONT) missing.push('Foto frontal del DNI');
+    if (!data.RUTA_DNI_BACK) missing.push('Foto posterior del DNI');
 
     // Validación de fecha de nacimiento
-    if (!data.fecha_nacimiento) {
+    if (!data.FECHA_NACIMIENTO) {
       missing.push('Fecha de nacimiento');
-    } else if (!this.isOfLegalAge(data.fecha_nacimiento)) {
+    } else if (!this.isOfLegalAge(data.FECHA_NACIMIENTO)) {
       missing.push('El productor debe ser mayor de 18 años');
     }
 
@@ -798,13 +899,13 @@ export class RegisterDataService {
   // --- Lógica de Fotos ---
 
   public async takePicture() {
-    if (this._photosForDisplay.getValue().length >= 6) {
+    if (this._photosForDisplay.getValue().length >= 6) { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Límite de 6 fotos alcanzado.', 'warning');
       return;
     }
 
     const permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
-    if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
+    if (permissions.camera !== 'granted' || permissions.photos !== 'granted') { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Se necesitan permisos de cámara y galería.', 'warning');
       return;
     }
@@ -840,7 +941,7 @@ export class RegisterDataService {
       try {
         await Filesystem.writeFile({
           path: `GeoDAIS/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
-        });
+        }); // No hay errores aquí, pero es una buena práctica de validación.
         await this.showToast('Copia de la foto guardada en la galería.', 'success');
       } catch (publicSaveError: any) {
       }
@@ -858,7 +959,7 @@ export class RegisterDataService {
         displayMessage = 'No se pudo obtener la ubicación GPS a tiempo. Intente en un lugar con mejor señal.';
       }
 
-      await this.showToast(displayMessage, 'danger', 5000);
+      await this.showToast(displayMessage, 'danger', 'middle', 5000);
     } finally {
       await loading.dismiss();
     }
@@ -892,7 +993,7 @@ export class RegisterDataService {
 
   public async takeDniPicture(side: 'front' | 'back') {
     const permissions = await Camera.requestPermissions({ permissions: ['camera'] });
-    if (permissions.camera !== 'granted') {
+    if (permissions.camera !== 'granted') { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Se necesita permiso de cámara.', 'warning');
       return;
     }
@@ -902,17 +1003,16 @@ export class RegisterDataService {
 
     try {
       const currentFormData = this._formData.getValue();
-      const productorDni = currentFormData.dni;
+      const productorDni = currentFormData.DNI;
       const recordKey = this._editKey.getValue();
 
       if (!productorDni || productorDni.length !== 8) {
-        await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos antes de tomar la foto.', 'warning');
+        await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos antes de tomar la foto.', 'warning', 'top');
         return;
       }
 
       if (!recordKey) {
-        // Esto no debería ocurrir en el flujo normal, pero es una salvaguarda.
-        await this.showToast('Error: No se pudo identificar el registro actual. Intente de nuevo.', 'danger');
+        await this.showToast('Error: No se pudo identificar el registro actual. Intente de nuevo.', 'danger', 'middle');
         return;
       }
 
@@ -934,7 +1034,7 @@ export class RegisterDataService {
       const fileName = `dni_${side}_${productorDni}_${recordKey}.jpeg`;
 
       // Si ya existe una foto para este lado, la eliminamos primero
-      const existingUri = side === 'front' ? currentFormData.dni_photo_front : currentFormData.dni_photo_back;
+      const existingUri = side === 'front' ? currentFormData.RUTA_DNI_FRONT : currentFormData.RUTA_DNI_BACK;
       if (existingUri) {
         try {
           // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
@@ -964,9 +1064,9 @@ export class RegisterDataService {
 
       // Actualizamos el estado del formulario con el URI completo y correcto
       if (side === 'front') {
-        currentFormData.dni_photo_front = savedFile.uri;
+        currentFormData.RUTA_DNI_FRONT = savedFile.uri;
       } else {
-        currentFormData.dni_photo_back = savedFile.uri;
+        currentFormData.RUTA_DNI_BACK = savedFile.uri;
       }
       this._formData.next(currentFormData);
 
@@ -975,7 +1075,7 @@ export class RegisterDataService {
       if (errorMessage.toLowerCase().includes('user cancelled')) {
         return; // No mostrar error si el usuario cancela
       }
-      await this.showToast(`Error: ${errorMessage}`, 'danger', 5000);
+      await this.showToast(`Error: ${errorMessage}`, 'danger', 'middle', 5000);
     } finally {
       await loading.dismiss();
     }
@@ -983,7 +1083,7 @@ export class RegisterDataService {
 
   public async deleteDniPicture(side: 'front' | 'back') {
     const currentFormData = this._formData.getValue();
-    const uriToDelete = side === 'front' ? currentFormData.dni_photo_front : currentFormData.dni_photo_back;
+    const uriToDelete = side === 'front' ? currentFormData.RUTA_DNI_FRONT : currentFormData.RUTA_DNI_BACK;
 
     if (uriToDelete) {
       try {
@@ -993,9 +1093,9 @@ export class RegisterDataService {
       }
 
       if (side === 'front') {
-        currentFormData.dni_photo_front = '';
+        currentFormData.RUTA_DNI_FRONT = '';
       } else {
-        currentFormData.dni_photo_back = '';
+        currentFormData.RUTA_DNI_BACK = '';
       }
       this._formData.next(currentFormData);
     }
@@ -1016,7 +1116,8 @@ export class RegisterDataService {
     if (!geojson || !geojson.geometry || !geojson.geometry.coordinates) return;
 
     const geometryType = geojson.geometry.type;
-    const data = this._formData.getValue();
+    // MEJORA: Clonar el estado para evitar mutaciones directas y comportamientos inesperados.
+    const data = { ...this._formData.getValue() };
 
     if (geometryType === 'Point') {
       data.geometryTypeLabel = 'Punto';
@@ -1040,13 +1141,31 @@ export class RegisterDataService {
       const center = L.polyline(latlngs).getBounds().getCenter();
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
       data.altitud = this.calculateAverageAltitude(coords);
-    } else { // Polygon or MultiPolygon
+    // MEJORA: Ser explícito con los tipos de geometría para evitar errores con tipos no manejados.
+    } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
       data.geometryTypeLabel = 'Polígono';
-      let coords = (geometryType === 'Polygon') ? geojson.geometry.coordinates[0] : geojson.geometry.coordinates[0][0];
+
+      // CORRECCIÓN: Acceder de forma segura a las coordenadas para evitar errores con MultiPolygon vacíos.
+      let coords;
+      if (geometryType === 'Polygon') {
+        coords = geojson.geometry.coordinates[0];
+      } else { // MultiPolygon
+        if (geojson.geometry.coordinates && geojson.geometry.coordinates.length > 0) {
+          coords = geojson.geometry.coordinates[0][0];
+        }
+      }
+
       if (!coords || coords.length < 3) return;
       const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
-      const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+
+      // CORRECCIÓN: Asegurarse de que el polígono esté cerrado para el cálculo del área, evitando resultados incorrectos.
+      const closedLatlngs = [...latlngs];
+      if (closedLatlngs.length > 0 && closedLatlngs[0].distanceTo(closedLatlngs[closedLatlngs.length - 1]) > 1) {
+        closedLatlngs.push(closedLatlngs[0]);
+      }
+      const areaM2 = L.GeometryUtil.geodesicArea(closedLatlngs);
       data.area = `${(areaM2 / 10000).toFixed(4)} ha`;
+
       let perimeter = 0;
       for (let i = 0; i < latlngs.length - 1; i++) {
         perimeter += latlngs[i].distanceTo(latlngs[i + 1]);
@@ -1055,6 +1174,7 @@ export class RegisterDataService {
         perimeter += latlngs[latlngs.length - 1].distanceTo(latlngs[0]);
       }
       data.perimetro = `${perimeter.toFixed(2)} m`;
+
       const center = L.polygon(latlngs).getBounds().getCenter();
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
       data.altitud = this.calculateAverageAltitude(coords);
@@ -1079,7 +1199,7 @@ export class RegisterDataService {
 
     // Si ya existen datos de ubicación, no volvemos a buscarlos para evitar el toast.
     const existingData = this._formData.getValue();
-    if (existingData.ubigeo_departamento || existingData.ubigeo_provincia || existingData.ubigeo_distrito) {
+    if (existingData.UBIGEO_DEPARTAMENTO || existingData.UBIGEO_PROVINCIA || existingData.UBIGEO_DISTRITO) {
       return;
     }
 
@@ -1092,11 +1212,23 @@ export class RegisterDataService {
       let latlngs: L.LatLng[];
       if (geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
         const coords = geometry.type === 'LineString' ? geometry.coordinates : geometry.coordinates[0];
+        // CORRECCIÓN: Una línea necesita al menos 2 puntos para tener un centro.
+        if (!coords || coords.length < 2) return;
         latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
         const center = L.polyline(latlngs).getBounds().getCenter();
         point = { x: center.lng, y: center.lat };
       } else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
-        const coords = geometry.type === 'Polygon' ? geometry.coordinates[0] : geometry.coordinates[0][0];
+        // CORRECCIÓN: Acceder de forma segura a las coordenadas para evitar errores.
+        let coords;
+        if (geometry.type === 'Polygon') {
+          coords = geometry.coordinates[0];
+        } else { // MultiPolygon
+          if (geometry.coordinates && geometry.coordinates.length > 0) {
+            coords = geometry.coordinates[0][0];
+          }
+        }
+        // CORRECCIÓN: Un polígono necesita al menos 3 puntos para tener un centro.
+        if (!coords || coords.length < 3) return;
         latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
         const center = L.polygon(latlngs).getBounds().getCenter();
         point = { x: center.lng, y: center.lat };
@@ -1141,18 +1273,18 @@ export class RegisterDataService {
       // Process Ubigeo Response
       if (ubigeoResponse.status === 200 && ubigeoResponse.data && ubigeoResponse.data.features && ubigeoResponse.data.features.length > 0) {
         const attributes = ubigeoResponse.data.features[0].attributes;
-        currentFormData.ubigeo_departamento = attributes.nombdep || '';
-        currentFormData.ubigeo_provincia = attributes.nombprov || '';
-        currentFormData.ubigeo_distrito = attributes.nombdist || '';
+        currentFormData.UBIGEO_DEPARTAMENTO = attributes.nombdep || '';
+        currentFormData.UBIGEO_PROVINCIA = attributes.nombprov || '';
+        currentFormData.UBIGEO_DISTRITO = attributes.nombdist || '';
         ubigeoDataFound = true;
       }
 
       // Process Zonal Office Response
       if (zonalResponse.status === 200 && zonalResponse.data && zonalResponse.data.features && zonalResponse.data.features.length > 0) {
         const attributes = zonalResponse.data.features[0].attributes;
-        currentFormData.ubigeo_oficina_zonal = attributes.nombre || 'FUERA DE LA OFICINA ZONAL';
+        currentFormData.UBIGEO_OFICINA_ZONAL = attributes.nombre || 'FUERA DE LA OFICINA ZONAL';
       } else {
-        currentFormData.ubigeo_oficina_zonal = 'FUERA DE LA OFICINA ZONAL';
+        currentFormData.UBIGEO_OFICINA_ZONAL = 'FUERA DE LA OFICINA ZONAL';
       }
 
       // Update state immutably
@@ -1244,12 +1376,25 @@ export class RegisterDataService {
     return age >= 18;
   }
 
-  public async showToast(message: string, color: 'success' | 'danger' | 'warning' | 'tertiary' = 'tertiary', duration: number = 3000) {
+  /**
+   * Muestra un toast (mensaje emergente) de forma centralizada.
+   * @param message El mensaje a mostrar.
+   * @param color El color del toast.
+   * @param position La posición en la pantalla.
+   * @param duration La duración en milisegundos.
+   */
+  public async showToast(
+    message: string,
+    color: 'success' | 'danger' | 'warning' | 'tertiary' | 'primary' | 'medium' = 'tertiary',
+    position: 'top' | 'bottom' | 'middle' = 'middle',
+    duration: number = 3000
+  ) {
     const toast = await this.toastController.create({
-      message: message,
-      duration: duration,
-      position: 'middle',
-      color: color,
+      message,
+      duration,
+      position,
+      color,
+      cssClass: 'multiline-toast' // Clase para permitir múltiples líneas
     });
     await toast.present();
   }

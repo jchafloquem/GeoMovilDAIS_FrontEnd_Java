@@ -10,6 +10,7 @@ import {
   IonFab,
   IonFabButton,
   IonLoading,
+  LoadingController,
   IonSpinner,
   NavController,
   ToastController,
@@ -29,6 +30,7 @@ import {
   add,
   addCircleOutline,
   addOutline,
+  cloudUploadOutline,
   analyticsOutline,
   cellularOutline,
   checkmarkCircleOutline,
@@ -61,6 +63,7 @@ import { Network } from '@capacitor/network';
 import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { GpsDataService } from 'src/app/services/gps-data.service';
+import { ApiService } from 'src/app/services/api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { LegendDataService, LegendCounts } from 'src/app/services/legend-data.service';
 import { LegendPage } from './pages/legend/legend.page';
@@ -195,9 +198,11 @@ export class MapaPage implements OnDestroy {
     private registerDataService: RegisterDataService,
     private gpsDataService: GpsDataService,
     private authService: AuthService, // Inyectamos el AuthService
+    private apiService: ApiService, // Inyectamos el ApiService
+    private loadingController: LoadingController,
     private legendDataService: LegendDataService
   ) {
-    addIcons({personAddOutline,listOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,mailOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
+    addIcons({personAddOutline,listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
 
   async ionViewWillEnter() {
@@ -414,7 +419,7 @@ export class MapaPage implements OnDestroy {
 
   toggleDrawingMode() {
     if (this.isDrawingLine) {
-      this.presentToast('Finalice el dibujo de la línea primero.', 'warning');
+      this.registerDataService.showToast('Finalice el dibujo de la línea primero.', 'warning', 'top');
       return;
     }
     this.isDrawingPolygon = !this.isDrawingPolygon;
@@ -428,7 +433,7 @@ export class MapaPage implements OnDestroy {
 
   toggleLineDrawing() {
     if (this.isDrawingPolygon) {
-      this.presentToast('Finalice el dibujo del polígono primero.', 'warning');
+      this.registerDataService.showToast('Finalice el dibujo del polígono primero.', 'warning', 'top');
       return;
     }
     this.isDrawingLine = !this.isDrawingLine;
@@ -581,7 +586,7 @@ export class MapaPage implements OnDestroy {
       }
       this.registerDataService.createDraftAndNavigate(polygon.toGeoJSON());
     } else {
-      this.presentToast('Dibujo cancelado: se necesitan al menos 3 puntos.', 'warning');
+      this.registerDataService.showToast('Dibujo cancelado: se necesitan al menos 3 puntos.', 'warning', 'top');
     }
 
     // 3. Limpiar elementos temporales del mapa
@@ -617,7 +622,7 @@ export class MapaPage implements OnDestroy {
       }
       this.registerDataService.createDraftAndNavigate(line.toGeoJSON());
     } else {
-      this.presentToast('Dibujo cancelado: se necesitan al menos 2 puntos para una línea.', 'warning');
+      this.registerDataService.showToast('Dibujo cancelado: se necesitan al menos 2 puntos para una línea.', 'warning', 'top');
     }
 
     // 3. Limpiar elementos temporales del mapa
@@ -629,12 +634,12 @@ export class MapaPage implements OnDestroy {
 
   async addPointAtCurrentLocation() {
     if (this.isDrawingPolygon || this.isDrawingLine) {
-      this.presentToast('Termine de dibujar el polígono antes de añadir un punto.', 'warning');
+      this.registerDataService.showToast('Termine de dibujar el polígono antes de añadir un punto.', 'warning', 'top');
       return;
     }
 
     if (!this.gpsData.lat) {
-      this.presentToast('Ubicación GPS no disponible. Intente centrar el mapa primero.', 'warning');
+      this.registerDataService.showToast('Ubicación GPS no disponible. Intente centrar el mapa primero.', 'warning', 'top');
       return;
     }
 
@@ -660,7 +665,7 @@ export class MapaPage implements OnDestroy {
       this.loadSavedGeometries();
     }
 
-    this.presentToast(
+    this.registerDataService.showToast(
       this.isEditingMode ? 'Modo Edición Activado. Toca un polígono para editarlo.' : 'Modo Edición Desactivado.',
       this.isEditingMode ? 'primary' : 'medium',
       'middle'
@@ -706,8 +711,28 @@ export class MapaPage implements OnDestroy {
     await alert.present();
   }
 
+  /**
+   * Orquesta el envío de todos los registros completos (verdes) al backend de DEVIDA.
+   */
+  public async enviarADevida() {
+    // La lógica de envío se ha centralizado en el servicio para mayor consistencia y mantenibilidad.
+    await this.registerDataService.sendAllCompletedRecords();
+
+    // Después del envío, siempre recargamos las geometrías en el mapa para
+    // reflejar los cambios (ej. registros eliminados o con errores).
+    this.loadSavedGeometries();
+  }
+
+  /**
+   * Convierte un objeto de geometría GeoJSON a su representación Well-Known Text (WKT).
+   * @param geometry El objeto de geometría GeoJSON.
+   * @returns Una cadena WKT con componente Z, o null si la geometría es inválida.
+   */
+  // DEPRECADO: Esta función se ha movido al `register-data.service` para centralizar la lógica.
+  // private convertGeoJsonToWkt(geometry: any): string | null { ... }
+
+
   async exportAllGeometries() {
-    this.isLoading = true;
     try {
       // 1. Clasificar todos los registros en 'completos' e 'incompletos' en una sola pasada.
       const { keys: allKeys } = await Preferences.keys();
@@ -746,6 +771,9 @@ export class MapaPage implements OnDestroy {
               incompleteCounts.points++;
             }
           } else {
+            // AÑADIR LA CLAVE INTERNA PARA PODER ACTUALIZAR EL REGISTRO DESPUÉS
+            if (!geojson.properties) geojson.properties = {};
+            geojson.properties.internal_key = key;
             completeRecordsToExport.push(geojson); // Solo los completos se añaden a la lista de exportación
           }
         } catch (e) {
@@ -769,15 +797,18 @@ export class MapaPage implements OnDestroy {
         if (incompleteCounts.points > 0) messageParts.push(`${incompleteCounts.points} punto(s)`);
 
         const detailMessage = messageParts.join(', ');
-        this.presentToast(`Tiene geometrías por completar (${detailMessage}). Solo se pueden exportar registros completos (verdes).`, 'warning', 'middle');
+        this.registerDataService.showToast(`Tiene geometrías por completar (${detailMessage}). Solo se pueden exportar registros completos (verdes).`, 'warning', 'middle');
         return;
       }
 
       // 3. Si no hay registros completos para exportar, informar y detener.
       if (completeRecordsToExport.length === 0) {
-        this.presentToast('No hay geometrías completas para exportar.', 'warning', 'middle');
+        this.registerDataService.showToast('No hay geometrías completas para exportar.', 'warning', 'middle');
         return;
       }
+
+      // --- LÓGICA DE EXPORTACIÓN LOCAL ---
+      // Se ha eliminado la lógica de envío al backend de esta función.
 
       // 4. Proceder con la exportación usando SOLO la lista de registros completos.
       // Cargar los datos del profesional para incluirlos en la exportación
@@ -880,11 +911,20 @@ export class MapaPage implements OnDestroy {
         }
       }
 
-      this.presentToast(
-        `Exportación completada. ${filesWritten} archivo(s) guardado(s) en la carpeta '${exportFolderName}'.`,
-        'success',
-        'middle'
-      );
+      // --- Mensaje final específico para exportación local ---
+      if (filesWritten > 0) {
+        this.registerDataService.showToast(
+          `${filesWritten} archivo(s) GeoJSON guardados en la carpeta '${exportFolderName}' de su dispositivo.`,
+          'success',
+          'middle'
+        );
+      } else {
+        this.registerDataService.showToast(
+          'No se exportó ningún archivo.',
+          'warning',
+          'middle'
+        );
+      }
 
     } catch (error: any) {
       const alert = await this.alertController.create({
@@ -893,31 +933,15 @@ export class MapaPage implements OnDestroy {
         buttons: ['OK']
       });
       await alert.present();
-    } finally {
-      this.isLoading = false;
     }
   }
 
   private isRecordIncomplete(properties: any): boolean {
-    const props = properties || {};
-    // Un registro se considera incompleto si le faltan datos clave.
-    // La negación (!) al principio invierte el resultado: si todo existe, devuelve false (no incompleto).
-    return !(
-      props.updatedAt &&
-      props.dni &&
-      props.tipo_productor &&
-      props.celular_participante &&
-      props.dni_photo_front &&
-      props.dni_photo_back &&
-      props.tipo_cultivo &&
-      props.fecha_nacimiento &&
-      props.ubigeo_oficina_zonal &&
-      props.ubigeo_departamento &&
-      props.ubigeo_provincia &&
-      props.ubigeo_distrito &&
-      props.photos && props.photos.length >= 2 &&
-      props.nombres && props.nombres !== 'PENDIENTE' && props.nombres !== 'NO ENCONTRADO'
-    );
+    // DEPRECADO: La lógica de validación ahora está centralizada en `registerDataService.isRecordComplete`.
+    // Esta función ahora simplemente llama al método del servicio para mantener la consistencia.
+    // La lógica negada es intencional: `isRecordComplete` devuelve `true` si está completo.
+    // Para `isRecordIncomplete`, necesitamos el valor opuesto.
+    return !this.registerDataService.isRecordComplete(properties);
   }
   private editGeometryInfo(key: string) {
     if (!key) return;
@@ -1094,20 +1118,6 @@ export class MapaPage implements OnDestroy {
       });
     } catch (error) {
     }
-  }
-  async presentToast(
-    message: string,
-    color: 'success' | 'warning' | 'danger' | 'primary' | 'medium',
-    position: 'top' | 'bottom' | 'middle' = 'top'
-  ) {
-    const toast = await this.toastController.create({
-      message,
-      duration: 2500,
-      color,
-      position,
-      cssClass: 'multiline-toast' // Clase para permitir múltiples líneas
-    });
-    toast.present();
   }
 
   /**
