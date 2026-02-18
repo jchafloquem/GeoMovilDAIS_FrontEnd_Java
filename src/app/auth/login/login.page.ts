@@ -1,8 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { addIcons } from 'ionicons';
+import { eye, eyeOff } from 'ionicons/icons';
 import {
   IonContent,
+  IonCheckbox,
   IonItem,
   IonInput,
   IonButton,
@@ -10,10 +13,13 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
+  IonButtons,
   IonCardSubtitle,
+  IonIcon,
   IonCardTitle,
   LoadingController,
-  ToastController
+  ToastController,
+
 } from '@ionic/angular/standalone';
 import { Router} from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
@@ -25,6 +31,7 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./login.page.scss'],
   standalone: true,
   imports: [
+    IonButtons,
     CommonModule,
     FormsModule,
     IonButton,
@@ -36,11 +43,16 @@ import { AuthService } from 'src/app/services/auth.service';
     IonContent,
     IonInput,
     IonItem,
+    IonIcon,
     IonList,
     ReactiveFormsModule,
+    IonCheckbox,
   ],
 })
 export class LoginPage {
+  passwordType: string = 'password';
+  passwordIcon: string = 'eye-off';
+
 
   private formBuilder: FormBuilder = inject(FormBuilder);
   private authService: AuthService = inject(AuthService);
@@ -49,11 +61,21 @@ export class LoginPage {
   private toastController: ToastController = inject(ToastController);
 
   public formLogin: FormGroup = this.formBuilder.group({
+
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]]
   });
 
-  constructor() { }
+
+  togglePassword():void {
+    this.passwordType = this.passwordType === 'text' ? 'password' : 'text';
+    this.passwordIcon = this.passwordIcon === 'eye-off' ? 'eye' : 'eye-off';
+  }
+
+  constructor() {
+    addIcons({ eye, eyeOff })
+
+   }
 
   async login() {
     if (this.formLogin.invalid) {
@@ -76,6 +98,7 @@ export class LoginPage {
       }
     } catch (error: any) {
       this.showToast(error.message);
+
     } finally {
       loading.dismiss();
     }

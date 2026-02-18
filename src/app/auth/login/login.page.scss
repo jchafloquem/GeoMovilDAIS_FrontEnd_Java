@@ -35,3 +35,12 @@ ion-card.rounded-card {
   font-size: 1rem;
   font-weight: bold;
 }
+
+ion-item {
+  --padding-start: 8px;
+  --inner-padding-end: 0; // Permite que el botón del ojo llegue bien al borde
+
+  ion-button {
+    margin-top: 15px; // Alinea el ojo con el texto del input cuando la etiqueta flota
+  }
+}

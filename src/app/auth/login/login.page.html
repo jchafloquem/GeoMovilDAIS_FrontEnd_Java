@@ -2,7 +2,7 @@
   <div class="login-container">
     <ion-card class="rounded-card">
       <ion-card-header>
-        <ion-card-title class="ion-text-center">Bienvenido a GeoDAIS</ion-card-title>
+        <ion-card-title class="ion-text-center">BIENVENIDOS AL GeoDAIS</ion-card-title>
         <ion-card-subtitle class="ion-text-center">Accede a tu cuenta</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
@@ -12,10 +12,22 @@
               <ion-input label="Email" labelPlacement="floating" type="email" name="email" formControlName="email" placeholder="correo@gmail.com"></ion-input>
             </ion-item>
             <ion-item>
-              <ion-input label="Contraseña" labelPlacement="floating" type="password" name="password" formControlName="password" placeholder="Ingresa tu contraseña"></ion-input>
+              <ion-input [type]="passwordType" label="Contraseña" labelPlacement="floating" formControlName="password" placeholder="Ingresa tu contraseña"></ion-input>
+              <ion-buttons slot="end">
+                <ion-button (click)="togglePassword()" fill="clear" style="--color: #666;">
+                  <ion-icon [name]="passwordIcon" slot="icon-only" style="font-size: 22px;"></ion-icon>
+                </ion-button>
+              </ion-buttons>
             </ion-item>
           </ion-list>
-          <ion-button color="primary" expand="block" type="submit" [disabled]="formLogin.invalid" class="ion-margin-top login-button">INGRESAR</ion-button>
+          <ion-button
+              color="primary"
+              expand="block"
+              type="submit"
+              [disabled]="formLogin.invalid"
+              class="ion-margin-top login-button">
+              INGRESAR
+          </ion-button>
         </form>
       </ion-card-content>
     </ion-card>
