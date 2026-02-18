@@ -1,26 +1,25 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
 import {
   AlertController,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonTitle,
-  IonToolbar,
+  IonButton,
   IonButtons,
+  IonContent,
   IonFab,
   IonFabButton,
-  IonLoading,
-  LoadingController,
-  IonSpinner,
-  NavController,
-  ToastController,
-  IonMenu,
-  IonMenuButton,
-  IonList,
+  IonHeader,
+  IonIcon,
   IonItem,
   IonLabel,
-  IonButton,
-
+  IonList,
+  IonLoading,
+  IonMenu,
+  IonMenuButton,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+  LoadingController,
+  NavController,
+  ToastController,
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { App } from '@capacitor/app';
@@ -30,19 +29,21 @@ import {
   add,
   addCircleOutline,
   addOutline,
-  cloudUploadOutline,
   analyticsOutline,
   cellularOutline,
   checkmarkCircleOutline,
+  cloudUploadOutline,
   createOutline,
   downloadOutline,
   ellipseOutline,
   globeOutline,
   imageOutline,
+  informationCircleOutline,
   layersOutline,
   listOutline,
   locate,
   locationOutline,
+  mailOutline,
   mapOutline,
   personAddOutline,
   planetOutline,
@@ -52,7 +53,7 @@ import {
   trashOutline,
   walkOutline,
   wifiOutline,
-  informationCircleOutline, mailOutline } from 'ionicons/icons';
+} from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -67,12 +68,9 @@ import { ApiService } from 'src/app/services/api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { LegendDataService, LegendCounts } from 'src/app/services/legend-data.service';
 import { LegendPage } from './pages/legend/legend.page';
-
-
 // Declara L como una variable global para que TypeScript no se queje.
 // Leaflet y Leaflet-draw se cargan globalmente a través de angular.json
 declare var L: any;
-
 const iconRetinaUrl = 'assets/images/marker-icon-2x.png';
 const iconUrl = 'assets/images/marker-icon.png';
 const shadowUrl = 'assets/images/marker-shadow.png';
@@ -1171,9 +1169,6 @@ export class MapaPage implements OnDestroy {
       this.isLoading = false;
     }
   }
-
-
-
   private initMap(): void {
     const map = L.map('map', {
       center: [-9.00, -70.0152],

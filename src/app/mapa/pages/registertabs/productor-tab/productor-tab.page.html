@@ -10,7 +10,8 @@
           <ion-item>
             <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8" name="DNI"
                        [ngModel]="formData.DNI"
-                       (ngModelChange)="formData.DNI = $event"></ion-input>
+                       (ngModelChange)="formData.DNI = $event">
+            </ion-input>
             <ion-button slot="end" (click)="searchDni()" [disabled]="!formData.DNI || formData.DNI.length !== 8">
               <ion-icon name="search" slot="icon-only"></ion-icon>
             </ion-button>

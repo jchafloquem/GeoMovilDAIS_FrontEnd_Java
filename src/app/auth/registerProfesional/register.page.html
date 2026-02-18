@@ -1,28 +1,36 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button [defaultHref]="isProfileRegistered ? '/mapa' : '/login'"></ion-back-button>
+      <ion-button class="back-circle-button" (click)="goBack()">
+        <ion-icon name="arrow-back-circle-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
-    <ion-title>{{ isProfileRegistered ? 'Mi Perfil' : 'Registro de Perfil' }}</ion-title>
+    <ion-title
+      >{{ isProfileRegistered ? 'MI PERFIL' : 'Registro de Perfil' }}</ion-title
+    >
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <div class="register-container">
-    <ion-card>
+    <ion-card style="border-radius: 25px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.30);">
       <ion-card-header>
-        <ion-card-title class="ion-text-center">{{ isProfileRegistered ? 'Datos del Usuario' : 'Completa tu Perfil' }}</ion-card-title>
+        <ion-card-title class="ion-text-center"
+          >{{ isProfileRegistered ? 'DATOS DEL USUARIO' : 'COMPLETA TU PERFIL'
+          }}</ion-card-title
+        >
       </ion-card-header>
 
       <ion-card-content>
-        <form [formGroup]="profileForm" (ngSubmit)="!isProfileRegistered && saveProfile()">
+        <form
+          [formGroup]="profileForm"
+          (ngSubmit)="!isProfileRegistered && saveProfile()">
           <ion-list>
             <ion-item>
               <ion-input
                 label="DNI"
                 labelPlacement="floating"
                 type="tel"
-                class="uppercase-input"
                 formControlName="dni"
                 placeholder="Ingresa tu DNI"
                 maxlength="8"
@@ -35,7 +43,6 @@
                 label="Nombres"
                 labelPlacement="floating"
                 type="text"
-                class="uppercase-input"
                 formControlName="nombres"
                 placeholder="Ingresa tus nombres"
                 required
@@ -47,7 +54,6 @@
                 label="Apellido Paterno"
                 labelPlacement="floating"
                 type="text"
-                class="uppercase-input"
                 formControlName="apellidoPaterno"
                 placeholder="Ingresa tu apellido paterno"
                 required
@@ -59,7 +65,6 @@
                 label="Apellido Materno"
                 labelPlacement="floating"
                 type="text"
-                class="uppercase-input"
                 formControlName="apellidoMaterno"
                 placeholder="Ingresa tu apellido materno"
                 required
@@ -87,14 +92,13 @@
                 required
               ></ion-input>
             </ion-item>
-
           </ion-list>
 
-          <!-- Botón para guardar el perfil por primera vez -->
           <ion-button
             *ngIf="!isProfileRegistered"
-            class="ion-margin-top"
+            style="height: 50px; width: 90%; margin: 20px auto"
             expand="block"
+            shape="round"
             type="submit"
             [disabled]="profileForm.invalid"
             color="primary"
@@ -102,13 +106,14 @@
             Guardar Perfil
           </ion-button>
 
-          <!-- Botón para volver al mapa si ya está registrado -->
           <ion-button
             *ngIf="isProfileRegistered"
-            class="ion-margin-top"
+            style="height: 50px; width: 90%; margin: 20px auto"
             expand="block"
+            shape="round"
             (click)="goToMap()"
-            color="primary">
+            color="primary"
+          >
             Volver al Mapa
           </ion-button>
         </form>

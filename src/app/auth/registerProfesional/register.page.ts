@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { arrowBack, arrowBackCircleOutline } from 'ionicons/icons';
 import {
+  IonIcon,
   IonHeader,
   IonToolbar,
   IonButtons,
-  IonBackButton,
   IonTitle,
   IonContent,
   IonCard,
@@ -31,8 +34,8 @@ const USER_PROFILE_KEY = 'userProfile';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, IonHeader, IonToolbar, IonButtons,
-    IonBackButton, IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle,
-    IonCardContent, IonList, IonItem, IonInput, IonButton
+    IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle,
+    IonCardContent, IonList, IonItem, IonInput, IonButton, IonIcon,
   ],
 })
 export class RegisterPage implements OnInit {
@@ -43,8 +46,16 @@ export class RegisterPage implements OnInit {
     private formBuilder: FormBuilder,
     private router: Router,
     private loadingController: LoadingController,
-    private toastController: ToastController
-  ) {}
+    private toastController: ToastController,
+    private navCtrl: NavController,
+
+  ) {
+    addIcons({arrowBackCircleOutline,arrowBack});
+  }
+
+  goBack() {
+    this.navCtrl.back();
+  }
 
   ngOnInit() {
     this.profileForm = this.formBuilder.group({
