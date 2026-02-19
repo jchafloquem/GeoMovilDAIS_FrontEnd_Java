@@ -5,7 +5,6 @@ import { addIcons } from 'ionicons';
 import { eye, eyeOff } from 'ionicons/icons';
 import {
   IonContent,
-  IonCheckbox,
   IonItem,
   IonInput,
   IonButton,
@@ -46,7 +45,6 @@ import { AuthService } from 'src/app/services/auth.service';
     IonIcon,
     IonList,
     ReactiveFormsModule,
-    IonCheckbox,
   ],
 })
 export class LoginPage {

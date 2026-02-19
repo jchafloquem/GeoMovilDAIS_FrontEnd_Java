@@ -1,9 +1,26 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonCard, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail, IonTitle, IonToolbar, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline } from 'ionicons/icons';
+import {
+  ActionSheetController,
+  AlertController,
+  IonButton,
+  IonButtons,
+  IonCard,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonImg,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonThumbnail,
+  IonTitle,
+  IonToolbar,
+  NavController
+} from '@ionic/angular/standalone';
+import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline, arrowBackCircleOutline } from 'ionicons/icons';
 import { RegisterDataService, SavedRecordSummary } from 'src/app/services/register-data.service';
 
 @Component({
@@ -11,7 +28,22 @@ import { RegisterDataService, SavedRecordSummary } from 'src/app/services/regist
   templateUrl: './list.page.html',
   styleUrls: ['./list.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonList, IonItem, IonLabel, IonIcon, IonBackButton, IonButtons, IonCard, IonThumbnail, IonImg, IonButton]
+  imports: [
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    CommonModule,
+    FormsModule,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonIcon,
+    IonButtons,
+    IonCard,
+    IonThumbnail,
+    IonImg,
+    IonButton]
 })
 export class ListPage {
   public savedItems: SavedRecordSummary[] = [];
@@ -22,7 +54,24 @@ export class ListPage {
     private actionSheetCtrl: ActionSheetController,
     private registerDataService: RegisterDataService
   ) {
-    addIcons({listCircleOutline,listOutline,imageOutline,ellipsisVerticalOutline,mapOutline,shapesOutline,locationOutline,analyticsOutline,createOutline,trashOutline,close});
+    addIcons({
+      arrowBackCircleOutline,
+      listCircleOutline,
+      listOutline,
+      imageOutline,
+      ellipsisVerticalOutline,
+      mapOutline,
+      shapesOutline,
+      locationOutline,
+      analyticsOutline,
+      createOutline,
+      trashOutline,
+      close
+    });
+  }
+
+  goBack() {
+    this.navCtrl.back();
   }
 
   ionViewWillEnter() {

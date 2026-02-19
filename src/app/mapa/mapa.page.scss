@@ -35,7 +35,7 @@ ion-toolbar {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #0D9BD7; /* Azul de Ionic */
+    --background: #0DA642; /* Azul de Ionic */
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
@@ -51,7 +51,7 @@ ion-toolbar {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #0D9BD7;
+    --background: #0DA642;
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
@@ -78,7 +78,7 @@ ion-toolbar {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #0D9BD7;
+    --background: #0DA642;
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
@@ -130,11 +130,11 @@ ion-toolbar {
 
 /* Colores de fondo para las filas, estilo hoja de cálculo */
 .gps-panel .row:nth-child(odd) {
-  background-color: rgba(13, 155, 215, 0.7); /* #0D9BD7 con transparencia */
+  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
 }
 
 .gps-panel .row:nth-child(even) {
-  background-color: rgba(13, 155, 215, 0.7); /* #0D9BD7 con transparencia */
+  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
 }
 
 .gps-panel .row:last-child {
@@ -198,7 +198,7 @@ ion-toolbar {
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease-in-out;
     &.active-layer {
-      --background: #0D9BD7; /* Azul primario de Ionic */
+      --background: #0DA642; /* Azul primario de Ionic */
       --color: white;
     }
   }
@@ -259,13 +259,13 @@ ion-toolbar {
   ion-fab-button {
     width: 40px;
     height: 40px;
-    --background: #0D9BD7;
+    --background: #0DA642;
     --color: white;
     --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 }
 ::ng-deep .vertex-tooltip {
-  background-color: #0D9BD7;
+  background-color: #0DA642;
   border: 1px solid #fff;
   color: #fff;
   font-weight: bold;
@@ -315,7 +315,7 @@ ion-toolbar {
 
 .draw-walk-btn {
   bottom: 250px; // Posición base
-  background-color: #0D9BD7; // Restaurado a tu color azul
+  background-color: #0DA642; // Restaurado a tu color azul
   &.active {
     background-color: #eb445a; // Color danger (rojo)
   }
@@ -323,7 +323,7 @@ ion-toolbar {
 
 .draw-line-btn {
   bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
-  background-color: #0D9BD7; // Restaurado a tu color azul
+  background-color: #0DA642; // Restaurado a tu color azul
   &.active {
     background-color: #eb445a; // Color danger (rojo)
   }
@@ -332,13 +332,13 @@ ion-toolbar {
 .add-point-btn {
   // Se posiciona encima del botón de dibujar polígono, en el mismo lugar que el botón de "añadir vértice"
   bottom: 350px; // 300px (línea) + 40px + 10px
-  background-color: #0D9BD7; // Restaurado a tu color azul
+  background-color: #0DA642; // Restaurado a tu color azul
 }
 
 .add-vertex-btn {
   // Aparece encima del botón de detener cuando se está dibujando
   bottom: 350px; // Posición más alta para no solapar con ningún botón de "stop"
-  background-color: #0D9BD7; // Restaurado a tu color azul
+  background-color: #0DA642; // Restaurado a tu color azul
 }
 
 // Estilos para los controles de Leaflet y plugins, que requieren ::ng-deep para sobreescribir los estilos globales.
@@ -350,7 +350,7 @@ ion-toolbar {
     left: 4px;
 
     .leaflet-control-scale {
-      background: rgba(13, 155, 215, 0.7);
+      background: rgba(13, 166, 66, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 2px;
       padding: 2px 5px;
@@ -376,7 +376,7 @@ ion-toolbar {
       width: 40px;
       height: 40px;
       line-height: 40px;
-      background-color: #0D9BD7; // Mismo azul que los botones de zoom
+      background-color: #0DA642; // Mismo azul que los botones de zoom
       border-radius: 50%; // Totalmente redondo
       border: none;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); // Misma sombra
@@ -398,7 +398,7 @@ ion-toolbar {
 
       // Efecto hover similar a los botones de Ionic
       &:hover {
-        background-color: #0b84b8;
+        background-color: #0DA642;
       }
     }
 

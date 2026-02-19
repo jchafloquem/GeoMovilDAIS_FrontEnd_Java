@@ -1247,7 +1247,7 @@ export class RegisterDataService {
       returnGeometry: 'false',
       f: 'json'
     });
-    const ubigeoUrl = `https://siscod.devida.gob.pe/server/rest/services/DPM_PIRDAIS_CULTIVOS_DESARROLLO/MapServer/6/query?${ubigeoQueryParams.toString()}`;
+    const ubigeoUrl = `https://services8.arcgis.com/tPY1NaqA2ETpJ86A/ArcGIS/rest/services/caribgeoportal/FeatureServer/6/query?${ubigeoQueryParams.toString()}`;
 
     // --- Query for Oficina Zonal ---
     const zonalQueryParams = new URLSearchParams({
@@ -1259,7 +1259,7 @@ export class RegisterDataService {
       returnGeometry: 'false',
       f: 'json'
     });
-    const zonalUrl = `https://siscod.devida.gob.pe/server/rest/services/DPM_PIRDAIS_CULTIVOS_DESARROLLO/MapServer/0/query?${zonalQueryParams.toString()}`;
+    const zonalUrl = `https://services8.arcgis.com/tPY1NaqA2ETpJ86A/ArcGIS/rest/services/caribgeoportal/FeatureServer/0/query?${zonalQueryParams.toString()}`;
 
     try {
       const [ubigeoResponse, zonalResponse] = await Promise.all([
