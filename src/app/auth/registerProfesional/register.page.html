@@ -5,9 +5,7 @@
         <ion-icon name="arrow-back-circle-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title
-      >{{ isProfileRegistered ? 'MI PERFIL' : 'Registro de Perfil' }}</ion-title
-    >
+    <ion-title>{{ isProfileRegistered ? 'Mi Perfil' : 'Registro de Perfil' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -15,10 +13,9 @@
   <div class="register-container">
     <ion-card style="border-radius: 25px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.30);">
       <ion-card-header>
-        <ion-card-title class="ion-text-center"
-          >{{ isProfileRegistered ? 'DATOS DEL USUARIO' : 'COMPLETA TU PERFIL'
-          }}</ion-card-title
-        >
+        <ion-card-title class="ion-text-center">
+          {{ isProfileRegistered ? 'DATOS DEL USUARIO' : 'COMPLETA TU PERFIL' }}
+        </ion-card-title>
       </ion-card-header>
 
       <ion-card-content>
@@ -46,6 +43,7 @@
                 formControlName="nombres"
                 placeholder="Ingresa tus nombres"
                 required
+                style="text-transform: uppercase;"
               ></ion-input>
             </ion-item>
 
@@ -57,6 +55,7 @@
                 formControlName="apellidoPaterno"
                 placeholder="Ingresa tu apellido paterno"
                 required
+                style="text-transform: uppercase;"
               ></ion-input>
             </ion-item>
 
@@ -68,6 +67,7 @@
                 formControlName="apellidoMaterno"
                 placeholder="Ingresa tu apellido materno"
                 required
+                style="text-transform: uppercase;"
               ></ion-input>
             </ion-item>
 
@@ -103,7 +103,7 @@
             [disabled]="profileForm.invalid"
             color="primary"
           >
-            Guardar Perfil
+            REGISTRARSE EN EL APLICATIVO
           </ion-button>
 
           <ion-button
@@ -111,10 +111,10 @@
             style="height: 50px; width: 90%; margin: 20px auto"
             expand="block"
             shape="round"
-            (click)="goToMap()"
+            (click)="goToLogin()"
             color="primary"
           >
-            Volver al Mapa
+            Ir al Login
           </ion-button>
         </form>
       </ion-card-content>

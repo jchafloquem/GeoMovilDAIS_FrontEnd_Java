@@ -6,6 +6,7 @@ import { Preferences } from '@capacitor/preferences';
 
 // Definimos una clave para guardar las credenciales de forma segura
 const CREDENTIALS_KEY = 'userCredentials';
+const LAST_EMAIL_KEY = 'lastEmail';
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +35,7 @@ export class AuthService {
         // Guardamos las credenciales y el rol en el dispositivo después de un login exitoso
         const credentialsToStore = { email, password, role };
         await Preferences.set({ key: CREDENTIALS_KEY, value: JSON.stringify(credentialsToStore) });
+        await Preferences.set({ key: LAST_EMAIL_KEY, value: email });
         return credential;
       } catch (error: any) {
         // Si falla el login online, por si acaso, limpiamos credenciales viejas
@@ -54,6 +56,7 @@ export class AuthService {
 
       const storedCredentials = JSON.parse(value);
       if (storedCredentials.email === email && storedCredentials.password === password) {
+        await Preferences.set({ key: LAST_EMAIL_KEY, value: email });
         return { offlineSuccess: true };
       } else {
         throw new Error('El correo o la contraseña son incorrectos. Por favor, verifica tus datos.');
@@ -79,6 +82,11 @@ export class AuthService {
     }
     // Si no hay credenciales, el rol es 'default'
     return 'default';
+  }
+
+  async getLastEmail(): Promise<string> {
+    const { value } = await Preferences.get({ key: LAST_EMAIL_KEY });
+    return value || '';
   }
 
 }

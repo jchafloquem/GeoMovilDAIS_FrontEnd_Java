@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { addIcons } from 'ionicons';
@@ -47,7 +47,7 @@ import { AuthService } from 'src/app/services/auth.service';
     ReactiveFormsModule,
   ],
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   passwordType: string = 'password';
   passwordIcon: string = 'eye-off';
 
@@ -74,6 +74,13 @@ export class LoginPage {
     addIcons({ eye, eyeOff })
 
    }
+
+  async ngOnInit() {
+    const email = await this.authService.getLastEmail();
+    if (email) {
+      this.formLogin.patchValue({ email });
+    }
+  }
 
   async login() {
     if (this.formLogin.invalid) {
