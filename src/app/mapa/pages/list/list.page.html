@@ -12,7 +12,7 @@
 
 <ion-content>
   <div *ngIf="savedItems.length === 0" class="empty-state">
-    <ion-icon name="list-outline"></ion-icon>
+    <ion-icon name="list-outline" color="medium"></ion-icon>
     <p>No hay registros guardados.</p>
     <p>Vuelve al mapa para añadir un punto, línea o polígono.</p>
   </div>
@@ -23,20 +23,20 @@
         <ion-thumbnail slot="start">
           <ion-img *ngIf="item.thumbnail" [src]="item.thumbnail"></ion-img>
           <div *ngIf="!item.thumbnail" class="no-photo-placeholder">
-            <ion-icon name="image-outline"></ion-icon>
+            <ion-icon name="image-outline" color="medium"></ion-icon>
           </div>
         </ion-thumbnail>
         <ion-label>
           <h2>{{ item.name }}</h2>
           <p class="item-meta">
-            <ion-icon [name]="item.icon" class="type-icon"></ion-icon>
+            <ion-icon [name]="item.icon" class="type-icon" color="primary"></ion-icon>
             <span>{{ item.type }}</span>
           </p>
           <p class="item-meta date-note">{{ item.createdAt }}</p>
         </ion-label>
       </ion-item>
       <ion-button fill="clear" class="more-button" (click)="presentActionSheet(item, i, $event)">
-        <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
+        <ion-icon slot="icon-only" name="ellipsis-vertical-outline" color="dark"></ion-icon>
       </ion-button>
     </ion-card>
   </ion-list>
