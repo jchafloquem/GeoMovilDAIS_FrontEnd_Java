@@ -914,6 +914,14 @@ export class RegisterDataService {
     await loading.present();
 
     try {
+      const currentFormData = this._formData.getValue();
+      const productorDni = currentFormData.DNI;
+
+      if (!productorDni || productorDni.length !== 8) {
+        await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos antes de tomar la foto.', 'warning', 'top');
+        return;
+      }
+
       const image = await Camera.getPhoto({
         quality: 90, allowEditing: false, resultType: CameraResultType.Base64, source: CameraSource.Camera
       });
@@ -932,7 +940,8 @@ export class RegisterDataService {
       ];
 
       const imageWithOverlayBase64 = await this.addTextOverlayToImage(`data:image/jpeg;base64,${image.base64String}`, textLines);
-      const fileName = `photo_${new Date().getTime()}.jpeg`;
+      const photoNumber = this._savedPhotoUris.getValue().length + 1;
+      const fileName = `${productorDni}_${photoNumber}.jpeg`;
 
       const savedFile = await Filesystem.writeFile({
         path: fileName, data: imageWithOverlayBase64, directory: Directory.Data
@@ -940,7 +949,7 @@ export class RegisterDataService {
 
       try {
         await Filesystem.writeFile({
-          path: `GeoDAIS/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
+          path: `GeoDAIS_dni/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
         }); // No hay errores aquí, pero es una buena práctica de validación.
         await this.showToast('Copia de la foto guardada en la galería.', 'success');
       } catch (publicSaveError: any) {
@@ -1053,7 +1062,7 @@ export class RegisterDataService {
       // Guardar una copia en la carpeta pública 'GeoDAIS'
       try {
         await Filesystem.writeFile({
-          path: `GeoDAIS/${fileName}`,
+          path: `GeoDAIS_Fotos/${fileName}`,
           data: fileData.data,
           directory: Directory.Documents,
           recursive: true

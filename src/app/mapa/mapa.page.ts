@@ -878,7 +878,7 @@ export class MapaPage implements OnDestroy {
         }
       }
       // Ahora, escribir un archivo por cada tipo de geometría que tenga datos
-      const exportFolderName = 'GeoMOVILDAIS_Export';
+      const exportFolderName = 'GeoMOVILDAIS_geometrias';
       let filesWritten = 0;
       // Obtenemos la fecha actual para el nombre del archivo
       const today = new Date();
