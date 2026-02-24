@@ -4,10 +4,7 @@
 
 export const environment = {
   production: false,
-  // CORRECCIÓN: Se elimina el segmento '/v1' que no corresponde con la configuración del backend.
-  // La URL base debe terminar en '/api' para que coincida con el @RequestMapping del controlador.
-  // Asegúrate de que la IP '192.168.26.12' sea la de tu máquina donde corre el backend.
-  apiUrl: 'http://192.168.26.12:8080/geodaismovil/api',
+  apiUrl: 'https://backend-geodais.onrender.com/api',
   firebase: {
       apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
       authDomain: "geomovildais.firebaseapp.com",

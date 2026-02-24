@@ -19,6 +19,17 @@ export interface ValidationResult {
   missing: string[];
 }
 
+/**
+ * Define la estructura de un objeto GeoJSON Feature para mejorar la seguridad de tipos.
+ */
+export interface GeoJSONFeature {
+  type: 'Feature';
+  properties: Partial<GeoJsonProperties>;
+  geometry: {
+    type: string;
+    coordinates: any;
+  };
+}
 // Reutilizamos la interfaz de propiedades
 interface GeoJsonProperties {
   // Mapeo a la estructura de la base de datos
@@ -64,6 +75,12 @@ interface GeoJsonProperties {
   // Campos de estado de la app
   status?: 'draft' | 'pending';
   syncStatus?: 'pending';
+  // Campos calculados de geometría que también se persisten
+  perimetro?: string;
+  area?: string;
+  altitud?: string;
+  centroide?: string;
+  geometryTypeLabel?: string;
 }
 
 /**
@@ -89,7 +106,7 @@ export class RegisterDataService {
   private isOnline = true;
 
   // --- Estado Reactivo con BehaviorSubjects ---
-  private readonly _geojson = new BehaviorSubject<any>(null);
+  private readonly _geojson = new BehaviorSubject<GeoJSONFeature | null>(null);
   readonly geojson$ = this._geojson.asObservable();
 
   private readonly _editKey = new BehaviorSubject<string | null>(null);
@@ -100,14 +117,7 @@ export class RegisterDataService {
 
   private readonly _savedPhotoUris = new BehaviorSubject<string[]>([]);
 
-  // ESTRUCTURA ALINEADA CON GeoJsonProperties para eliminar mapeos.
-  private readonly _formData = new BehaviorSubject<Partial<GeoJsonProperties & {
-    perimetro: string,
-    area: string,
-    altitud: string,
-    centroide: string,
-    geometryTypeLabel: string,
-  }>>({
+  private readonly _formData = new BehaviorSubject<Partial<GeoJsonProperties>>({
     DNI: '',
     NOMBRES: '',
     APELLIDO_PATERNO: '',
@@ -117,7 +127,7 @@ export class RegisterDataService {
     CODIGO_AUTOGENERADO_MIDAGRI: '',
     FECHA_REGISTRO_MIDAGRI: '',
     ACTIVIDAD_AGRARIA: '',
-    SUPERFICIE_MIDAGRI: '',
+    SUPERFICIE_MIDAGRI: null,
     REGIMEN_TENENCIA: '',
     SEXO: '',
     TXT_DEPARTAMENTO: '',
@@ -213,6 +223,7 @@ export class RegisterDataService {
           }
         }
       } catch (error) {
+        console.error(`[RegisterDataService] Error procesando registro pendiente ${key}:`, error);
       }
     }
 
@@ -293,8 +304,8 @@ export class RegisterDataService {
   }
 
   private loadFormDataFromProperties(properties: any) {
-    // Al tener la misma estructura, la carga es directa.
-    // Se mantienen los valores de geometría que ya estaban en el formulario.
+    // La carga es directa. Se priorizan los valores de geometría recién calculados
+    // sobre los que pudieran estar guardados, que podrían estar obsoletos.
     const currentForm = this._formData.getValue();
     const newFormData = {
       ...properties,
@@ -312,7 +323,7 @@ export class RegisterDataService {
 
   public async searchDni(isSync: boolean = false) {
     const currentFormData = this._formData.getValue();
-    if (!currentFormData.DNI || currentFormData.DNI.length !== 8) { // DNI is not in currentFormData
+    if (!currentFormData.DNI || currentFormData.DNI.length !== 8) {
       await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos.', 'warning', 'top');
       return;
     }
@@ -585,44 +596,78 @@ export class RegisterDataService {
         // 2. Construir un payload LIMPIO para la API, mapeando explícitamente solo los campos necesarios.
         // Esto previene que se envíen campos antiguos o temporales del frontend.
         const props = record.properties as GeoJsonProperties;
+
+        // Limpieza de valores numéricos (quitar ' ha', ' m', ' msnm') para la base de datos
+        const parseNumeric = (val: string | null | undefined) => {
+          if (!val) return null;
+          const clean = val.toString().replace(/[^0-9.]/g, '');
+          return clean ? parseFloat(clean) : null;
+        };
+
+        // Preparar array de fotos para la tabla 'fotos_registro'
+        const fotosPayload: { tipo_foto: string, ruta_foto: string }[] = [];
+        // Función auxiliar para leer el archivo y obtener el Base64
+        const procesarFoto = async (tipo: string, ruta: string) => {
+          if (!ruta) return;
+          try {
+            // Filesystem.readFile devuelve los datos en Base64 por defecto si no se especifica encoding
+            const file = await Filesystem.readFile({ path: ruta });
+            // Aseguramos que enviamos el string de datos
+            const base64Data = typeof file.data === 'string' ? file.data : JSON.stringify(file.data);
+            fotosPayload.push({ tipo_foto: tipo, ruta_foto: base64Data });
+          } catch (e) {
+            console.warn(`No se pudo leer la foto ${ruta} para envío:`, e);
+          }
+        };
+
+        if (props.RUTA_DNI_FRONT) await procesarFoto('DNI_FRONT', props.RUTA_DNI_FRONT);
+        if (props.RUTA_DNI_BACK) await procesarFoto('DNI_BACK', props.RUTA_DNI_BACK);
+        if (props.RUTA_FOTOS) {
+          for (const f of props.RUTA_FOTOS) {
+            await procesarFoto('PARCELA', f);
+          }
+        }
+
         const payload = {
-          DNI: props.DNI,
-          NOMBRES: props.NOMBRES,
-          APELLIDO_PATERNO: props.APELLIDO_PATERNO,
-          APELLIDO_MATERNO: props.APELLIDO_MATERNO,
-          NOMBRE_COMPLETO: props.NOMBRE_COMPLETO,
-          FECHA_NACIMIENTO: props.FECHA_NACIMIENTO,
-          CELULAR_PARTICIPANTE: props.CELULAR_PARTICIPANTE,
-          TIPO_PRODUCTOR: props.TIPO_PRODUCTOR,
-          TIPO_CULTIVO: props.TIPO_CULTIVO,
-          OBSERVACIONES: props.OBSERVACIONES,
-          CODIGO_AUTOGENERADO_MIDAGRI: props.CODIGO_AUTOGENERADO_MIDAGRI,
-          FECHA_REGISTRO_MIDAGRI: props.FECHA_REGISTRO_MIDAGRI,
-          ACTIVIDAD_AGRARIA: props.ACTIVIDAD_AGRARIA,
-          SUPERFICIE_MIDAGRI: props.SUPERFICIE_MIDAGRI,
-          REGIMEN_TENENCIA: props.REGIMEN_TENENCIA,
-          SEXO: props.SEXO,
-          TXT_DEPARTAMENTO: props.TXT_DEPARTAMENTO,
-          TXT_PROVINCIA: props.TXT_PROVINCIA,
-          TXT_DISTRITO: props.TXT_DISTRITO,
-          UBIGEO_OFICINA_ZONAL: props.UBIGEO_OFICINA_ZONAL,
-          UBIGEO_DEPARTAMENTO: props.UBIGEO_DEPARTAMENTO,
-          UBIGEO_PROVINCIA: props.UBIGEO_PROVINCIA,
-          UBIGEO_DISTRITO: props.UBIGEO_DISTRITO,
-          UBIGEO_CASERIO: props.UBIGEO_CASERIO,
-          PROFESIONAL_DNI: props.PROFESIONAL_DNI,
-          PROFESIONAL_NOMBRES: props.PROFESIONAL_NOMBRES,
-          PROFESIONAL_APELLIDO_PATERNO: props.PROFESIONAL_APELLIDO_PATERNO,
-          PROFESIONAL_APELLIDO_MATERNO: props.PROFESIONAL_APELLIDO_MATERNO,
-          PROFESIONAL_CELULAR: props.PROFESIONAL_CELULAR,
-          PROFESIONAL_EMAIL: props.PROFESIONAL_EMAIL,
-          FUENTE: props.FUENTE,
-          DATUM: props.DATUM,
-          DEVICE_UUID: props.DEVICE_UUID,
-          RUTA_FOTOS: props.RUTA_FOTOS,
-          RUTA_DNI_FRONT: props.RUTA_DNI_FRONT,
-          RUTA_DNI_BACK: props.RUTA_DNI_BACK,
-          geometria: wktGeometry
+          // --- Tabla: registros_productor ---
+          internal_key: props.INTERNAL_KEY,
+          dni_productor: props.DNI,
+          nombre_completo: props.NOMBRE_COMPLETO,
+          nombres: props.NOMBRES,
+          apellido_paterno: props.APELLIDO_PATERNO,
+          apellido_materno: props.APELLIDO_MATERNO,
+          fecha_nacimiento: props.FECHA_NACIMIENTO,
+          sexo: props.SEXO,
+          celular_participante: props.CELULAR_PARTICIPANTE,
+          actividad_agraria: props.ACTIVIDAD_AGRARIA,
+          tipo_cultivo: props.TIPO_CULTIVO,
+          superficie_midagri: props.SUPERFICIE_MIDAGRI, // Ya es numérico o null
+          regimen_tenencia: props.REGIMEN_TENENCIA,
+          tipo_productor: props.TIPO_PRODUCTOR,
+
+          // Datos geográficos y de área
+          geom: wktGeometry, // Se enviará como texto WKT (ej: "POLYGON((...))")
+          centroide: props.centroide, // "Lat: ..., Lon: ..."
+          area_ha: parseNumeric(props.area), // Convierte "1.50 ha" a 1.50
+          perimetro_m: parseNumeric(props.perimetro), // Convierte "200 m" a 200.00
+
+          // Ubicación administrativa
+          txt_departamento: props.TXT_DEPARTAMENTO,
+          txt_provincia: props.TXT_PROVINCIA,
+          txt_distrito: props.TXT_DISTRITO,
+          ubigeo_distrito: props.UBIGEO_DISTRITO,
+
+          // Datos del profesional y auditoría
+          profesional_dni: props.PROFESIONAL_DNI,
+          profesional_nombres: props.PROFESIONAL_NOMBRES,
+          profesional_apellidos: `${props.PROFESIONAL_APELLIDO_PATERNO || ''} ${props.PROFESIONAL_APELLIDO_MATERNO || ''}`.trim(),
+          profesional_celular: props.PROFESIONAL_CELULAR,
+          profesional_email: props.PROFESIONAL_EMAIL,
+          device_uuid: props.DEVICE_UUID,
+
+          // --- Para Tabla: fotos_registro ---
+          // Enviamos un array para que el backend itere e inserte en la tabla secundaria
+          fotos_asociadas: fotosPayload
         };
 
         // 3. Enviar el registro individual
@@ -682,21 +727,39 @@ export class RegisterDataService {
   private geometryToWkt(geometry: { type: string, coordinates: any }): string | null {
     if (!geometry || !geometry.coordinates) return null;
 
-    const coordToString = (coords: any[]) => coords.join(' ');
+    // CORRECCIÓN: Asegurar que siempre haya 3 coordenadas (X Y Z) para cumplir con la columna GeometryZ de la BD.
+    const coordToString = (coords: any[]) => {
+      const x = coords[0];
+      const y = coords[1];
+      // Si no hay Z (altitud), asumimos 0 para que la base de datos lo acepte
+      const z = coords.length > 2 ? coords[2] : 0;
+      return `${x} ${y} ${z}`;
+    };
 
     switch (geometry.type) {
       case 'Point':
-        return `POINT Z (${geometry.coordinates.join(' ')})`;
+        return `POINT Z (${coordToString(geometry.coordinates)})`;
       case 'LineString':
-        return `LINESTRING (${geometry.coordinates.map(coordToString).join(', ')})`;
+        return `LINESTRING Z (${geometry.coordinates.map(coordToString).join(', ')})`;
       case 'Polygon':
-        const ring = geometry.coordinates[0].map(coordToString).join(', ');
-        return `POLYGON ((${ring}))`;
+        if (!geometry.coordinates[0]) return null; // Protección contra polígonos vacíos
+
+        // Asegurar que el polígono esté cerrado (primer y último punto iguales)
+        const coords = [...geometry.coordinates[0]];
+        if (coords.length > 0) {
+          const first = coords[0];
+          const last = coords[coords.length - 1];
+          if (first[0] !== last[0] || first[1] !== last[1]) {
+            coords.push(first);
+          }
+        }
+
+        const ring = coords.map(coordToString).join(', ');
+        return `POLYGON Z ((${ring}))`;
       default:
         return null;
     }
   }
-
   /**
    * Obtiene todos los registros guardados en su formato GeoJSON crudo.
    * @returns Una promesa que resuelve a un array de GeoJSON Features.
@@ -713,7 +776,9 @@ export class RegisterDataService {
       if (value) {
         try {
           allRecords.push(JSON.parse(value));
-        } catch (e) { /* Ignorar registros corruptos */ }
+        } catch (e) {
+          console.error(`[RegisterDataService] Error al parsear registro ${key} de Preferences:`, e);
+        }
       }
     }
     return allRecords;
@@ -738,6 +803,7 @@ export class RegisterDataService {
           const geojson = JSON.parse(value);
           allRecords.push({ key, geojson });
         } catch (e) {
+          console.error(`[RegisterDataService] Error al parsear registro ${key} de Preferences:`, e);
         }
       }
     }
@@ -953,6 +1019,7 @@ export class RegisterDataService {
         }); // No hay errores aquí, pero es una buena práctica de validación.
         await this.showToast('Copia de la foto guardada en la galería.', 'success');
       } catch (publicSaveError: any) {
+        console.warn(`[RegisterDataService] No se pudo guardar copia de la foto en la galería pública:`, publicSaveError);
       }
 
       const currentSavedUris = this._savedPhotoUris.getValue();
@@ -988,6 +1055,7 @@ export class RegisterDataService {
             try {
               await Filesystem.deleteFile({ path: uriToDelete });
             } catch (e) {
+              console.warn(`[RegisterDataService] No se pudo eliminar el archivo de foto ${uriToDelete}:`, e);
             }
             uris.splice(index, 1);
             displayPhotos.splice(index, 1);
@@ -1049,6 +1117,7 @@ export class RegisterDataService {
           // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
           await Filesystem.deleteFile({ path: existingUri });
         } catch (e) {
+          console.warn(`[RegisterDataService] No se pudo eliminar el archivo de foto de DNI ${existingUri}:`, e);
         }
       }
 
@@ -1099,6 +1168,7 @@ export class RegisterDataService {
         // El URI guardado ya es la ruta completa, no necesitamos especificar el directorio
         await Filesystem.deleteFile({ path: uriToDelete });
       } catch (e) {
+        console.warn(`[RegisterDataService] No se pudo eliminar el archivo de foto de DNI ${uriToDelete}:`, e);
       }
 
       if (side === 'front') {
