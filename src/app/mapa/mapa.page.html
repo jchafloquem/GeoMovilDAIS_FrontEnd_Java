@@ -14,7 +14,7 @@
         <ion-label>Ver registros guardados</ion-label>
       </ion-item>
 
-      <ion-item button (click)="enviarADevida()">
+      <ion-item button (click)="enviarADevida()" disabled>
         <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
         <ion-label>Enviar a DEVIDA</ion-label>
       </ion-item>
@@ -52,7 +52,7 @@
         <ion-icon name="exit-outline" slot="start" color="danger"></ion-icon>
         <ion-label>Cerrar aplicación</ion-label>
       </ion-item>
-      
+
     </ion-list>
   </ion-content>
 </ion-menu>
