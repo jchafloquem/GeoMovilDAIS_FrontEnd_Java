@@ -1090,15 +1090,16 @@ export class MapaPage implements OnDestroy {
       this.locationWatchId = await Geolocation.watchPosition({
         enableHighAccuracy: true,
         timeout: 10000,
+        maximumAge: 3000 // Acepta posiciones de hace 3 segundos (mucho más rápido)
       }, (position, err) => {
         if (err) {
           return;
         }
         if (position) {
           // --- FILTRO DE PRECISIÓN ---
-          // Si la precisión horizontal es mayor a 20 metros, ignoramos esta lectura.
-          // Puedes ajustar este valor según tus necesidades.
-          if (position.coords.accuracy > 20) {
+          // Si la precisión horizontal es mayor a 50 metros, ignoramos esta lectura.
+          // Se aumentó de 20 a 50 para que detecte la ubicación más rápido al inicio.
+          if (position.coords.accuracy > 50) {
             return;
           }
 

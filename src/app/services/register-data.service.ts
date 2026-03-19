@@ -9,6 +9,7 @@ import { ConnectionStatus, Network } from '@capacitor/network';
 import { ToastController, NavController, AlertController, LoadingController } from '@ionic/angular/standalone';
 import { BehaviorSubject } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
@@ -183,6 +184,8 @@ export class RegisterDataService {
         if (this.isOnline) {
           await this.showToast('Conexión recuperada. Iniciando sincronización...', 'success', 'middle');
           this.syncPendingProductorData();
+          // Verificamos si hay registros listos para enviar y actualizamos la notificación
+          this.updatePendingUploadNotification();
         } else {
           await this.showToast('Estás sin conexión. Se guardarán los datos localmente.', 'warning', 'middle');
         }
@@ -570,7 +573,11 @@ export class RegisterDataService {
       isEditing ? 'Información actualizada con éxito' : 'Registro guardado con éxito',
       'success', 'middle'
     );
+
     this.navCtrl.navigateBack('/mapa');
+
+    // Actualizar notificación después de guardar
+    this.updatePendingUploadNotification();
 
   }
 
@@ -714,6 +721,9 @@ export class RegisterDataService {
     // Informar al usuario del resultado
     const message = `Envío finalizado. Éxitos: ${successCount}, Fallos: ${errorCount}.`;
     await this.showToast(message, errorCount > 0 ? 'warning' : 'success', 'middle', 4000);
+
+    // Actualizar o limpiar la notificación según los pendientes que queden
+    this.updatePendingUploadNotification();
 
     return { successCount, errorCount, total: recordsToSend.length };
   }
@@ -1037,7 +1047,8 @@ export class RegisterDataService {
       });
       if (!image.base64String) return;
 
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      // Aumentamos maximumAge a 5000ms para aceptar una ubicación reciente y no esperar una nueva triangulación
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
       const coords = position.coords;
       if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
         throw new Error('Coordenadas inválidas o nulas recibidas del GPS.');
@@ -1538,5 +1549,46 @@ export class RegisterDataService {
       cssClass: 'multiline-toast' // Clase para permitir múltiples líneas
     });
     await toast.present();
+  }
+
+  // --- Notificaciones Locales ---
+
+  /**
+   * Verifica registros pendientes (verdes pero no enviados) y muestra una notificación local.
+   */
+  public async updatePendingUploadNotification() {
+    try {
+      const allRecords = await this.getAllRawRecords();
+      // Contamos: Registros completos (verdes) Y que NO tengan 'uploaded: true'
+      const pendingCount = allRecords.filter(rec =>
+        this.isRecordComplete(rec.properties) && !rec.properties.uploaded
+      ).length;
+
+      const NOTIFICATION_ID = 1001;
+
+      if (pendingCount > 0) {
+        // Verificar permisos antes de programar
+        let perm = await LocalNotifications.checkPermissions();
+        if (perm.display === 'prompt') {
+          perm = await LocalNotifications.requestPermissions();
+        }
+        if (perm.display !== 'granted') return;
+
+        await LocalNotifications.schedule({
+          notifications: [{
+            title: 'Registros Pendientes - GeoDAIS',
+            body: `Tienes ${pendingCount} registro(s) listos para enviar a DEVIDA. Toca para abrir.`,
+            id: NOTIFICATION_ID,
+            schedule: { at: new Date(Date.now() + 1000) }, // Mostrar 1 segundo después
+            smallIcon: 'ic_stat_icon_config_sample', // Icono por defecto de Android o el de tu app
+          }]
+        });
+      } else {
+        // Si no hay pendientes, cancelamos la notificación para limpiar la barra de estado
+        await LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });
+      }
+    } catch (error) {
+      console.warn('Error gestionando notificaciones locales (plugin no instalado o error):', error);
+    }
   }
 }
