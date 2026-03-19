@@ -81,6 +81,7 @@ interface GeoJsonProperties {
   altitud?: string;
   centroide?: string;
   geometryTypeLabel?: string;
+  uploaded?: boolean; // Indica si el registro ya fue enviado al servidor
 }
 
 /**
@@ -94,6 +95,7 @@ export interface SavedRecordSummary {
   createdAt: string;
   thumbnail?: string;
   statusColor: 'danger' | 'warning' | 'success'; // Rojo, Ambar, Verde
+  uploaded?: boolean; // Nuevo campo para controlar el bloqueo en la lista
 }
 
 const USER_PROFILE_KEY = 'userProfile';
@@ -323,6 +325,13 @@ export class RegisterDataService {
 
   public async searchDni(isSync: boolean = false) {
     const currentFormData = this._formData.getValue();
+
+    // BLOQUEO: Si el registro ya fue enviado, no permitir modificar datos vía búsqueda
+    if (currentFormData.uploaded && !isSync) {
+      await this.showToast('El registro ya fue enviado. No se pueden modificar los datos.', 'warning', 'middle');
+      return;
+    }
+
     if (!currentFormData.DNI || currentFormData.DNI.length !== 8) {
       await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos.', 'warning', 'top');
       return;
@@ -444,14 +453,18 @@ export class RegisterDataService {
   public async saveData() {
     const formData = this._formData.getValue();
 
+    // BLOQUEO: Si ya fue enviado, no permitir guardar cambios
+    if (formData.uploaded) {
+      await this.showToast('Este registro ya fue enviado y no se puede editar.', 'warning', 'middle');
+      return;
+    }
+
     // --- Validación de Campos Obligatorios ---
     const missingFields = [];
     // Campos siempre obligatorios
     if (!formData.DNI) missingFields.push('DNI del productor');
     if (!formData.TIPO_PRODUCTOR) missingFields.push('Tipo de Productor');
     if (!formData.CELULAR_PARTICIPANTE) missingFields.push('Número de celular');
-    if (!formData.RUTA_DNI_FRONT) missingFields.push('Foto frontal del DNI');
-    if (!formData.RUTA_DNI_BACK) missingFields.push('Foto posterior del DNI');
     if (!formData.TIPO_CULTIVO) missingFields.push('Tipo de Cultivo');
 
     // Validación de fecha de nacimiento
@@ -517,7 +530,8 @@ export class RegisterDataService {
       PROFESIONAL_CELULAR: professionalProfile.celular || null,
       PROFESIONAL_EMAIL: professionalProfile.email || null,
       DEVICE_UUID: deviceId.identifier,
-      RUTA_FOTOS: this._savedPhotoUris.getValue()
+      RUTA_FOTOS: this._savedPhotoUris.getValue(),
+      uploaded: false // Al guardar o editar, marcamos como NO subido para permitir el envío
     };
 
     // Si estamos editando un borrador, eliminamos el estado 'draft' al guardar los datos completos.
@@ -557,6 +571,7 @@ export class RegisterDataService {
       'success', 'middle'
     );
     this.navCtrl.navigateBack('/mapa');
+
   }
 
   /**
@@ -570,10 +585,13 @@ export class RegisterDataService {
     }
 
     const allRecords = await this.getAllRawRecords();
-    const recordsToSend = allRecords.filter(rec => this.isRecordComplete(rec.properties));
+    // Filtramos: Solo registros completos (eliminamos la validación 'uploaded' para permitir reenvíos/actualizaciones)
+    const recordsToSend = allRecords.filter(rec =>
+      this.isRecordComplete(rec.properties)
+    );
 
     if (recordsToSend.length === 0) {
-      await this.showToast("No hay registros completos (verdes) para enviar.", "warning", "middle");
+      await this.showToast("No hay registros pendientes de envío.", "warning", "middle");
       return { successCount: 0, errorCount: 0, total: 0 };
     }
 
@@ -675,8 +693,12 @@ export class RegisterDataService {
 
         if (response.status >= 200 && response.status < 300) {
           successCount++;
-          // Opcional: Marcar el registro como enviado o eliminarlo de `Preferences`
-          // Por ahora, lo dejamos para que el usuario pueda reenviarlo si es necesario.
+          // Marcamos el registro como subido para no reenviarlo
+          record.properties.uploaded = true;
+          const key = record.properties.INTERNAL_KEY;
+          if (key) {
+            await Preferences.set({ key, value: JSON.stringify(record) });
+          }
         } else {
           errorCount++;
         }
@@ -711,8 +733,8 @@ export class RegisterDataService {
 
     return !!(
       props.DNI && props.TIPO_PRODUCTOR &&
-      props.CELULAR_PARTICIPANTE && props.RUTA_DNI_FRONT &&
-      props.RUTA_DNI_BACK && props.TIPO_CULTIVO &&
+      props.CELULAR_PARTICIPANTE &&
+      props.TIPO_CULTIVO &&
       props.FECHA_NACIMIENTO && this.isOfLegalAge(props.FECHA_NACIMIENTO) &&
       props.UBIGEO_OFICINA_ZONAL && props.UBIGEO_DEPARTAMENTO &&
       props.UBIGEO_PROVINCIA && props.UBIGEO_DISTRITO &&
@@ -736,6 +758,19 @@ export class RegisterDataService {
       return `${x} ${y} ${z}`;
     };
 
+    // Función auxiliar para cerrar y formatear anillos de polígonos
+    const formatRing = (ring: any[]): string => {
+      const coords = [...ring];
+      if (coords.length > 0) {
+        const first = coords[0];
+        const last = coords[coords.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          coords.push(first);
+        }
+      }
+      return `(${coords.map(coordToString).join(', ')})`;
+    };
+
     switch (geometry.type) {
       case 'Point':
         return `POINT Z (${coordToString(geometry.coordinates)})`;
@@ -743,19 +778,11 @@ export class RegisterDataService {
         return `LINESTRING Z (${geometry.coordinates.map(coordToString).join(', ')})`;
       case 'Polygon':
         if (!geometry.coordinates[0]) return null; // Protección contra polígonos vacíos
-
-        // Asegurar que el polígono esté cerrado (primer y último punto iguales)
-        const coords = [...geometry.coordinates[0]];
-        if (coords.length > 0) {
-          const first = coords[0];
-          const last = coords[coords.length - 1];
-          if (first[0] !== last[0] || first[1] !== last[1]) {
-            coords.push(first);
-          }
-        }
-
-        const ring = coords.map(coordToString).join(', ');
-        return `POLYGON Z ((${ring}))`;
+        return `POLYGON Z (${geometry.coordinates.map(formatRing).join(', ')})`;
+      case 'MultiLineString':
+        return `MULTILINESTRING Z (${geometry.coordinates.map((line: any[]) => `(${line.map(coordToString).join(', ')})`).join(', ')})`;
+      case 'MultiPolygon':
+        return `MULTIPOLYGON Z (${geometry.coordinates.map((poly: any[]) => `(${poly.map(formatRing).join(', ')})`).join(', ')})`;
       default:
         return null;
     }
@@ -857,7 +884,8 @@ export class RegisterDataService {
         icon: this.getIconForType(geometryType),
         createdAt: props.FECHA_CREACION_REGISTRO ? new Date(props.FECHA_CREACION_REGISTRO).toLocaleDateString('es-PE') : 'Fecha no disponible',
         thumbnail: thumbnailUrl,
-        statusColor: statusColor
+        statusColor: statusColor,
+        uploaded: !!props.uploaded // Exponemos el estado para que la lista lo pueda usar
       };
     });
   }
@@ -878,9 +906,21 @@ export class RegisterDataService {
    * @param key La clave del registro a eliminar.
    */
   public async deleteRecord(key: string): Promise<void> {
-    // Por ahora, solo elimina de Preferences.
-    // En el futuro, podría necesitar eliminar fotos asociadas del sistema de archivos.
     const { value } = await Preferences.get({ key });
+
+    // BLOQUEO: Si el registro ya fue enviado, impedimos eliminarlo desde el servicio
+    if (value) {
+      try {
+        const geojson = JSON.parse(value);
+        if (geojson.properties?.uploaded) {
+          await this.showToast('Registro enviado. No se puede eliminar.', 'warning', 'middle');
+          return;
+        }
+      } catch (e) {
+        console.warn('Error al verificar estado uploaded al eliminar', e);
+      }
+    }
+
     // Aquí iría la lógica para eliminar las fotos del filesystem si es necesario.
     await Preferences.remove({ key });
   }
@@ -924,8 +964,6 @@ export class RegisterDataService {
     if (!data.DNI || data.DNI.length !== 8) missing.push('DNI (8 dígitos)');
     if (!data.TIPO_PRODUCTOR) missing.push('Tipo de productor');
     if (!data.CELULAR_PARTICIPANTE) missing.push('Número de celular');
-    if (!data.RUTA_DNI_FRONT) missing.push('Foto frontal del DNI');
-    if (!data.RUTA_DNI_BACK) missing.push('Foto posterior del DNI');
 
     // Validación de fecha de nacimiento
     if (!data.FECHA_NACIMIENTO) {
@@ -965,6 +1003,12 @@ export class RegisterDataService {
   // --- Lógica de Fotos ---
 
   public async takePicture() {
+    // BLOQUEO DE EDICIÓN
+    if (this._formData.getValue().uploaded) {
+      await this.showToast('Registro enviado. No se pueden agregar más fotos.', 'warning');
+      return;
+    }
+
     if (this._photosForDisplay.getValue().length >= 6) { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Límite de 6 fotos alcanzado.', 'warning');
       return;
@@ -1042,6 +1086,12 @@ export class RegisterDataService {
   }
 
   public async deletePhoto(index: number) {
+    // BLOQUEO DE EDICIÓN
+    if (this._formData.getValue().uploaded) {
+      await this.showToast('Registro enviado. No se pueden eliminar fotos.', 'warning');
+      return;
+    }
+
     const alert = await this.alertController.create({
       header: 'Confirmar', message: '¿Estás seguro de que quieres eliminar esta foto?',
       buttons: [
@@ -1069,6 +1119,12 @@ export class RegisterDataService {
   }
 
   public async takeDniPicture(side: 'front' | 'back') {
+    // BLOQUEO DE EDICIÓN
+    if (this._formData.getValue().uploaded) {
+      await this.showToast('Registro enviado. No se pueden cambiar las fotos del DNI.', 'warning');
+      return;
+    }
+
     const permissions = await Camera.requestPermissions({ permissions: ['camera'] });
     if (permissions.camera !== 'granted') { // No hay errores aquí, pero es una buena práctica de validación.
       await this.showToast('Se necesita permiso de cámara.', 'warning');
@@ -1160,6 +1216,12 @@ export class RegisterDataService {
   }
 
   public async deleteDniPicture(side: 'front' | 'back') {
+    // BLOQUEO DE EDICIÓN
+    if (this._formData.getValue().uploaded) {
+      await this.showToast('Registro enviado. No se pueden eliminar las fotos del DNI.', 'warning');
+      return;
+    }
+
     const currentFormData = this._formData.getValue();
     const uriToDelete = side === 'front' ? currentFormData.RUTA_DNI_FRONT : currentFormData.RUTA_DNI_BACK;
 

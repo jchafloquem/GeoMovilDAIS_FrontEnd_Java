@@ -21,7 +21,7 @@ import {
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { addIcons } from 'ionicons';
-import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline } from 'ionicons/icons';
+import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline, lockClosed } from 'ionicons/icons';
 
 @Component({
   selector: 'app-geometricos-tab',
@@ -61,7 +61,7 @@ export class GeometricosTabPage implements OnInit {
     public registerDataService: RegisterDataService,
     private authService: AuthService
   ) {
-    addIcons({ mapOutline, analyticsOutline, ellipseOutline, shapesOutline });
+    addIcons({lockClosed,mapOutline,analyticsOutline,ellipseOutline,shapesOutline});
   }
 
   async ngOnInit() {

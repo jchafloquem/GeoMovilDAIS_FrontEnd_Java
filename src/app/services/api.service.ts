@@ -161,7 +161,8 @@ export class ApiService {
    * @param payload El objeto de datos listo para ser enviado como JSON.
    */
   async enviarRegistroIndividual(payload: any): Promise<HttpResponse> {
-    const url = `${environment.apiUrl}/registros/single`; // URL del backend
+    // CORRECCIÓN: Apuntamos al endpoint correcto y enviamos un objeto simple, como espera el backend.
+    const url = `${environment.apiUrl}/registros/single`;
     console.log(`[ApiService] Iniciando enviarRegistroIndividual a URL: ${url}`);
     console.log('[ApiService] Payload original recibido:', JSON.stringify(payload));
 
@@ -191,7 +192,7 @@ export class ApiService {
     try {
       const response = await CapacitorHttp.post({
         url,
-        data: sanitizedPayload, // Enviamos el payload sanitizado directamente
+        data: sanitizedPayload, // Enviamos el payload sanitizado directamente como un objeto
         headers: { 'Content-Type': 'application/json' }
       });
       console.log(`[ApiService] Respuesta de enviarRegistroIndividual recibida. Status: ${response.status}`);

@@ -714,11 +714,15 @@ export class MapaPage implements OnDestroy {
    */
   public async enviarADevida() {
     // La lógica de envío se ha centralizado en el servicio para mayor consistencia y mantenibilidad.
-    await this.registerDataService.sendAllCompletedRecords();
-
-    // Después del envío, siempre recargamos las geometrías en el mapa para
-    // reflejar los cambios (ej. registros eliminados o con errores).
-    this.loadSavedGeometries();
+    try {
+      await this.registerDataService.sendAllCompletedRecords();
+    } catch (error) {
+      console.error('Error durante el envío:', error);
+    } finally {
+      // Después del envío, siempre recargamos las geometrías en el mapa para
+      // reflejar los cambios (ej. registros eliminados o con errores).
+      this.loadSavedGeometries();
+    }
   }
 
   /**
@@ -974,6 +978,7 @@ export class MapaPage implements OnDestroy {
           const isDraft = props.status === 'draft';
           const isPendingSync = props.syncStatus === 'pending';
           const isDataMissing = this.isRecordIncomplete(props);
+          const isUploaded = !!props.uploaded;
 
           // --- Lógica de conteo centralizada ---
           if (isDraft) {
@@ -1042,10 +1047,15 @@ export class MapaPage implements OnDestroy {
             onEachFeature: (feature: any, layer: any) => {
               const name = feature.properties?.name || (feature.geometry.type === 'Point' ? 'Punto sin nombre' : 'Polígono sin nombre');
               const isDraft = feature.properties?.status === 'draft';
+              const isUploadedFeature = !!feature.properties?.uploaded;
 
               // Un borrador siempre es editable, o si el modo edición general está activo.
               if (isDraft || this.isEditingMode) {
-                const tooltipText = isDraft ? `Tocar para completar: <strong>${name}</strong>` : `Tocar para editar: <strong>${name}</strong>`;
+                let actionText = "editar";
+                if (isDraft) actionText = "completar";
+                else if (isUploadedFeature) actionText = "ver"; // Cambiamos el texto si está subido
+
+                const tooltipText = `Tocar para ${actionText}: <strong>${name}</strong>`;
                 layer.bindTooltip(tooltipText, { permanent: false, sticky: true });
 
                 layer.on('click', (e: any) => {

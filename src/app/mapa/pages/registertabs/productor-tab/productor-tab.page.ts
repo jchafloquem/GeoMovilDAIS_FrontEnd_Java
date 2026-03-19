@@ -22,7 +22,7 @@ import {
 } from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { addIcons } from 'ionicons';
-import { search, cameraOutline, trashOutline } from 'ionicons/icons';
+import { search, cameraOutline, trashOutline, lockClosed } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
 
 @Component({
@@ -58,7 +58,7 @@ export class ProductorTabPage {
     public registerDataService: RegisterDataService,
     private alertController: AlertController
   ) {
-    addIcons({ search, cameraOutline, trashOutline });
+    addIcons({ search, cameraOutline, trashOutline, lockClosed });
   }
 
   // El método searchDni ahora se llama desde el servicio
@@ -94,6 +94,7 @@ export class ProductorTabPage {
    */
   async checkAndProceed() {
     const validation = this.registerDataService.isProductorTabValid();
+
     if (validation.isValid) {
       // Aquí iría la lógica para pasar a la siguiente pestaña o guardar.
     } else {

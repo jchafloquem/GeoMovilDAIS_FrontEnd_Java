@@ -1,8 +1,12 @@
 <ion-content>
+  <ng-container *ngIf="registerDataService.formData$ | async as formData">
   <ng-container *ngIf="registerDataService.photosForDisplay$ | async as photosForDisplay">
     <ion-card>
-      <ion-card-header>
-        <ion-card-title color="white">Registro fotográfico</ion-card-title>
+      <ion-card-header color="primary">
+        <ion-card-title color="white" style="display: flex; justify-content: space-between; align-items: center;">
+          Registro fotográfico
+          <ion-icon *ngIf="formData.uploaded" name="lock-closed" style="font-size: 1.2em;"></ion-icon>
+        </ion-card-title>
         <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
@@ -19,7 +23,10 @@
             <div
               class="photo-box"
               [class.add-photo-box]="!photosForDisplay[i]"
-              (click)="photosForDisplay[i] ? openViewer(i) : registerDataService.takePicture()"
+              [class.disabled-box]="formData.uploaded"
+              [style.opacity]="formData.uploaded && !photosForDisplay[i] ? '0.5' : '1'"
+              [style.pointer-events]="formData.uploaded && !photosForDisplay[i] ? 'none' : 'auto'"
+              (click)="photosForDisplay[i] ? openViewer(i) : (!formData.uploaded && registerDataService.takePicture())"
             >
               <ng-container *ngIf="photosForDisplay[i] as photoSrc; else addPhotoContent">
                 <!-- Contenido para una foto existente -->
@@ -34,7 +41,7 @@
             </div>
 
             <!-- Botón de eliminar, solo visible si la foto existe -->
-            <ion-button *ngIf="photosForDisplay[i]" fill="clear" color="danger" size="small" class="delete-photo-btn" (click)="deletePhoto(i, $event)">
+            <ion-button *ngIf="photosForDisplay[i] && !formData.uploaded" fill="clear" color="danger" size="small" class="delete-photo-btn" (click)="deletePhoto(i, $event)">
               <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
             </ion-button>
           </div>
@@ -59,5 +66,6 @@
         </div>
       </ng-template>
     </ion-modal>
+  </ng-container>
   </ng-container>
 </ion-content>

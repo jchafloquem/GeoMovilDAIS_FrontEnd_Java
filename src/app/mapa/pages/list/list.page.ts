@@ -20,7 +20,7 @@ import {
   IonToolbar,
   NavController
 } from '@ionic/angular/standalone';
-import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline, arrowBackCircleOutline } from 'ionicons/icons';
+import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline, arrowBackCircleOutline, lockClosed, eyeOutline } from 'ionicons/icons';
 import { RegisterDataService, SavedRecordSummary } from 'src/app/services/register-data.service';
 
 @Component({
@@ -66,7 +66,9 @@ export class ListPage {
       analyticsOutline,
       createOutline,
       trashOutline,
-      close
+      close,
+      lockClosed,
+      eyeOutline
     });
   }
 
@@ -89,35 +91,59 @@ export class ListPage {
   async presentActionSheet(item: SavedRecordSummary, index: number, event: Event) {
     event.stopPropagation(); // Evita que el click se propague al card
 
-    const actionSheet = await this.actionSheetCtrl.create({
-      header: item.name,
-      buttons: [
-        {
-          text: 'Editar',
-          icon: 'create-outline',
-          handler: () => {
-            this.editItem(item);
-          }
-        },
-        {
-          text: 'Eliminar',
-          role: 'destructive',
-          icon: 'trash-outline',
-          handler: () => {
-            this.deleteItem(item, index);
-          }
-        },
-        {
-          text: 'Cancelar',
-          icon: 'close',
-          role: 'cancel'
+    const buttons = [];
+
+    // 1. Botón Editar / Ver
+    if (item.uploaded) {
+      buttons.push({
+        text: 'Ver (Solo Lectura)',
+        icon: 'eye-outline',
+        handler: () => {
+          this.editItem(item);
         }
-      ]
+      });
+    } else {
+      buttons.push({
+        text: 'Editar',
+        icon: 'create-outline',
+        handler: () => {
+          this.editItem(item);
+        }
+      });
+    }
+
+    // 2. Botón Eliminar (Solo si NO ha sido enviado)
+    if (!item.uploaded) {
+      buttons.push({
+        text: 'Eliminar',
+        role: 'destructive',
+        icon: 'trash-outline',
+        handler: () => {
+          this.deleteItem(item, index);
+        }
+      });
+    }
+
+    // 3. Botón Cancelar (Siempre visible)
+    buttons.push({
+      text: 'Cancelar',
+      icon: 'close',
+      role: 'cancel'
+    });
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: item.uploaded ? `${item.name} (Enviado)` : item.name,
+      buttons: buttons
     });
     await actionSheet.present();
   }
 
   async deleteItem(item: SavedRecordSummary, index: number) {
+    // Protección extra: No permitir borrar si está subido (aunque el botón esté oculto)
+    if (item.uploaded) {
+      return;
+    }
+
     const alert = await this.alertController.create({
       header: 'Confirmar Eliminación',
       message: `¿Estás seguro de que quieres eliminar el registro "${item.name}"? Esta acción no se puede deshacer.`,

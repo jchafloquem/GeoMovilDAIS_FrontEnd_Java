@@ -14,8 +14,8 @@ const config: CapacitorConfig = {
     allowNavigation: [
       "api.decolecta.com",
       "gateway.midagri.gob.pe"
-    ]
-    // -------------------------
+    ],
+    cleartext: true
   }
 };
 

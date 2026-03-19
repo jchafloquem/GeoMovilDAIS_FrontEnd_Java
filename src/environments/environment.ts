@@ -4,7 +4,9 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'https://backend-geodais.onrender.com/api',
+  // Para EMULADOR usa: http://10.0.2.2:3000/api
+  // Para DISPOSITIVO FÍSICO (celular) usa la IP de tu computadora en la red WiFi.
+  apiUrl: 'http://192.168.26.12:3000',
   firebase: {
       apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
       authDomain: "geomovildais.firebaseapp.com",

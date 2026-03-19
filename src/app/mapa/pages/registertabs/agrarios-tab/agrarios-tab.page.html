@@ -1,38 +1,41 @@
 <ion-content>
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
     <ion-card>
-      <ion-card-header>
-        <ion-card-title color="white">Datos Agrarios</ion-card-title>
+      <ion-card-header color="primary">
+        <ion-card-title color="white" style="display: flex; justify-content: space-between; align-items: center;">
+          Datos Agrarios
+          <ion-icon *ngIf="formData.uploaded" name="lock-closed" style="font-size: 1.2em;"></ion-icon>
+        </ion-card-title>
         <ion-card-subtitle color="white">Fuente: MIDAGRI</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
-            <ion-input label="Código Autogenerado" label-placement="floating" type="text" name="CODIGO_AUTOGENERADO_MIDAGRI" [(ngModel)]="formData.CODIGO_AUTOGENERADO_MIDAGRI" [readonly]="true"></ion-input>
+            <ion-input label="Código Autogenerado" label-placement="floating" type="text" name="CODIGO_AUTOGENERADO_MIDAGRI" [(ngModel)]="formData.CODIGO_AUTOGENERADO_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Fecha de Registro" label-placement="floating" type="text" name="FECHA_REGISTRO_MIDAGRI" [(ngModel)]="formData.FECHA_REGISTRO_MIDAGRI" [readonly]="true"></ion-input>
+            <ion-input label="Fecha de Registro" label-placement="floating" type="text" name="FECHA_REGISTRO_MIDAGRI" [(ngModel)]="formData.FECHA_REGISTRO_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Actividad Agraria" label-placement="floating" type="text" name="ACTIVIDAD_AGRARIA" [(ngModel)]="formData.ACTIVIDAD_AGRARIA" [readonly]="true"></ion-input>
+            <ion-input label="Actividad Agraria" label-placement="floating" type="text" name="ACTIVIDAD_AGRARIA" [(ngModel)]="formData.ACTIVIDAD_AGRARIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Superficie (ha)" label-placement="floating" type="text" name="SUPERFICIE_MIDAGRI" [(ngModel)]="formData.SUPERFICIE_MIDAGRI" [readonly]="true"></ion-input>
+            <ion-input label="Superficie (ha)" label-placement="floating" type="text" name="SUPERFICIE_MIDAGRI" [(ngModel)]="formData.SUPERFICIE_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Régimen de Tenencia" label-placement="floating" type="text" name="REGIMEN_TENENCIA" [(ngModel)]="formData.REGIMEN_TENENCIA" [readonly]="true"></ion-input>
+            <ion-input label="Régimen de Tenencia" label-placement="floating" type="text" name="REGIMEN_TENENCIA" [(ngModel)]="formData.REGIMEN_TENENCIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Sexo" label-placement="floating" type="text" name="SEXO" [(ngModel)]="formData.SEXO" [readonly]="true"></ion-input>
+            <ion-input label="Sexo" label-placement="floating" type="text" name="SEXO" [(ngModel)]="formData.SEXO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Departamento" label-placement="floating" type="text" name="TXT_DEPARTAMENTO" [(ngModel)]="formData.TXT_DEPARTAMENTO" [readonly]="true"></ion-input>
+            <ion-input label="Departamento" label-placement="floating" type="text" name="TXT_DEPARTAMENTO" [(ngModel)]="formData.TXT_DEPARTAMENTO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Provincia" label-placement="floating" type="text" name="TXT_PROVINCIA" [(ngModel)]="formData.TXT_PROVINCIA" [readonly]="true"></ion-input>
+            <ion-input label="Provincia" label-placement="floating" type="text" name="TXT_PROVINCIA" [(ngModel)]="formData.TXT_PROVINCIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Distrito" label-placement="floating" type="text" name="TXT_DISTRITO" [(ngModel)]="formData.TXT_DISTRITO" [readonly]="true"></ion-input>
+            <ion-input label="Distrito" label-placement="floating" type="text" name="TXT_DISTRITO" [(ngModel)]="formData.TXT_DISTRITO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
         </ion-list>
       </ion-card-content>
