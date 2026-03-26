@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://backend-geodais.onrender.com/api',
+  apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
   firebase: {
     apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
     authDomain: "geomovildais.firebaseapp.com",

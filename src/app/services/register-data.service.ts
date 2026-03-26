@@ -655,13 +655,15 @@ export class RegisterDataService {
 
         const payload = {
           // --- Tabla: registros_productor ---
-          internal_key: props.INTERNAL_KEY,
+          // La columna en BD es VARCHAR(10). Truncamos el key local (ej: polygon_123...)
+          // para que el servidor no rechace la transacción.
+          internal_key: props.INTERNAL_KEY ? props.INTERNAL_KEY.toString().substring(0, 10) : '',
           dni_productor: props.DNI,
           nombre_completo: props.NOMBRE_COMPLETO,
           nombres: props.NOMBRES,
           apellido_paterno: props.APELLIDO_PATERNO,
           apellido_materno: props.APELLIDO_MATERNO,
-          fecha_nacimiento: props.FECHA_NACIMIENTO,
+          fecha_nacimiento: props.FECHA_NACIMIENTO ? props.FECHA_NACIMIENTO.substring(0, 10) : '',
           sexo: props.SEXO,
           celular_participante: props.CELULAR_PARTICIPANTE,
           actividad_agraria: props.ACTIVIDAD_AGRARIA,
@@ -680,15 +682,16 @@ export class RegisterDataService {
           txt_departamento: props.TXT_DEPARTAMENTO,
           txt_provincia: props.TXT_PROVINCIA,
           txt_distrito: props.TXT_DISTRITO,
-          ubigeo_distrito: props.UBIGEO_DISTRITO,
-
+          // Forzamos a que el ubigeo no pase de 10 caracteres. Si accidentalmente
+          // se guardó un nombre largo, lo truncamos para evitar el Error 500.
+          ubigeo_distrito: props.UBIGEO_DISTRITO ? props.UBIGEO_DISTRITO.toString().substring(0, 10) : '',
           // Datos del profesional y auditoría
           profesional_dni: props.PROFESIONAL_DNI,
           profesional_nombres: props.PROFESIONAL_NOMBRES,
           profesional_apellidos: `${props.PROFESIONAL_APELLIDO_PATERNO || ''} ${props.PROFESIONAL_APELLIDO_MATERNO || ''}`.trim(),
           profesional_celular: props.PROFESIONAL_CELULAR,
           profesional_email: props.PROFESIONAL_EMAIL,
-          device_uuid: props.DEVICE_UUID,
+          device_uuid: props.DEVICE_UUID ? props.DEVICE_UUID.substring(0, 10) : 'UUID_UNK',
 
           // --- Para Tabla: fotos_registro ---
           // Enviamos un array para que el backend itere e inserte en la tabla secundaria
@@ -1395,7 +1398,8 @@ export class RegisterDataService {
       geometryType: 'esriGeometryPoint',
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
-      outFields: 'nombdep,nombprov,nombdist',
+      // Agregamos idubigeo para obtener el código de 6 dígitos
+      outFields: 'nombdep,nombprov,nombdist,idubigeo',
       returnGeometry: 'false',
       f: 'json'
     });
@@ -1422,19 +1426,39 @@ export class RegisterDataService {
       const currentFormData = this._formData.getValue();
       let ubigeoDataFound = false;
 
-      // Process Ubigeo Response
-      if (ubigeoResponse.status === 200 && ubigeoResponse.data && ubigeoResponse.data.features && ubigeoResponse.data.features.length > 0) {
-        const attributes = ubigeoResponse.data.features[0].attributes;
-        currentFormData.UBIGEO_DEPARTAMENTO = attributes.nombdep || '';
-        currentFormData.UBIGEO_PROVINCIA = attributes.nombprov || '';
-        currentFormData.UBIGEO_DISTRITO = attributes.nombdist || '';
+      let ubigeoData = ubigeoResponse.data;
+      if (typeof ubigeoData === 'string') {
+        try { ubigeoData = JSON.parse(ubigeoData); } catch (e) { console.error('Error parseando ubigeoData:', e); }
+      }
+
+      if (ubigeoResponse.status === 200 && ubigeoData?.features?.length > 0) {
+        const attributes = ubigeoData.features[0].attributes;
+
+        // Esto es lo que se "pinta" en los campos de texto del formulario
+        currentFormData.TXT_DEPARTAMENTO = attributes.nombdep || attributes.NOMBDEP || attributes.DEPARTAMENTO || '';
+        currentFormData.TXT_PROVINCIA = attributes.nombprov || attributes.NOMBPROV || attributes.PROVINCIA || '';
+        currentFormData.TXT_DISTRITO = attributes.nombdist || attributes.NOMBDIST || attributes.DISTRITO || '';
+
+        // Sincronizamos campos internos (persistimos los nombres en DPTO y PROV)
+        currentFormData.UBIGEO_DEPARTAMENTO = currentFormData.TXT_DEPARTAMENTO;
+        currentFormData.UBIGEO_PROVINCIA = currentFormData.TXT_PROVINCIA;
+
+        // IMPORTANTE: Solo asignamos el CÓDIGO de 6 dígitos.
+        // Nunca asignamos el nombre aquí para que no exceda los 10 caracteres en la DB.
+        // Añadimos 'ubigeo' en minúsculas por si el servicio de ArcGIS cambia el nombre del campo.
+        currentFormData.UBIGEO_DISTRITO = attributes.idubigeo || attributes.IDUBIGEO || attributes.ubigeo || attributes.UBIGEO || '';
+
         ubigeoDataFound = true;
       }
 
-      // Process Zonal Office Response
-      if (zonalResponse.status === 200 && zonalResponse.data && zonalResponse.data.features && zonalResponse.data.features.length > 0) {
-        const attributes = zonalResponse.data.features[0].attributes;
-        currentFormData.UBIGEO_OFICINA_ZONAL = attributes.nombre || 'FUERA DE LA OFICINA ZONAL';
+      let zonalData = zonalResponse.data;
+      if (typeof zonalData === 'string') {
+        try { zonalData = JSON.parse(zonalData); } catch (e) { console.error('Error parseando zonalData:', e); }
+      }
+
+      if (zonalResponse.status === 200 && zonalData?.features?.length > 0) {
+        const attributes = zonalData.features[0].attributes;
+        currentFormData.UBIGEO_OFICINA_ZONAL = attributes.nombre || attributes.NOMBRE || 'FUERA DE LA OFICINA ZONAL';
       } else {
         currentFormData.UBIGEO_OFICINA_ZONAL = 'FUERA DE LA OFICINA ZONAL';
       }
