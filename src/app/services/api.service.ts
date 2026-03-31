@@ -7,6 +7,8 @@ export interface ReniecResponse {
   first_name: string;
   first_last_name: string;
   second_last_name: string;
+  birthday?: string;
+  sex?: string;
   // Agrega otros campos si son necesarios según la respuesta real de la API
 }
 

@@ -56,6 +56,9 @@ interface GeoJsonProperties {
   TXT_DEPARTAMENTO: string;
   TXT_PROVINCIA: string;
   TXT_DISTRITO: string;
+  MIDAGRI_DEPARTAMENTO: string;
+  MIDAGRI_PROVINCIA: string;
+  MIDAGRI_DISTRITO: string;
   UBIGEO_OFICINA_ZONAL: string;
   UBIGEO_DEPARTAMENTO: string;
   UBIGEO_PROVINCIA: string;
@@ -136,6 +139,9 @@ export class RegisterDataService {
     TXT_DEPARTAMENTO: '',
     TXT_PROVINCIA: '',
     TXT_DISTRITO: '',
+    MIDAGRI_DEPARTAMENTO: '',
+    MIDAGRI_PROVINCIA: '',
+    MIDAGRI_DISTRITO: '',
     TIPO_PRODUCTOR: '',
     TIPO_CULTIVO: '',
     UBIGEO_OFICINA_ZONAL: '',
@@ -218,6 +224,14 @@ export class RegisterDataService {
             properties.NOMBRE_COMPLETO = `${properties.NOMBRES || ''} ${properties.APELLIDO_PATERNO || ''} ${properties.APELLIDO_MATERNO || ''}`.trim();
             properties.FECHA_ACTUALIZACION_REGISTRO = new Date().toISOString();
             delete (properties as any).syncStatus; // Elimina el flag de pendiente
+
+            // MEJORA: Obtenemos la ubicación y la mezclamos con las propiedades antes de guardar
+            // Pasamos 'true' para forzar la actualización aunque los campos locales estén vacíos
+            const locationData = await this.autocompletarUbicacion(geojson.geometry, true, properties);
+            if (locationData) {
+              Object.assign(properties, locationData);
+            }
+
             await Preferences.set({ key, value: JSON.stringify(geojson) });
             syncedCount++;
 
@@ -290,6 +304,9 @@ export class RegisterDataService {
       TXT_DEPARTAMENTO: '',
       TXT_PROVINCIA: '',
       TXT_DISTRITO: '',
+      MIDAGRI_DEPARTAMENTO: '',
+      MIDAGRI_PROVINCIA: '',
+      MIDAGRI_DISTRITO: '',
       TIPO_PRODUCTOR: '',
       TIPO_CULTIVO: '',
       UBIGEO_OFICINA_ZONAL: '',
@@ -391,6 +408,12 @@ export class RegisterDataService {
         fetchedData.NOMBRES = (reniecData.first_name || 'NO ENCONTRADO').toUpperCase();
         fetchedData.APELLIDO_PATERNO = (reniecData.first_last_name || 'NO ENCONTRADO').toUpperCase();
         fetchedData.APELLIDO_MATERNO = (reniecData.second_last_name || 'NO ENCONTRADO').toUpperCase();
+
+        // Capturamos fecha de nacimiento y sexo si vienen de RENIEC
+        if (reniecData.birthday) fetchedData.FECHA_NACIMIENTO = reniecData.birthday;
+        if (reniecData.sex) {
+          fetchedData.SEXO = (reniecData.sex === 'M' || reniecData.sex === 'MASCULINO') ? 'MASCULINO' : 'FEMENINO';
+        }
         reniecSuccess = true;
       }
     } catch (err) {
@@ -407,11 +430,15 @@ export class RegisterDataService {
         }
         fetchedData.ACTIVIDAD_AGRARIA = productor.txt_actagraria || '';
         fetchedData.SUPERFICIE_MIDAGRI = productor.num_superficie || null;
-        fetchedData.REGIMEN_TENENCIA = productor.txt_regtenencia || '';
-        fetchedData.SEXO = productor.txt_sexo || '';
-        fetchedData.TXT_DEPARTAMENTO = productor.txt_departamento || '';
-        fetchedData.TXT_PROVINCIA = productor.txt_provincia || '';
-        fetchedData.TXT_DISTRITO = productor.txt_distrito || '';
+        if (productor.txt_regtenencia) fetchedData.REGIMEN_TENENCIA = productor.txt_regtenencia;
+        if (productor.txt_sexo) {
+          fetchedData.SEXO = (productor.txt_sexo.toUpperCase().startsWith('M')) ? 'MASCULINO' : 'FEMENINO';
+        } else {
+          fetchedData.SEXO = '';
+        }
+        fetchedData.MIDAGRI_DEPARTAMENTO = productor.txt_departamento || '';
+        fetchedData.MIDAGRI_PROVINCIA = productor.txt_provincia || '';
+        fetchedData.MIDAGRI_DISTRITO = productor.txt_distrito || '';
         midagriSuccess = true;
       }
     } catch (err) {
@@ -430,9 +457,9 @@ export class RegisterDataService {
       fetchedData.SUPERFICIE_MIDAGRI = fetchedData.SUPERFICIE_MIDAGRI ?? null;
       fetchedData.REGIMEN_TENENCIA = fetchedData.REGIMEN_TENENCIA ?? '';
       fetchedData.SEXO = fetchedData.SEXO ?? '';
-      fetchedData.TXT_DEPARTAMENTO = fetchedData.TXT_DEPARTAMENTO ?? '';
-      fetchedData.TXT_PROVINCIA = fetchedData.TXT_PROVINCIA ?? '';
-      fetchedData.TXT_DISTRITO = fetchedData.TXT_DISTRITO ?? '';
+      fetchedData.MIDAGRI_DEPARTAMENTO = fetchedData.MIDAGRI_DEPARTAMENTO ?? '';
+      fetchedData.MIDAGRI_PROVINCIA = fetchedData.MIDAGRI_PROVINCIA ?? '';
+      fetchedData.MIDAGRI_DISTRITO = fetchedData.MIDAGRI_DISTRITO ?? '';
     }
 
     let message = '', color: 'success' | 'warning' | 'danger' = 'danger';
@@ -489,10 +516,10 @@ export class RegisterDataService {
       }
       // Añadimos la validación de los datos de ubicación que se autocompletan.
       // Si estos datos faltan, el usuario debe esperar a que terminen de cargar.
-      if (!formData.UBIGEO_OFICINA_ZONAL) missingFields.push('Oficina Zonal (espere autocompletado)');
-      if (!formData.UBIGEO_DEPARTAMENTO) missingFields.push('Departamento (espere autocompletado)');
-      if (!formData.UBIGEO_PROVINCIA) missingFields.push('Provincia (espere autocompletado)');
-      if (!formData.UBIGEO_DISTRITO) missingFields.push('Distrito (espere autocompletado)');
+      if (!formData.UBIGEO_OFICINA_ZONAL) missingFields.push('Oficina Zonal');
+      if (!formData.TXT_DEPARTAMENTO) missingFields.push('Departamento');
+      if (!formData.TXT_PROVINCIA) missingFields.push('Provincia');
+      if (!formData.TXT_DISTRITO) missingFields.push('Distrito');
     }
 
     if (missingFields.length > 0) {
@@ -655,9 +682,8 @@ export class RegisterDataService {
 
         const payload = {
           // --- Tabla: registros_productor ---
-          // La columna en BD es VARCHAR(10). Truncamos el key local (ej: polygon_123...)
-          // para que el servidor no rechace la transacción.
-          internal_key: props.INTERNAL_KEY ? props.INTERNAL_KEY.toString().substring(0, 10) : '',
+          // Enviamos la llave completa para garantizar la unicidad de múltiples parcelas por DNI
+          internal_key: props.INTERNAL_KEY || '',
           dni_productor: props.DNI,
           nombre_completo: props.NOMBRE_COMPLETO,
           nombres: props.NOMBRES,
@@ -691,7 +717,7 @@ export class RegisterDataService {
           profesional_apellidos: `${props.PROFESIONAL_APELLIDO_PATERNO || ''} ${props.PROFESIONAL_APELLIDO_MATERNO || ''}`.trim(),
           profesional_celular: props.PROFESIONAL_CELULAR,
           profesional_email: props.PROFESIONAL_EMAIL,
-          device_uuid: props.DEVICE_UUID ? props.DEVICE_UUID.substring(0, 10) : 'UUID_UNK',
+          device_uuid: props.DEVICE_UUID || 'UUID_UNK',
 
           // --- Para Tabla: fotos_registro ---
           // Enviamos un array para que el backend itere e inserte en la tabla secundaria
@@ -749,8 +775,8 @@ export class RegisterDataService {
       props.CELULAR_PARTICIPANTE &&
       props.TIPO_CULTIVO &&
       props.FECHA_NACIMIENTO && this.isOfLegalAge(props.FECHA_NACIMIENTO) &&
-      props.UBIGEO_OFICINA_ZONAL && props.UBIGEO_DEPARTAMENTO &&
-      props.UBIGEO_PROVINCIA && props.UBIGEO_DISTRITO &&
+      props.UBIGEO_OFICINA_ZONAL && props.TXT_DEPARTAMENTO &&
+      props.TXT_PROVINCIA && props.TXT_DISTRITO &&
       props.RUTA_FOTOS && props.RUTA_FOTOS.length >= 2 &&
       props.NOMBRES && props.NOMBRES !== 'PENDIENTE' && props.NOMBRES !== 'NO ENCONTRADO'
     );
@@ -1349,13 +1375,13 @@ export class RegisterDataService {
     }
   }
 
-  private async autocompletarUbicacion(geometry: any) {
-    if (!geometry) return;
+  public async autocompletarUbicacion(geometry: any, ignoreExisting: boolean = false, targetData?: Partial<GeoJsonProperties>): Promise<Partial<GeoJsonProperties> | null> {
+    if (!geometry) return null;
 
-    // Si ya existen datos de ubicación, no volvemos a buscarlos para evitar el toast.
-    const existingData = this._formData.getValue();
-    if (existingData.UBIGEO_DEPARTAMENTO || existingData.UBIGEO_PROVINCIA || existingData.UBIGEO_DISTRITO) {
-      return;
+    // Si no se pasa targetData, usamos el estado actual del formulario (UI)
+    const currentData = targetData ? targetData : this._formData.getValue();
+    if (!ignoreExisting && currentData.UBIGEO_DEPARTAMENTO?.trim() && currentData.UBIGEO_PROVINCIA?.trim() && currentData.UBIGEO_DISTRITO?.trim()) {
+        return null;
     }
 
     let point: { x: number, y: number };
@@ -1368,7 +1394,7 @@ export class RegisterDataService {
       if (geometry.type === 'LineString' || geometry.type === 'MultiLineString') {
         const coords = geometry.type === 'LineString' ? geometry.coordinates : geometry.coordinates[0];
         // CORRECCIÓN: Una línea necesita al menos 2 puntos para tener un centro.
-        if (!coords || coords.length < 2) return;
+        if (!coords || coords.length < 2) return null;
         latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
         const center = L.polyline(latlngs).getBounds().getCenter();
         point = { x: center.lng, y: center.lat };
@@ -1383,12 +1409,12 @@ export class RegisterDataService {
           }
         }
         // CORRECCIÓN: Un polígono necesita al menos 3 puntos para tener un centro.
-        if (!coords || coords.length < 3) return;
+        if (!coords || coords.length < 3) return null;
         latlngs = coords.map((c: any) => L.latLng(c[1], c[0]));
         const center = L.polygon(latlngs).getBounds().getCenter();
         point = { x: center.lng, y: center.lat };
       } else {
-        return;
+        return null;
       }
     }
 
@@ -1398,8 +1424,8 @@ export class RegisterDataService {
       geometryType: 'esriGeometryPoint',
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
-      // Agregamos idubigeo para obtener el código de 6 dígitos
-      outFields: 'nombdep,nombprov,nombdist,idubigeo',
+      // Usamos * para evitar fallos si los nombres de campos cambian entre servicios
+      outFields: '*',
       returnGeometry: 'false',
       f: 'json'
     });
@@ -1423,7 +1449,8 @@ export class RegisterDataService {
         CapacitorHttp.get({ url: zonalUrl })
       ]);
 
-      const currentFormData = this._formData.getValue();
+      // Clonamos los datos para trabajar de forma inmutable
+      const workingData = targetData ? { ...targetData } : { ...this._formData.getValue() };
       let ubigeoDataFound = false;
 
       let ubigeoData = ubigeoResponse.data;
@@ -1432,21 +1459,37 @@ export class RegisterDataService {
       }
 
       if (ubigeoResponse.status === 200 && ubigeoData?.features?.length > 0) {
-        const attributes = ubigeoData.features[0].attributes;
+        const attr = ubigeoData.features[0].attributes;
 
-        // Esto es lo que se "pinta" en los campos de texto del formulario
-        currentFormData.TXT_DEPARTAMENTO = attributes.nombdep || attributes.NOMBDEP || attributes.DEPARTAMENTO || '';
-        currentFormData.TXT_PROVINCIA = attributes.nombprov || attributes.NOMBPROV || attributes.PROVINCIA || '';
-        currentFormData.TXT_DISTRITO = attributes.nombdist || attributes.NOMBDIST || attributes.DISTRITO || '';
+        // Buscador de atributos robusto (ignora mayúsculas/minúsculas y prueba variantes comunes)
+        const getAttr = (keys: string[]) => {
+          for (const k of keys) {
+            const foundKey = Object.keys(attr).find(key => key.toUpperCase() === k.toUpperCase());
+            if (foundKey && attr[foundKey] !== null && attr[foundKey] !== undefined && attr[foundKey] !== '') return attr[foundKey];
+          }
+          return null;
+        };
 
-        // Sincronizamos campos internos (persistimos los nombres en DPTO y PROV)
-        currentFormData.UBIGEO_DEPARTAMENTO = currentFormData.TXT_DEPARTAMENTO;
-        currentFormData.UBIGEO_PROVINCIA = currentFormData.TXT_PROVINCIA;
+        // ASIGNACIÓN DE NOMBRES: Priorizamos la ubicación detectada por la geometría (ArcGIS)
+        // sobre los datos administrativos previos del productor (MIDAGRI/Agrarios).
+        const depName = getAttr(['NOMBDEP', 'DEPARTAMEN', 'NOM_DEPART', 'DEPARTAMENTO', 'NOMDEP']);
+        const provName = getAttr(['NOMBPROV', 'PROVIN_1', 'NOM_PROV', 'PROVINCIA', 'NOMPROV']);
+        const distName = getAttr(['NOMBDIST', 'DISTRITO_1', 'NOM_DIST', 'DISTRITO', 'NOMDIST']);
 
-        // IMPORTANTE: Solo asignamos el CÓDIGO de 6 dígitos.
-        // Nunca asignamos el nombre aquí para que no exceda los 10 caracteres en la DB.
-        // Añadimos 'ubigeo' en minúsculas por si el servicio de ArcGIS cambia el nombre del campo.
-        currentFormData.UBIGEO_DISTRITO = attributes.idubigeo || attributes.IDUBIGEO || attributes.ubigeo || attributes.UBIGEO || '';
+        // Si el servicio devuelve datos, sobreescribimos los campos de texto
+        if (depName) workingData.TXT_DEPARTAMENTO = String(depName).trim().toUpperCase();
+        if (provName) workingData.TXT_PROVINCIA = String(provName).trim().toUpperCase();
+        if (distName) workingData.TXT_DISTRITO = String(distName).trim().toUpperCase();
+
+        // ASIGNACIÓN DE CÓDIGOS (para los campos UBIGEO_ con 10 caracteres)
+        // Buscamos específicamente el código numérico (IDUBIGEO / UBIGEO)
+        const deptCode = getAttr(['IDDEPARTAMENTO', 'CODDEP', 'UBIGEO_DEP']);
+        const provCode = getAttr(['IDPROVINCIA', 'CODPROV', 'UBIGEO_PRO']);
+        const distCode = getAttr(['IDUBIGEO', 'UBIGEO', 'CODDIST', 'COD_DIST', 'UBIGEO_REN']);
+
+        if (deptCode) workingData.UBIGEO_DEPARTAMENTO = deptCode.toString().substring(0, 10);
+        if (provCode) workingData.UBIGEO_PROVINCIA = provCode.toString().substring(0, 10);
+        if (distCode) workingData.UBIGEO_DISTRITO = distCode.toString().substring(0, 10);
 
         ubigeoDataFound = true;
       }
@@ -1458,21 +1501,26 @@ export class RegisterDataService {
 
       if (zonalResponse.status === 200 && zonalData?.features?.length > 0) {
         const attributes = zonalData.features[0].attributes;
-        currentFormData.UBIGEO_OFICINA_ZONAL = attributes.nombre || attributes.NOMBRE || 'FUERA DE LA OFICINA ZONAL';
+        workingData.UBIGEO_OFICINA_ZONAL = attributes.nombre || attributes.NOMBRE || 'FUERA DE LA OFICINA ZONAL';
       } else {
-        currentFormData.UBIGEO_OFICINA_ZONAL = 'FUERA DE LA OFICINA ZONAL';
+        workingData.UBIGEO_OFICINA_ZONAL = 'FUERA DE LA OFICINA ZONAL';
       }
 
-      // Update state immutably
-      const updatedFormData = { ...currentFormData };
-      this.zone.run(() => this._formData.next(updatedFormData));
+      // Solo actualizamos el BehaviorSubject si NO se pasó un targetData (es decir, es el formulario activo)
+      if (!targetData) {
+        this.zone.run(() => this._formData.next(workingData));
+      }
 
-      if (ubigeoDataFound) {
+      // Solo mostrar toast si es la UI activa
+      if (ubigeoDataFound && !targetData) {
         await this.showToast('Datos de ubicación autocompletados.', 'success');
       }
 
+      return workingData;
+
     } catch (error: any) {
       await this.showToast(`No se pudo autocompletar la ubicación: ${error.message || 'Error de red'}`, 'warning');
+      return null;
     }
   }
 
