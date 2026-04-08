@@ -331,6 +331,8 @@ export class RegisterDataService {
     const currentForm = this._formData.getValue();
     const newFormData = {
       ...properties,
+      FUENTE: properties.FUENTE || 'DEVIDA',
+      DATUM: properties.DATUM || 'WGS-84',
       perimetro: currentForm.perimetro,
       area: currentForm.area,
       altitud: currentForm.altitud,
@@ -1090,8 +1092,8 @@ export class RegisterDataService {
       ];
 
       const imageWithOverlayBase64 = await this.addTextOverlayToImage(`data:image/jpeg;base64,${image.base64String}`, textLines);
-      const photoNumber = this._savedPhotoUris.getValue().length + 1;
-      const fileName = `${productorDni}_${photoNumber}.jpeg`;
+      const timestamp = new Date().getTime();
+      const fileName = `parcela_${productorDni}_${timestamp}.jpeg`;
 
       const savedFile = await Filesystem.writeFile({
         path: fileName, data: imageWithOverlayBase64, directory: Directory.Data
@@ -1204,7 +1206,8 @@ export class RegisterDataService {
         path: image.path
       });
 
-      const fileName = `dni_${side}_${productorDni}_${recordKey}.jpeg`;
+      const timestamp = new Date().getTime();
+      const fileName = `dni_${side}_${productorDni}_${recordKey}_${timestamp}.jpeg`;
 
       // Si ya existe una foto para este lado, la eliminamos primero
       const existingUri = side === 'front' ? currentFormData.RUTA_DNI_FRONT : currentFormData.RUTA_DNI_BACK;
@@ -1465,21 +1468,17 @@ export class RegisterDataService {
         const getAttr = (keys: string[]) => {
           for (const k of keys) {
             const foundKey = Object.keys(attr).find(key => key.toUpperCase() === k.toUpperCase());
-            if (foundKey && attr[foundKey] !== null && attr[foundKey] !== undefined && attr[foundKey] !== '') return attr[foundKey];
+            if (foundKey && attr[foundKey]) return attr[foundKey];
           }
-          return null;
+          return '';
         };
 
-        // ASIGNACIÓN DE NOMBRES: Priorizamos la ubicación detectada por la geometría (ArcGIS)
-        // sobre los datos administrativos previos del productor (MIDAGRI/Agrarios).
-        const depName = getAttr(['NOMBDEP', 'DEPARTAMEN', 'NOM_DEPART', 'DEPARTAMENTO', 'NOMDEP']);
-        const provName = getAttr(['NOMBPROV', 'PROVIN_1', 'NOM_PROV', 'PROVINCIA', 'NOMPROV']);
-        const distName = getAttr(['NOMBDIST', 'DISTRITO_1', 'NOM_DIST', 'DISTRITO', 'NOMDIST']);
-
-        // Si el servicio devuelve datos, sobreescribimos los campos de texto
-        if (depName) workingData.TXT_DEPARTAMENTO = String(depName).trim().toUpperCase();
-        if (provName) workingData.TXT_PROVINCIA = String(provName).trim().toUpperCase();
-        if (distName) workingData.TXT_DISTRITO = String(distName).trim().toUpperCase();
+        // ASIGNACIÓN CORRECTA: Nombres van a los campos TXT_ (100 chars)
+        // ASIGNACIÓN DE NOMBRES (para los campos TXT_ con 100 caracteres)
+        // Priorizamos campos de texto para evitar capturar el código por accidente
+        workingData.TXT_DEPARTAMENTO = String(getAttr(['NOMBDEP', 'DEPARTAMEN', 'NOM_DEPART']) || workingData.TXT_DEPARTAMENTO).toUpperCase();
+        workingData.TXT_PROVINCIA = String(getAttr(['NOMBPROV', 'PROVIN_1', 'NOM_PROV']) || workingData.TXT_PROVINCIA).toUpperCase();
+        workingData.TXT_DISTRITO = String(getAttr(['NOMBDIST', 'DISTRITO_1', 'NOM_DIST']) || workingData.TXT_DISTRITO).toUpperCase();
 
         // ASIGNACIÓN DE CÓDIGOS (para los campos UBIGEO_ con 10 caracteres)
         // Buscamos específicamente el código numérico (IDUBIGEO / UBIGEO)
