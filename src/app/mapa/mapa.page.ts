@@ -170,7 +170,7 @@ export class MapaPage implements OnDestroy {
   public isDrawingLine = false;
   public isOnline = true;
   public networkStatusChanged = false;
-  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default'; // Propiedad para almacenar el rol del usuario
+  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' | 'animal-crops' = 'default'; // Propiedad para almacenar el rol del usuario
 
   // --- Getters de Permisos basados en Roles ---
   get canDrawLines(): boolean {

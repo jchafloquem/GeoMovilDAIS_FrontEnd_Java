@@ -49,7 +49,7 @@ import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline, lockClosed
   ]
 })
 export class GeometricosTabPage implements OnInit {
-  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default';
+  public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' | 'animal-crops' = 'default';
 
   public geometryIcons: { [key: string]: string } = {
     'Polígono': 'map-outline',

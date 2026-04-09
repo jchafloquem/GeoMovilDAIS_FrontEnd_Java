@@ -23,7 +23,7 @@ export class AuthService {
       try {
         const credential = await signInWithEmailAndPassword(this.auth, email, password);
         // Determinamos el rol del usuario basado en el email
-        let role: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' = 'default';
+        let role: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' | 'animal-crops' = 'default';
         const lowerCaseEmail = email.toLowerCase();
         if (lowerCaseEmail === 'pirdais@devida.gob.pe') {
           role = 'polygon-only';
@@ -31,6 +31,8 @@ export class AuthService {
           role = 'other-crops';
         } else if (lowerCaseEmail === 'acuavicola@devida.gob.pe') {
           role = 'point-polygon';
+        } else if (lowerCaseEmail === 'crianzas@devida.gob.pe') {
+          role = 'animal-crops';
         }
         // Guardamos las credenciales y el rol en el dispositivo después de un login exitoso
         const credentialsToStore = { email, password, role };
@@ -73,7 +75,7 @@ export class AuthService {
     return signOut(this.auth);
   }
 
-  async getUserRole(): Promise<'default' | 'polygon-only' | 'other-crops' | 'point-polygon'> {
+  async getUserRole(): Promise<'default' | 'polygon-only' | 'other-crops' | 'point-polygon' | 'animal-crops'> {
     const { value } = await Preferences.get({ key: CREDENTIALS_KEY });
     if (value) {
       const storedCredentials = JSON.parse(value);

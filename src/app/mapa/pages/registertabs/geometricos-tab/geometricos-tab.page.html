@@ -17,18 +17,34 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
-            <ion-select label="Tipo de Cultivo" label-placement="stacked" interface="action-sheet" placeholder="Seleccione un cultivo"
+            <ion-select [label]="userRole === 'animal-crops' ? 'Tipo de Crianza' : 'Tipo de Cultivo'"
+                        label-placement="stacked" interface="action-sheet"
+                        [placeholder]="userRole === 'animal-crops' ? 'Seleccione la crianza' : 'Seleccione un cultivo'"
                         [ngModel]="formData.TIPO_CULTIVO"
                         (ngModelChange)="formData.TIPO_CULTIVO = $event"
                         [disabled]="!!formData.uploaded">
-              <!-- Opciones para roles 'default' y 'polygon-only' (todos menos 'other-crops') -->
-              <ion-select-option *ngIf="userRole !== 'other-crops'" value="CACAO">CACAO</ion-select-option>
-              <ion-select-option *ngIf="userRole !== 'other-crops'" value="CAFE">CAFÉ</ion-select-option>
-              <!-- Opciones para roles 'default' y 'other-crops' (todos menos 'polygon-only') -->
-              <ion-select-option *ngIf="userRole !== 'polygon-only'" value="PLATANO">PLATANO</ion-select-option>
-              <ion-select-option *ngIf="userRole !== 'polygon-only'" value="MARACUYA">MARACUYA</ion-select-option>
-              <ion-select-option *ngIf="userRole !== 'polygon-only'" value="JENGIBRE">JENGIBRE</ion-select-option>
-              <ion-select-option *ngIf="userRole !== 'polygon-only'" value="PALTO">PALTO</ion-select-option>
+              <!-- Opciones para roles 'default' y 'polygon-only' (todos menos 'other-crops' y 'animal-crops') -->
+              <ion-select-option *ngIf="userRole !== 'other-crops' && userRole !== 'animal-crops'" value="CACAO">CACAO</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'other-crops' && userRole !== 'animal-crops'" value="CAFE">CAFÉ</ion-select-option>
+              <!-- Opciones para roles 'default' y 'other-crops' (todos menos 'polygon-only' y 'animal-crops') -->
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="PLATANO">PLATANO</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="MARACUYA">MARACUYA</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="JENGIBRE">JENGIBRE</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="PALTO">PALTO</ion-select-option>
+
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="APICOLA">APICOLA</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="ACUICOLA">ACUICOLA</ion-select-option>
+              <ion-select-option *ngIf="userRole !== 'polygon-only' && userRole !== 'animal-crops'" value="AVICOLA">AVICOLA</ion-select-option>
+
+              <!-- Opciones solo para rol 'animal-crops' -->
+              <ion-select-option *ngIf="userRole === 'animal-crops'" value="APICOLA">APICOLA</ion-select-option>
+              <ion-select-option *ngIf="userRole === 'animal-crops'" value="ACUICOLA">ACUICOLA</ion-select-option>
+              <ion-select-option *ngIf="userRole === 'animal-crops'" value="AVICOLA">AVICOLA</ion-select-option>
+
+
+
+
+
             </ion-select>
           </ion-item>
           <ion-item>
