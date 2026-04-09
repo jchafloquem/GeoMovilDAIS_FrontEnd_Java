@@ -1098,8 +1098,14 @@ export class RegisterDataService {
       });
       if (!image.base64String) return;
 
-      // Aumentamos maximumAge a 5000ms para aceptar una ubicación reciente y no esperar una nueva triangulación
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
+      // MEJORA DE PRECISIÓN: maximumAge: 0 fuerza una lectura real del satélite ahora mismo.
+      let position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+
+      // Si la precisión es pobre (>15m), re-intentamos una vez más para dar tiempo al sensor a estabilizarse
+      if (position.coords.accuracy > 15) {
+        position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      }
+
       const coords = position.coords;
       if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
         throw new Error('Coordenadas inválidas o nulas recibidas del GPS.');
