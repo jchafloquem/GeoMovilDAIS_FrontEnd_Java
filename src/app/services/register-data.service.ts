@@ -14,6 +14,7 @@ import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
 import { GpsDataService } from './gps-data.service';
+import { AuthService } from './auth.service';
 
 // Reutilizamos la interfaz de propiedades
 export interface ValidationResult {
@@ -166,7 +167,8 @@ export class RegisterDataService {
     private loadingController: LoadingController,
     private zone: NgZone,
     private apiService: ApiService,
-    private gpsDataService: GpsDataService
+    private gpsDataService: GpsDataService,
+    private authService: AuthService
   ) {
     this.initializeNetworkListener();
   }
@@ -536,6 +538,19 @@ export class RegisterDataService {
     const geojson = this._geojson.getValue();
     if (!geojson) {
       return;
+    }
+
+    // --- Validación de Negocio: Restricción para rol de Cultivos (cultivos@devida.gob.pe) ---
+    const role = await this.authService.getUserRole();
+    const isPolygon = geojson.geometry.type.toLowerCase().includes('polygon');
+
+    if (role === 'other-crops' && isPolygon) {
+      const restricted = ['APICOLA', 'ACUICOLA', 'AVICOLA'];
+      const currentTipo = (formData.TIPO_CULTIVO || '').toUpperCase();
+      if (restricted.includes(currentTipo)) {
+        await this.showToast(`El rol de Cultivos no permite registrar polígonos para la actividad: ${currentTipo}`, 'warning', 'top');
+        return;
+      }
     }
 
     const isEditing = !!this._editKey.getValue();
