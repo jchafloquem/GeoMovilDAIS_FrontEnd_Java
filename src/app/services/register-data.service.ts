@@ -13,6 +13,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
+import { GpsDataService } from './gps-data.service';
 
 // Reutilizamos la interfaz de propiedades
 export interface ValidationResult {
@@ -164,7 +165,8 @@ export class RegisterDataService {
     private alertController: AlertController,
     private loadingController: LoadingController,
     private zone: NgZone,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private gpsDataService: GpsDataService
   ) {
     this.initializeNetworkListener();
   }
@@ -335,7 +337,8 @@ export class RegisterDataService {
       DATUM: properties.DATUM || 'WGS-84',
       perimetro: currentForm.perimetro,
       area: currentForm.area,
-      altitud: currentForm.altitud,
+      // Priorizar la altitud calculada si es válida; si no, mantener la que ya estaba en propiedades
+      altitud: (currentForm.altitud && currentForm.altitud !== 'No disponible') ? currentForm.altitud : (properties.altitud || 'No disponible'),
       centroide: currentForm.centroide,
       geometryTypeLabel: currentForm.geometryTypeLabel,
     };
@@ -795,7 +798,9 @@ export class RegisterDataService {
       const x = coords[0];
       const y = coords[1];
       // Si no hay Z (altitud), asumimos 0 para que la base de datos lo acepte
-      const z = coords.length > 2 ? coords[2] : 0;
+      //const z = coords.length > 2 ? coords[2] : 0;
+      const zVal = coords.length > 2 ? Number(coords[2]) : 0;
+      const z = isNaN(zVal) ? 0 : zVal;
       return `${x} ${y} ${z}`;
     };
 
@@ -1086,8 +1091,13 @@ export class RegisterDataService {
       }
 
       const date = new Date();
+      const altStr = (coords.altitude !== null && coords.altitude !== undefined)
+        ? `Alt: ${coords.altitude.toFixed(2)} msnm`
+        : 'Alt: No disponible';
+
       const textLines = [
         `Lat: ${coords.latitude.toFixed(5)} Lon: ${coords.longitude.toFixed(5)}`,
+        altStr,
         `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
       ];
 
@@ -1308,7 +1318,15 @@ export class RegisterDataService {
       const coords = geojson.geometry.coordinates;
       if (!coords || coords.length < 2) return;
       data.centroide = `Lat: ${coords[1].toFixed(5)}, Lon: ${coords[0].toFixed(5)}`;
-      data.altitud = (coords[2] !== undefined) ? `${coords[2].toFixed(2)} msnm` : 'No disponible';
+
+      let altVal = (coords.length > 2 && coords[2] !== undefined) ? Number(coords[2]) : NaN;
+      // Fallback al GPS si la coordenada Z no existe en el GeoJSON
+      if (isNaN(altVal)) {
+        const gps = this.gpsDataService.getGpsValue();
+        if (gps && gps.alt !== null) altVal = gps.alt;
+      }
+
+      data.altitud = !isNaN(altVal) ? `${altVal.toFixed(2)} msnm` : 'No disponible';
       data.area = 'N/A (Punto)';
       data.perimetro = 'N/A (Punto)';
     } else if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
@@ -1363,19 +1381,46 @@ export class RegisterDataService {
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
       data.altitud = this.calculateAverageAltitude(coords);
     }
+
+    // MEJORA: Incluir la altitud en la cadena del centroide para persistencia en la BD
+    if (data.altitud && data.altitud !== 'No disponible') {
+      data.centroide += `, Alt: ${data.altitud}`;
+    }
+
     this._formData.next(data);
     // Iniciar autocompletado de ubigeo después de calcular los datos geométricos
     this.autocompletarUbicacion(geojson.geometry);
   }
 
   private calculateAverageAltitude(coords: any[]): string {
-    const altitudes = coords.map((c: any[]) => c[2]).filter((alt: number | undefined) => alt !== undefined && typeof alt === 'number');
-    if (altitudes.length > 0) {
-      const sum = altitudes.reduce((a, b) => a + b, 0);
-      return `${(sum / altitudes.length).toFixed(2)} msnm`;
-    } else {
-      return 'No disponible';
+    if (!coords || !Array.isArray(coords)) {
+      return this.getGpsFallback();
     }
+
+    const validAltitudes = coords
+      .map(c => (c.length > 2 && c[2] !== undefined ? Number(c[2]) : NaN))
+      .filter(alt => !isNaN(alt));
+
+    if (validAltitudes.length > 0) {
+      const sum = validAltitudes.reduce((acc, val) => acc + val, 0);
+      const avg = sum / validAltitudes.length;
+      return `${avg.toFixed(2)} msnm`;
+    }
+
+    return this.getGpsFallback();
+  }
+
+  private getGpsFallback(): string {
+    // Solo usamos el GPS actual como fallback si el registro es nuevo o es un borrador (proceso de captura activo)
+    const isNewOrDraft = !this._editKey.getValue() || this._geojson.getValue()?.properties?.status === 'draft';
+
+    if (isNewOrDraft) {
+      const gps = this.gpsDataService.getGpsValue();
+      if (gps && gps.alt !== null) {
+        return `${gps.alt.toFixed(2)} msnm`;
+      }
+    }
+    return 'No disponible';
   }
 
   public async autocompletarUbicacion(geometry: any, ignoreExisting: boolean = false, targetData?: Partial<GeoJsonProperties>): Promise<Partial<GeoJsonProperties> | null> {

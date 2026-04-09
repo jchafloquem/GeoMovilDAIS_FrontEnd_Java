@@ -24,5 +24,8 @@ export class GpsDataService {
   updateGpsData(data: GpsData) {
     this.gpsDataSource.next(data);
   }
-}
 
+  getGpsValue(): GpsData {
+    return this.gpsDataSource.getValue();
+  }
+}
