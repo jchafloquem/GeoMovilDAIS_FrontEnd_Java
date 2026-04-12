@@ -339,6 +339,29 @@ export class RegisterDataService {
     this._formData.next(resetData);
   }
 
+  /**
+   * Actualiza los datos del formulario en el servicio.
+   * El componente debe llamar a este método en cada cambio (input) para evitar pérdida de datos.
+   */
+  public updateFormData(patch: Partial<GeoJsonProperties>) {
+    const current = this._formData.getValue();
+    this._formData.next({ ...current, ...patch });
+  }
+
+  /**
+   * Guarda el estado actual de la memoria en Preferences de forma silenciosa.
+   * Esto evita que se pierdan datos si la app se reinicia al usar la cámara.
+   */
+  private async autoSaveState() {
+    const key = this._editKey.getValue();
+    const geojson = this._geojson.getValue();
+    if (key && geojson) {
+      const currentProps = this._formData.getValue();
+      geojson.properties = { ...geojson.properties, ...currentProps, ruta_fotos: this._savedPhotoUris.getValue() };
+      await Preferences.set({ key, value: JSON.stringify(geojson) });
+    }
+  }
+
   private loadFormDataFromProperties(properties: any) {
     // La carga es directa. Se priorizan los valores de geometría recién calculados
     // sobre los que pudieran estar guardados, que podrían estar obsoletos.
@@ -1181,7 +1204,7 @@ export class RegisterDataService {
 
       if (!productorDni || productorDni.length !== 8) {
         await this.showToast('Por favor, ingrese un DNI válido de 8 dígitos antes de tomar la foto.', 'warning', 'top');
-        return;
+        return; // CORRECCIÓN: Evita que se abra la cámara si el DNI es inválido
       }
 
       const image = await Camera.getPhoto({
@@ -1235,6 +1258,8 @@ export class RegisterDataService {
       const currentDisplayPhotos = this._photosForDisplay.getValue();
       this._photosForDisplay.next([...currentDisplayPhotos, Capacitor.convertFileSrc(savedFile.uri)]);
 
+      await this.autoSaveState(); // Persistencia inmediata
+
     } catch (error: any) {
       const rawErrorMessage = error.message || JSON.stringify(error);
 
@@ -1275,6 +1300,7 @@ export class RegisterDataService {
             displayPhotos.splice(index, 1);
             this._savedPhotoUris.next(uris);
             this._photosForDisplay.next(displayPhotos);
+            await this.autoSaveState();
           }
 
         }
@@ -1368,6 +1394,7 @@ export class RegisterDataService {
         currentFormData.ruta_dni_back = savedFile.uri;
       }
       this._formData.next(currentFormData);
+      await this.autoSaveState(); // Persistencia inmediata
 
     } catch (error: any) {
       const errorMessage = error.message || JSON.stringify(error);
@@ -1404,6 +1431,7 @@ export class RegisterDataService {
         currentFormData.ruta_dni_back = '';
       }
       this._formData.next(currentFormData);
+      await this.autoSaveState();
     }
   }
 
