@@ -11,31 +11,49 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
-            <ion-input label="Código Autogenerado" label-placement="floating" type="text" name="CODIGO_AUTOGENERADO_MIDAGRI" [(ngModel)]="formData.CODIGO_AUTOGENERADO_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Código Autogenerado" label-placement="stacked" type="text" name="cod_ppa_midagri" 
+                       [ngModel]="formData.cod_ppa_midagri" 
+                       (ngModelChange)="formData.cod_ppa_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Fecha de Registro" label-placement="floating" type="text" name="FECHA_REGISTRO_MIDAGRI" [(ngModel)]="formData.FECHA_REGISTRO_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Fecha de Registro" label-placement="stacked" type="text" name="fecha_registro_midagri" 
+                       [ngModel]="formData.fecha_registro_midagri" 
+                       (ngModelChange)="formData.fecha_registro_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Actividad Agraria" label-placement="floating" type="text" name="ACTIVIDAD_AGRARIA" [(ngModel)]="formData.ACTIVIDAD_AGRARIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Actividad Agraria" label-placement="stacked" type="text" name="actividad_agraria_midagri" 
+                       [ngModel]="formData.actividad_agraria_midagri" 
+                       (ngModelChange)="formData.actividad_agraria_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Superficie (ha)" label-placement="floating" type="text" name="SUPERFICIE_MIDAGRI" [(ngModel)]="formData.SUPERFICIE_MIDAGRI" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Superficie (ha)" label-placement="stacked" type="text" name="superficie_midagri" 
+                       [ngModel]="formData.superficie_midagri" 
+                       (ngModelChange)="formData.superficie_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Régimen de Tenencia" label-placement="floating" type="text" name="REGIMEN_TENENCIA" [(ngModel)]="formData.REGIMEN_TENENCIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Régimen de Tenencia" label-placement="stacked" type="text" name="regimen_tenencia_midagri" 
+                       [ngModel]="formData.regimen_tenencia_midagri" 
+                       (ngModelChange)="formData.regimen_tenencia_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Sexo" label-placement="floating" type="text" name="SEXO" [(ngModel)]="formData.SEXO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Sexo" label-placement="stacked" type="text" name="sexo_midagri" 
+                       [ngModel]="formData.sexo_midagri" 
+                       (ngModelChange)="formData.sexo_midagri = $event" 
+                       [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Departamento" label-placement="floating" type="text" name="TXT_DEPARTAMENTO" [(ngModel)]="formData.TXT_DEPARTAMENTO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Departamento" label-placement="stacked" type="text" name="departamento_midagri" [ngModel]="formData.departamento_midagri" (ngModelChange)="formData.departamento_midagri = $event" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Provincia" label-placement="floating" type="text" name="TXT_PROVINCIA" [(ngModel)]="formData.TXT_PROVINCIA" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Provincia" label-placement="stacked" type="text" name="provincia_midagri" [ngModel]="formData.provincia_midagri" (ngModelChange)="formData.provincia_midagri = $event" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Distrito" label-placement="floating" type="text" name="TXT_DISTRITO" [(ngModel)]="formData.TXT_DISTRITO" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
+            <ion-input label="Distrito" label-placement="stacked" type="text" name="distrito_midagri" [ngModel]="formData.distrito_midagri" (ngModelChange)="formData.distrito_midagri = $event" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
         </ion-list>
       </ion-card-content>

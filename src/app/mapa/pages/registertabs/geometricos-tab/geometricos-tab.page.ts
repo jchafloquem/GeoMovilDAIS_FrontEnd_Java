@@ -19,8 +19,8 @@ import {
   IonSelectOption,
   IonTextarea,
 } from '@ionic/angular/standalone';
-import { RegisterDataService } from 'src/app/services/register-data.service';
-import { AuthService } from 'src/app/services/auth.service';
+import { RegisterDataService } from '../../../../services/register-data.service';
+import { AuthService } from '../../../../services/auth.service';
 import { addIcons } from 'ionicons';
 import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline, lockClosed } from 'ionicons/icons';
 

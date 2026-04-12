@@ -1,3 +1,21 @@
+****PARA PRDUCCION*******
+
+export const environment = {
+  production: true,
+  apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
+  firebase: {
+    apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
+    authDomain: "geomovildais.firebaseapp.com",
+    projectId: "geomovildais",
+    storageBucket: "geomovildais.firebasestorage.app",
+    messagingSenderId: "553060227607",
+    appId: "1:553060227607:web:1105c2b7f35c1bc00cda52"
+  }
+};
+
+
+****** en enviroment.ts
+
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
@@ -7,7 +25,7 @@ export const environment = {
   // Para EMULADOR usa: http://10.0.2.2:3000/api
   // Para DISPOSITIVO FÍSICO (celular) usa la IP de tu computadora en la red WiFi.
   //apiUrl: 'http://192.168.26.12:3000',
-  apiUrl: 'http://192.168.100.2:8080/geodaismovil',
+  apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
   firebase: {
       apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
       authDomain: "geomovildais.firebaseapp.com",

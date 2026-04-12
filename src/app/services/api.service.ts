@@ -35,15 +35,59 @@ export interface MidagriApiResponse {
   unAuthorizedRequest: boolean;
 }
 
-// --- MEJORA: TIPADO FUERTE ---
-// Se define una interfaz para los objetos GeoJSON Feature para evitar el uso de `any`.
-export interface GeoJSONFeature {
-  type: 'Feature';
-  properties: { [key: string]: any };
-  geometry: {
-    type: string; // 'Point', 'LineString', 'Polygon', etc.
-    coordinates: any;
-  };
+// --- ESTRUCTURA DE ENVÍO AL BACKEND ---
+export interface ProductorRegistroPayload {
+  internalKey: string;
+  dniProductor?: string | null;
+  nombreCompleto?: string | null;
+  nombres?: string | null;
+  apellidoPaterno?: string | null;
+  apellidoMaterno?: string | null;
+  fechaNacimiento?: string | null; // Formato YYYY-MM-DD
+  celularParticipante?: string | null;
+  tipoProductor?: string | null;
+  sexoMidagri?: string | null; // char(1)
+  // MIDAGRI
+  codPpaMidagri?: string | null;
+  fechaRegistroMidagri?: string | null;
+  actividadAgrariaMidagri?: string | null;
+  superficieMidagri?: number | string | null;
+  regimenTenenciaMidagri?: string | null;
+  departamentoMidagri?: string | null;
+  provinciaMidagri?: string | null;
+  distritoMidagri?: string | null;
+  // GEOMETRIA
+  tipoCultivo?: string | null;
+  ozZonal?: string | null;
+  ubigeoInei?: string | null;
+  departamentoInei?: string | null;
+  provinciaInei?: string | null;
+  distritoInei?: string | null;
+  caserio?: string | null;
+  fuente?: string | null;
+  datum?: string | null;
+  perimetro?: number | null;
+  area?: number | null;
+  altitud?: number | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  observaciones?: string | null;
+  // PROFESIONAL
+  profesionalDni?: string | null;
+  profesionalNombres?: string | null;
+  profesionalApellidos?: string | null;
+  profesionalCelular?: string | null;
+  profesionalEmail?: string | null;
+  deviceUuid?: string | null;
+  geom: string | null;      // WKT GeometryZ
+  centroide: string | null; // WKT Point 2D
+  fotosAsociadas?: FotoRegistroPayload[];
+}
+
+export interface FotoRegistroPayload {
+  tipoFoto: string;
+  rutaFoto: string; // Base64
+  internalKey: string;
 }
 
 @Injectable({
@@ -120,20 +164,20 @@ export class ApiService {
    * Envía un lote de registros pre-procesados al backend.
    * @param payloads Un array de objetos de datos listos para ser enviados. Cada objeto debe tener la geometría en formato WKT.
    */
-  async enviarRegistros(payloads: any[]): Promise<HttpResponse> {
+  async enviarRegistros(payloads: ProductorRegistroPayload[]): Promise<HttpResponse> {
     const url = `${environment.apiUrl}/registros`;
     console.log(`[ApiService] Iniciando enviarRegistros a URL: ${url} con ${payloads.length} registros.`);
 
     // La sanitización ahora se hace para cada payload en el array.
     const sanitizedPayloads = payloads.map(p => {
       const sanitizedPayload = { ...p };
-      const superficieStr = sanitizedPayload.SUPERFICIE_MIDAGRI;
+      const superficieStr = sanitizedPayload.superficieMidagri;
 
       if (superficieStr && typeof superficieStr === 'string') {
         const superficieNum = parseFloat(superficieStr);
-        sanitizedPayload.SUPERFICIE_MIDAGRI = isNaN(superficieNum) ? null : superficieNum;
-      } else if (typeof sanitizedPayload.SUPERFICIE_MIDAGRI !== 'number') {
-        sanitizedPayload.SUPERFICIE_MIDAGRI = null;
+        sanitizedPayload.superficieMidagri = isNaN(superficieNum) ? null : superficieNum;
+      } else if (typeof sanitizedPayload.superficieMidagri !== 'number') {
+        sanitizedPayload.superficieMidagri = null;
       }
       return sanitizedPayload;
     });
@@ -162,7 +206,7 @@ export class ApiService {
    * esté en el formato que espera el backend (ej. WKT).
    * @param payload El objeto de datos listo para ser enviado como JSON.
    */
-  async enviarRegistroIndividual(payload: any): Promise<HttpResponse> {
+  async enviarRegistroIndividual(payload: ProductorRegistroPayload): Promise<HttpResponse> {
     // CORRECCIÓN: Apuntamos al endpoint correcto y enviamos un objeto simple, como espera el backend.
     const url = `${environment.apiUrl}/registros/single`;
     console.log(`[ApiService] Iniciando enviarRegistroIndividual a URL: ${url}`);
@@ -172,20 +216,20 @@ export class ApiService {
     const sanitizedPayload = { ...payload };
 
     // --- INICIO: SANITIZADOR DE DATOS ---
-    // El backend espera un NÚMERO para 'SUPERFICIE_MIDAGRI'. Aquí nos aseguramos
+    // El backend espera un NÚMERO para 'superficie_midagri'. Aquí nos aseguramos
     // de convertir el valor o enviarlo como null si no es un número válido.
-    const superficieStr = sanitizedPayload.SUPERFICIE_MIDAGRI;
+    const superficieStr = sanitizedPayload.superficieMidagri;
     if (superficieStr && typeof superficieStr === 'string') {
-      console.log(`[ApiService] Sanitizando SUPERFICIE_MIDAGRI. Valor original: "${superficieStr}"`);
+      console.log(`[ApiService] Sanitizando superficie_midagri. Valor original: "${superficieStr}"`);
       const superficieNum = parseFloat(superficieStr);
       // Si la conversión resulta en un número válido, lo usamos.
       // Si no (ej. "NO REGISTRA" se convierte en NaN), enviamos null.
-      sanitizedPayload.SUPERFICIE_MIDAGRI = isNaN(superficieNum) ? null : superficieNum;
-      console.log(`[ApiService] SUPERFICIE_MIDAGRI sanitizado a: ${sanitizedPayload.SUPERFICIE_MIDAGRI}`);
-    } else if (typeof sanitizedPayload.SUPERFICIE_MIDAGRI !== 'number') {
-      console.log(`[ApiService] SUPERFICIE_MIDAGRI no es string ni número. Forzando a null. Valor original:`, sanitizedPayload.SUPERFICIE_MIDAGRI);
+      sanitizedPayload.superficieMidagri = isNaN(superficieNum) ? null : superficieNum;
+      console.log(`[ApiService] superficie_midagri sanitizado a: ${sanitizedPayload.superficieMidagri}`);
+    } else if (typeof sanitizedPayload.superficieMidagri !== 'number') {
+      console.log(`[ApiService] superficie_midagri no es string ni número. Forzando a null. Valor original:`, sanitizedPayload.superficieMidagri);
       // Si no es un string ni un número (ej. es '', undefined), lo forzamos a null.
-      sanitizedPayload.SUPERFICIE_MIDAGRI = null;
+      sanitizedPayload.superficieMidagri = null;
     }
     // --- FIN: SANITIZADOR DE DATOS ---
 
@@ -194,11 +238,11 @@ export class ApiService {
     try {
       const response = await CapacitorHttp.post({
         url,
-        data: sanitizedPayload, // Enviamos el payload sanitizado directamente como un objeto
+        data: sanitizedPayload,
         headers: { 'Content-Type': 'application/json' }
       });
       console.log(`[ApiService] Respuesta de enviarRegistroIndividual recibida. Status: ${response.status}`);
-      console.log('[ApiService] Datos de respuesta (individual):', JSON.stringify(response.data));
+      if (response.status !== 200) console.error('[ApiService] Error del servidor:', JSON.stringify(response.data));
       return response;
     } catch (error: any) {
       console.error(`[ApiService] Error crítico en enviarRegistroIndividual: ${error.message}`);

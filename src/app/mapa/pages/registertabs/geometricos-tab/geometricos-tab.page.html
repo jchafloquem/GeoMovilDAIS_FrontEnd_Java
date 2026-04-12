@@ -20,8 +20,8 @@
             <ion-select [label]="userRole === 'animal-crops' ? 'Tipo de Crianza' : 'Tipo de Cultivo'"
                         label-placement="stacked" interface="action-sheet"
                         [placeholder]="userRole === 'animal-crops' ? 'Seleccione la crianza' : 'Seleccione un cultivo'"
-                        [ngModel]="formData.TIPO_CULTIVO"
-                        (ngModelChange)="formData.TIPO_CULTIVO = $event"
+                        [ngModel]="formData.tipo_cultivo"
+                        (ngModelChange)="formData.tipo_cultivo = $event"
                         [disabled]="!!formData.uploaded">
               <!-- Opciones para roles 'default' y 'polygon-only' (todos menos 'other-crops' y 'animal-crops') -->
               <ion-select-option *ngIf="userRole !== 'other-crops' && userRole !== 'animal-crops'" value="CACAO">CACAO</ion-select-option>
@@ -49,47 +49,47 @@
           </ion-item>
           <ion-item>
             <ion-input label="Oficina Zonal" label-placement="stacked"
-                       [ngModel]="formData.UBIGEO_OFICINA_ZONAL"
-                       (ngModelChange)="formData.UBIGEO_OFICINA_ZONAL = $event"
+                       [ngModel]="formData.oz_zonal"
+                       (ngModelChange)="formData.oz_zonal = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Departamento" label-placement="stacked"
-                       [ngModel]="formData.TXT_DEPARTAMENTO"
-                       (ngModelChange)="formData.TXT_DEPARTAMENTO = $event"
+                       [ngModel]="formData.departamento_inei"
+                       (ngModelChange)="formData.departamento_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Provincia" label-placement="stacked"
-                       [ngModel]="formData.TXT_PROVINCIA"
-                       (ngModelChange)="formData.TXT_PROVINCIA = $event"
+                       [ngModel]="formData.provincia_inei"
+                       (ngModelChange)="formData.provincia_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Distrito" label-placement="stacked"
-                       [ngModel]="formData.TXT_DISTRITO"
-                       (ngModelChange)="formData.TXT_DISTRITO = $event"
+                       [ngModel]="formData.distrito_inei"
+                       (ngModelChange)="formData.distrito_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Caserío" label-placement="stacked"
-                       [ngModel]="formData.UBIGEO_CASERIO"
-                       (ngModelChange)="formData.UBIGEO_CASERIO = $event"
+                       [ngModel]="formData.caserio"
+                       (ngModelChange)="formData.caserio = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Fuente" label-placement="stacked" [readonly]="true"
-                       [ngModel]="formData.FUENTE"
+                       [ngModel]="formData.fuente"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input label="Datum" label-placement="stacked" [readonly]="true"
-                       [ngModel]="formData.DATUM"
+                       [ngModel]="formData.datum"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
@@ -119,8 +119,8 @@
           <ion-item>
             <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
                           placeholder="Añada notas adicionales aquí..."
-                          [ngModel]="formData.OBSERVACIONES"
-                          (ngModelChange)="formData.OBSERVACIONES = $event"
+                          [ngModel]="formData.observaciones"
+                          (ngModelChange)="formData.observaciones = $event"
                           class="uppercase-input"
                           [disabled]="!!formData.uploaded"></ion-textarea>
           </ion-item>

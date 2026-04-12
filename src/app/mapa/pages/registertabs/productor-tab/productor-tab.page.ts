@@ -10,17 +10,25 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
+  IonCol,
   IonContent,
+  IonDatetime,
+  IonDatetimeButton,
+  IonGrid,
   IonIcon,
   IonInput,
   IonItem,
   IonItemDivider,
   IonLabel,
   IonList,
+  IonModal,
+  IonRow,
   IonSelect,
   IonSelectOption,
+  IonText,
+  IonThumbnail,
 } from '@ionic/angular/standalone';
-import { RegisterDataService } from 'src/app/services/register-data.service';
+import { RegisterDataService } from '../../../../services/register-data.service';
 import { addIcons } from 'ionicons';
 import { search, cameraOutline, trashOutline, lockClosed } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
@@ -39,16 +47,24 @@ import { Capacitor } from '@capacitor/core';
     IonCardTitle,
     IonCardSubtitle,
     IonCardContent,
+    IonCol,
     IonContent,
+    IonDatetime,
+    IonDatetimeButton,
+    IonGrid,
     IonIcon,
     IonInput,
     IonItem,
     IonItemDivider,
     IonLabel,
     IonList,
+    IonModal,
+    IonRow,
     IonSelect,
     IonSelectOption,
-    IonCheckbox, // <-- ¡Añade esta línea!
+    IonText,
+    IonThumbnail,
+    IonCheckbox,
   ]
 })
 export class ProductorTabPage {
