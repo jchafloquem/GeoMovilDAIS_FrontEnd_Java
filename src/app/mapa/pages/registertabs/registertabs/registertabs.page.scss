@@ -4,17 +4,19 @@ ion-header {
   background: transparent;
   pointer-events: none;
 }
-
-ion-header {
-  background: transparent;
-  pointer-events: none;
-}
 ion-toolbar {
   pointer-events: auto;
   color: #fff;
 }
 
+ion-tab-bar {
+  padding-inline: 12px; // Agrega espacio en los extremos izquierdo y derecho
+  border-top: 1px solid rgba(var(--ion-color-medium-rgb), 0.2);
+  --background: var(--ion-background-color, #fff);
+}
+
 ion-tab-button {
   --color: var(--ion-color-medium-shade);
   --color-selected: var(--ion-color-primary);
+  font-size: 11px;
 }
