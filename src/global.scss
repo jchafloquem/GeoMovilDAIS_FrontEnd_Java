@@ -50,3 +50,18 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+
+
+
+/* Centrar botones en ion-alert */
+ion-alert.custom-alert-center {
+  .alert-button-group {
+    justify-content: center;
+    flex-direction: row !important; /* Asegura que no se apilen en iOS */
+  }
+
+  .alert-button {
+    margin-inline: auto; /* Centrado adicional */
+  }
+}

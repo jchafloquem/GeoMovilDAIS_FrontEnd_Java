@@ -17,6 +17,7 @@
       <ion-item button (click)="enviarADevida()">
         <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
         <ion-label>Enviar a DEVIDA</ion-label>
+        <ion-badge slot="end" color="danger" *ngIf="pendingRecordsCount > 0">{{ pendingRecordsCount }}</ion-badge>
       </ion-item>
 
       <ion-item button (click)="exportAllGeometries()">
@@ -196,5 +197,14 @@
     <div *ngIf="canDrawPoints && !isDrawingPolygon && !isDrawingLine" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir Punto en mi Ubicación">
       <ion-icon name="location-outline"></ion-icon>
     </div>
+
+    <ion-alert
+      [isOpen]="isEditAlertOpen"
+      header="Modo Edición"
+      cssClass="custom-alert-center"
+      [message]="isEditingMode ? 'Modo Edición Activado. Toca un polígono para editarlo.' : 'Modo Edición Desactivado.'"
+      [buttons]="alertButtons"
+      (didDismiss)="isEditAlertOpen = false">
+    </ion-alert>
   </ion-content>
 </div>

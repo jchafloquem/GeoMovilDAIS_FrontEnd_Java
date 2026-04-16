@@ -1,6 +1,8 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
 import {
   AlertController,
+  IonAlert,
+  IonBadge,
   IonButton,
   IonButtons,
   IonContent,
@@ -53,6 +55,7 @@ import {
   trashOutline,
   walkOutline,
   wifiOutline,
+
 } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
@@ -131,6 +134,8 @@ const iconGreen = L.icon({
     RouterLink,
     IonButton,
     LegendPage,
+    IonAlert,
+    IonBadge // Importar IonBadge
 
   ]
 })
@@ -170,6 +175,9 @@ export class MapaPage implements OnDestroy {
   public isDrawingLine = false;
   public isOnline = true;
   public networkStatusChanged = false;
+  public isEditAlertOpen = false;
+  public pendingRecordsCount: number = 0; // Nueva propiedad para el conteo
+  public alertButtons = ['Aceptar'];
   public userRole: 'default' | 'polygon-only' | 'other-crops' | 'point-polygon' | 'animal-crops' = 'default'; // Propiedad para almacenar el rol del usuario
 
   // --- Getters de Permisos basados en Roles ---
@@ -227,6 +235,7 @@ export class MapaPage implements OnDestroy {
           this.drawnItems.clearLayers();
         }
         this.loadSavedGeometries();
+        this.updatePendingRecordsCount(); // Actualizar el conteo al cargar/volver a la página
       }, 200);
     }
   }
@@ -654,7 +663,7 @@ export class MapaPage implements OnDestroy {
     await this.registerDataService.createDraftAndNavigate(pointGeoJSON);
   }
 
-  toggleEditMode() {
+  async toggleEditMode() {
     this.isEditingMode = !this.isEditingMode;
 
     // Recargar los polígonos para aplicar los nuevos listeners de eventos y estilos
@@ -663,11 +672,7 @@ export class MapaPage implements OnDestroy {
       this.loadSavedGeometries();
     }
 
-    this.registerDataService.showToast(
-      this.isEditingMode ? 'Modo Edición Activado. Toca un polígono para editarlo.' : 'Modo Edición Desactivado.',
-      this.isEditingMode ? 'primary' : 'medium',
-      'middle'
-    );
+    this.isEditAlertOpen = true;
   }
 
   async confirmAndExitApp() {
@@ -723,6 +728,7 @@ export class MapaPage implements OnDestroy {
       // reflejar los cambios (ej. registros eliminados o con errores).
       this.loadSavedGeometries();
     }
+    this.updatePendingRecordsCount(); // Actualizar el conteo después de intentar enviar
   }
 
   /**
@@ -1083,6 +1089,7 @@ export class MapaPage implements OnDestroy {
 
     // 3. Actualizar el servicio con los conteos finales para que la leyenda los reciba
     this.legendDataService.updateCounts(counts);
+    this.updatePendingRecordsCount(); // Actualizar el conteo después de cargar las geometrías
   }
 
   private async startLocationWatch() {
@@ -1278,5 +1285,16 @@ export class MapaPage implements OnDestroy {
 
     // Cargamos los polígonos guardados en el dispositivo
     this.loadSavedGeometries();
+  }
+
+  // Nuevo método para actualizar el conteo de registros pendientes
+  private async updatePendingRecordsCount() {
+    const allRecords = await this.registerDataService.getAllRawRecords();
+    const pending = allRecords.filter(record =>
+      this.registerDataService.isRecordComplete(record.properties) && !record.properties.uploaded
+    );
+    this.zone.run(() => {
+      this.pendingRecordsCount = pending.length;
+    });
   }
 }
