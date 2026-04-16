@@ -12,8 +12,7 @@
         <ion-list lines="none">
           <ion-item>
             <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8" name="DNI"
-                       [ngModel]="formData.dni_productor"
-                       (ngModelChange)="formData.dni_productor = $event"
+                       [(ngModel)]="formData.dni_productor"
                        [disabled]="!!formData.uploaded">
             </ion-input>
             <ion-button slot="end" (click)="searchDni()" [disabled]="!formData.dni_productor || formData.dni_productor.length !== 8 || !!formData.uploaded">
@@ -23,36 +22,47 @@
 
           <ion-item>
             <ion-input label="Nombres" label-placement="stacked" name="NOMBRES"
-                       [ngModel]="formData.nombres"
-                       (ngModelChange)="formData.nombres = $event"
+                       [(ngModel)]="formData.nombres"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Apellido Paterno" label-placement="stacked" name="APELLIDO_PATERNO"
-                       [ngModel]="formData.apellido_paterno"
-                       (ngModelChange)="formData.apellido_paterno = $event"
+                       [(ngModel)]="formData.apellido_paterno"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input label="Apellido Materno" label-placement="stacked" name="APELLIDO_MATERNO"
-                       [ngModel]="formData.apellido_materno"
-                       (ngModelChange)="formData.apellido_materno = $event"
+                       [(ngModel)]="formData.apellido_materno"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Fecha de Nacimiento" label-placement="stacked" type="date" name="FECHA_NACIMIENTO"
-                       [ngModel]="formData.fecha_nacimiento"
-                       (ngModelChange)="formData.fecha_nacimiento = $event"
-                       [disabled]="!!formData.uploaded"></ion-input>
+            <ion-label position="stacked">Fecha de Nacimiento</ion-label>
+            <!-- El ion-datetime-button mostrará la fecha seleccionada y al clickear abrirá el modal -->
+            <ion-datetime-button class="ion-margin-top ion-margin-bottom" datetime="fechaNacimientoPicker" [disabled]="!!formData.uploaded"></ion-datetime-button>
+
+            <!-- El ion-modal contendrá el ion-datetime real -->
+            <ion-modal [keepContentsMounted]="true" #modalFechaNacimiento>
+              <ng-template>
+                <ion-datetime
+                  id="fechaNacimientoPicker"
+                  presentation="date"
+                  [preferWheel]="true"
+                  [showDefaultButtons]="true"
+                  doneText="Aceptar"
+                  cancelText="Cancelar"
+                  [(ngModel)]="formData.fecha_nacimiento"
+                  [disabled]="!!formData.uploaded">
+                </ion-datetime>
+              </ng-template>
+            </ion-modal>
           </ion-item>
 
           <ion-item>
             <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE"
-                       [ngModel]="formData.celular_participante"
-                       (ngModelChange)="formData.celular_participante = $event"
+                       [(ngModel)]="formData.celular_participante"
                        [disabled]="formData.celular_participante === 'NO TIENE' || !!formData.uploaded"
                        required></ion-input>
           </ion-item>
@@ -64,8 +74,7 @@
 
           <ion-item>
             <ion-select label="Tipo de Productor" label-placement="stacked" interface="action-sheet" placeholder="Seleccione una opción" name="TIPO_PRODUCTOR"
-                        [ngModel]="formData.tipo_productor"
-                        (ngModelChange)="formData.tipo_productor = $event"
+                        [(ngModel)]="formData.tipo_productor"
                         [disabled]="!!formData.uploaded">
               <ion-select-option value="SOCIO">SOCIO</ion-select-option>
               <ion-select-option value="SOCIO-PARTICIPANTE">SOCIO-PARTICIPANTE</ion-select-option>

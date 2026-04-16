@@ -27,6 +27,7 @@ import {
   IonSelectOption,
   IonText,
   IonThumbnail,
+  
 } from '@ionic/angular/standalone';
 import { RegisterDataService } from '../../../../services/register-data.service';
 import { addIcons } from 'ionicons';
@@ -57,6 +58,9 @@ import { Capacitor } from '@capacitor/core';
     IonSelect,
     IonSelectOption,
     IonCheckbox,
+    IonDatetime,
+    IonDatetimeButton, // Añadir IonDatetimeButton
+    IonModal,          // Añadir IonModal
   ]
 })
 export class ProductorTabPage {
