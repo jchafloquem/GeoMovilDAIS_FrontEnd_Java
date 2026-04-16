@@ -9,22 +9,6 @@
   z-index: 0;
 }
 
-.geo-label {
-  background-color: transparent;
-  border: none;
-  font-weight: bold;
-  font-size: 20px;
-  color: black;
-  z-index: 1000; /* Ensure the tooltip is above other elements */
-}
-ion-header {
-  background: transparent;
-  pointer-events: none;
-}
-ion-toolbar {
-  pointer-events: auto;
-}
-
 .zoom-extend-btn-wrapper {
   top: 10px;
   right: 15px;
@@ -120,32 +104,18 @@ ion-toolbar {
 .gps-panel .row {
   display: grid;
   grid-template-columns: 1fr 1fr; /* 2 columnas de celdas */
-  gap: 16px;
+  gap: 8px;
   padding: 8px;
+  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
+  align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   min-height: 40px;
   position: relative;
   z-index: 2;
 }
 
-/* Colores de fondo para las filas, estilo hoja de cálculo */
-.gps-panel .row:nth-child(odd) {
-  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
-}
-
-.gps-panel .row:nth-child(even) {
-  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
-}
-
 .gps-panel .row:last-child {
   border-bottom: none;
-}
-
-/* cada par label/value */
-.gps-panel .cell {
-  display: flex;
-  justify-content: space-between; /* label a la izquierda, value a la derecha */
-  align-items: center;            /* centra verticalmente */
 }
 
 /* etiquetas */
@@ -287,15 +257,6 @@ ion-toolbar {
   }
 }
 
-/* Estilos para el toast de múltiples líneas */
-/* Usamos ::ng-deep para que los estilos se apliquen al componente ion-toast,
-   que se renderiza fuera del DOM de esta página. */
-::ng-deep .multiline-toast .toast-message {
-  white-space: pre-line; /* Respeta los saltos de línea (\n) */
-  text-align: center;    /* Centra el texto, útil para toasts en el medio */
-}
-
-/* Estilos para los botones de acción personalizados (dibujar, punto, etc.) */
 .action-btn {
   position: absolute;
   right: 15px;
@@ -492,5 +453,3 @@ ion-toolbar ion-buttons[slot="end"] {
     opacity: 1;
   }
 }
-
-

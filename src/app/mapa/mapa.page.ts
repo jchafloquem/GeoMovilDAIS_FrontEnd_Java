@@ -88,26 +88,6 @@ const iconDefault = L.icon({
   shadowSize: [41, 41]
 });
 
-const iconYellow = L.icon({
-  iconUrl: 'assets/images/marker-icon-yellow.png',
-  shadowUrl: 'assets/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-});
-
-const iconGreen = L.icon({
-  iconUrl: 'assets/images/marker-icon-green.png',
-  shadowUrl: 'assets/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-});
-
 @Component({
   selector: 'app-mapa',
   templateUrl: './mapa.page.html',
@@ -730,15 +710,6 @@ export class MapaPage implements OnDestroy {
     }
     this.updatePendingRecordsCount(); // Actualizar el conteo después de intentar enviar
   }
-
-  /**
-   * Convierte un objeto de geometría GeoJSON a su representación Well-Known Text (WKT).
-   * @param geometry El objeto de geometría GeoJSON.
-   * @returns Una cadena WKT con componente Z, o null si la geometría es inválida.
-   */
-  // DEPRECADO: Esta función se ha movido al `register-data.service` para centralizar la lógica.
-  // private convertGeoJsonToWkt(geometry: any): string | null { ... }
-
 
   async exportAllGeometries() {
     try {

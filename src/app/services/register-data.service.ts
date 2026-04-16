@@ -1246,11 +1246,17 @@ export class RegisterDataService {
 
       try {
         await Filesystem.writeFile({
-          path: `GeoDAIS_dni/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
+          path: `GeoDAIS_Fotos/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
         });
-        await this.showToast('Copia de la foto guardada en la galería.', 'success');
+        const alert = await this.alertController.create({
+          header: '¡Foto Asegurada!',
+          subHeader: 'Copia en Galería Pública',
+          message: 'Se ha exportado una copia de la fotografía con marca de agua (coordenadas y fecha) a la carpeta "GeoDAIS_Fotos" de sus documentos.',
+          buttons: ['Entendido']
+        });
+        await alert.present();
       } catch (publicSaveError) {
-        console.warn(`[RegisterDataService] No se pudo guardar copia de la foto en la galería pública:`, publicSaveError);
+        //console.warn(`[RegisterDataService] No se pudo guardar copia de la foto en la galería pública:`, publicSaveError);
       }
 
       const currentSavedUris = this._savedPhotoUris.getValue();
@@ -1379,7 +1385,7 @@ export class RegisterDataService {
       // Guardar una copia en la carpeta pública 'GeoDAIS'
       try {
         await Filesystem.writeFile({
-          path: `GeoDAIS_Fotos/${fileName}`,
+          path: `GeoDAIS_DNI/${fileName}`,
           data: fileData.data,
           directory: Directory.Documents,
           recursive: true
@@ -1805,11 +1811,21 @@ export class RegisterDataService {
     position: 'top' | 'bottom' | 'middle' = 'middle',
     duration: number = 3000
   ) {
+    // Selección automática de icono para el diseño tipo Card
+    let iconName = '';
+    switch (color) {
+      case 'success': iconName = 'checkmark-circle'; break;
+      case 'danger':  iconName = 'close-circle'; break;
+      case 'warning': iconName = 'warning'; break;
+      case 'primary': iconName = 'information-circle'; break;
+    }
+
     const toast = await this.toastController.create({
       message,
       duration,
       position,
       color,
+      icon: iconName || undefined,
       cssClass: 'multiline-toast' // Clase para permitir múltiples líneas
     });
     await toast.present();

@@ -11,7 +11,7 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
-            <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8" name="DNI"
+            <ion-input label="DNI" label-placement="floating" type="tel" maxlength="8" name="DNI"
                        [(ngModel)]="formData.dni_productor"
                        [disabled]="!!formData.uploaded">
             </ion-input>
@@ -21,25 +21,25 @@
           </ion-item>
 
           <ion-item>
-            <ion-input label="Nombres" label-placement="stacked" name="NOMBRES"
+            <ion-input label="Nombres" label-placement="floating" name="NOMBRES"
                        [(ngModel)]="formData.nombres"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Apellido Paterno" label-placement="stacked" name="APELLIDO_PATERNO"
+            <ion-input label="Apellido Paterno" label-placement="floating" name="APELLIDO_PATERNO"
                        [(ngModel)]="formData.apellido_paterno"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input label="Apellido Materno" label-placement="stacked" name="APELLIDO_MATERNO"
+            <ion-input label="Apellido Materno" label-placement="floating" name="APELLIDO_MATERNO"
                        [(ngModel)]="formData.apellido_materno"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Fecha de Nacimiento</ion-label>
+            <ion-label position="floating">Fecha de Nacimiento</ion-label>
             <!-- El ion-datetime-button mostrará la fecha seleccionada y al clickear abrirá el modal -->
             <ion-datetime-button class="ion-margin-top ion-margin-bottom" datetime="fechaNacimientoPicker" [disabled]="!!formData.uploaded"></ion-datetime-button>
 
@@ -61,7 +61,7 @@
           </ion-item>
 
           <ion-item>
-            <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE"
+            <ion-input label="Celular" label-placement="floating" type="tel" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE"
                        [(ngModel)]="formData.celular_participante"
                        [disabled]="formData.celular_participante === 'NO TIENE' || !!formData.uploaded"
                        required></ion-input>
@@ -73,7 +73,7 @@
           </ion-item>
 
           <ion-item>
-            <ion-select label="Tipo de Productor" label-placement="stacked" interface="action-sheet" placeholder="Seleccione una opción" name="TIPO_PRODUCTOR"
+            <ion-select label="Tipo de Productor" label-placement="floating" interface="action-sheet" placeholder="Seleccione una opción" name="TIPO_PRODUCTOR"
                         [(ngModel)]="formData.tipo_productor"
                         [disabled]="!!formData.uploaded">
               <ion-select-option value="SOCIO">SOCIO</ion-select-option>
