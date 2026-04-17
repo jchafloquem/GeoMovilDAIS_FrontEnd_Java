@@ -103,12 +103,13 @@
 /* filas de pares label/value */
 .gps-panel .row {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 columnas de celdas */
-  gap: 8px;
-  padding: 8px;
-  background-color: rgba(13, 166, 66, 0.7); /* #0DA642 con transparencia */
-  align-items: center;
+  grid-template-columns: 1fr 1fr; /* Divide la fila en dos columnas iguales (50/50) */
+  gap: 0;
+  padding: 0;
+  background-color: rgba(13, 166, 66, 0.85); /* Mayor opacidad para lectura bajo el sol */
+  align-items: stretch; /* Hacemos que los contenedores hijos ocupen todo el alto */
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden; /* Evita que el contenido empuje el ancho */
   min-height: 40px;
   position: relative;
   z-index: 2;
@@ -118,18 +119,41 @@
   border-bottom: none;
 }
 
+/* Contenedor de cada par label/value para que se muestren en la misma línea */
+.gps-panel .cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
 /* etiquetas */
 .gps-panel .label {
   font-weight: 600;
   color: #ccc;
   white-space: nowrap;
+  text-align: left;
+  padding-left: 10px;
+  display: flex;
+  align-items: center; /* Centrado vertical del contenido */
+  justify-content: flex-start;
+  height: 100%;
+  gap: 6px; /* Espacio entre icono y texto */
 }
 
 /* valores */
 .gps-panel .value {
   font-family: Arial, Helvetica, sans-serif;
   white-space: nowrap;
+  color: #ffffff; /* Texto blanco para asegurar legibilidad */
   text-align: right;
+  padding-right: 10px;
+  display: flex;
+  align-items: center; /* Centrado vertical del contenido */
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
 }
 
 /* Estilos para el ion-loading personalizado */
@@ -372,9 +396,9 @@
 
       form {
         height: 40px;
-        // Posicionamos el formulario justo a la derecha del botón
         left: 40px;
-        // Redondeamos las esquinas derechas
+        width: calc(100vw - 100px); /* Limita el ancho del buscador */
+        max-width: 300px;
         border-radius: 0 20px 20px 0;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         border: none;

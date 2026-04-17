@@ -58,8 +58,10 @@
 .multiline-toast {
   --border-radius: 16px;
   --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  --width: calc(100% - 40px); /* Define el ancho restando los márgenes */
+  --max-width: 450px;
   --min-height: 60px;
-  margin: 16px 20px; /* Margen para efecto flotante */
+  margin: 8px auto 16px; /* Centrado horizontal automático */
 
   &::part(container) {
     padding: 12px 16px;

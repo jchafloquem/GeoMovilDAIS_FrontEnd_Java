@@ -1249,10 +1249,10 @@ export class RegisterDataService {
           path: `GeoDAIS_Fotos/${fileName}`, data: imageWithOverlayBase64, directory: Directory.Documents, recursive: true
         });
         const alert = await this.alertController.create({
-          header: '¡Foto Asegurada!',
-          subHeader: 'Copia en Galería Pública',
-          message: 'Se ha exportado una copia de la fotografía con marca de agua (coordenadas y fecha) a la carpeta "GeoDAIS_Fotos" de sus documentos.',
-          buttons: ['Entendido']
+          header: '📸 Copia Guardada',
+          subHeader: 'Carpeta: GeoDAIS_Fotos',
+          message: 'Se exportó una copia con <b>marca de agua (GPS)</b> a sus documentos públicos.',
+          buttons: [{ text: 'Entendido', role: 'cancel' }]
         });
         await alert.present();
       } catch (publicSaveError) {

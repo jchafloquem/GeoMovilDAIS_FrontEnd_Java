@@ -11,42 +11,51 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
+            <ion-icon name="barcode-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Código Autogenerado" label-placement="floating" type="text" name="cod_ppa_midagri"
                        [(ngModel)]="formData.cod_ppa_midagri"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="calendar-clear-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Fecha de Registro" label-placement="floating" type="text" name="fecha_registro_midagri"
                        [value]="formData.fecha_registro_midagri | date: 'dd/MM/yyyy'"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="leaf-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Actividad Agraria" label-placement="floating" type="text" name="actividad_agraria_midagri"
                        [(ngModel)]="formData.actividad_agraria_midagri"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="resize-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Superficie (ha)" label-placement="floating" type="text" name="superficie_midagri"
                        [(ngModel)]="formData.superficie_midagri"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="key-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Régimen de Tenencia" label-placement="floating" type="text" name="regimen_tenencia_midagri"
                        [(ngModel)]="formData.regimen_tenencia_midagri"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="transgender-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Sexo" label-placement="floating" type="text" name="sexo_midagri"
                        [(ngModel)]="formData.sexo_midagri"
                        [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="map-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Departamento" label-placement="floating" type="text" name="departamento_midagri" [(ngModel)]="formData.departamento_midagri" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="map-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Provincia" label-placement="floating" type="text" name="provincia_midagri" [(ngModel)]="formData.provincia_midagri" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
+            <ion-icon name="map-outline" slot="start" color="medium"></ion-icon>
             <ion-input label="Distrito" label-placement="floating" type="text" name="distrito_midagri" [(ngModel)]="formData.distrito_midagri" [readonly]="true" [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
         </ion-list>

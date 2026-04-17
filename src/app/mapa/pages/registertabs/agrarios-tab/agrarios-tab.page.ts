@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonList, IonItem, IonInput, IonIcon } from '@ionic/angular/standalone';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import { addIcons } from 'ionicons';
-import { lockClosed } from 'ionicons/icons';
+import { lockClosed, barcodeOutline, calendarClearOutline, leafOutline, resizeOutline, keyOutline, transgenderOutline, mapOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-agrarios-tab',
@@ -15,6 +15,6 @@ import { lockClosed } from 'ionicons/icons';
 })
 export class AgrariosTabPage {
   constructor(public registerDataService: RegisterDataService) {
-    addIcons({ lockClosed });
+    addIcons({lockClosed,barcodeOutline,calendarClearOutline,leafOutline,resizeOutline,keyOutline,transgenderOutline,mapOutline});
   }
 }

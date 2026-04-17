@@ -31,7 +31,7 @@ import {
 } from '@ionic/angular/standalone';
 import { RegisterDataService } from '../../../../services/register-data.service';
 import { addIcons } from 'ionicons';
-import { search, cameraOutline, trashOutline, lockClosed } from 'ionicons/icons';
+import { search, cameraOutline, trashOutline, lockClosed, cardOutline, personOutline, calendarOutline, callOutline, briefcaseOutline } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
 
 @Component({
@@ -70,7 +70,7 @@ export class ProductorTabPage {
     public registerDataService: RegisterDataService,
     private alertController: AlertController
   ) {
-    addIcons({ search, cameraOutline, trashOutline, lockClosed });
+    addIcons({lockClosed,cardOutline,search,personOutline,calendarOutline,callOutline,briefcaseOutline,cameraOutline,trashOutline});
   }
 
   // El método searchDni ahora se llama desde el servicio
