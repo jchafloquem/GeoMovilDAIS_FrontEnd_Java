@@ -22,7 +22,7 @@ import {
 import { RegisterDataService } from '../../../../services/register-data.service';
 import { AuthService } from '../../../../services/auth.service';
 import { addIcons } from 'ionicons';
-import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline, lockClosed } from 'ionicons/icons';
+import { mapOutline, analyticsOutline, ellipseOutline, shapesOutline, lockClosed, locationOutline, informationCircleOutline, globeOutline, planetOutline, createOutline, businessOutline, homeOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-geometricos-tab',
@@ -62,7 +62,7 @@ export class GeometricosTabPage implements OnInit {
     public registerDataService: RegisterDataService,
     private authService: AuthService
   ) {
-    addIcons({lockClosed,mapOutline,analyticsOutline,ellipseOutline,shapesOutline});
+    addIcons({lockClosed,shapesOutline,mapOutline,businessOutline,locationOutline,homeOutline,informationCircleOutline,analyticsOutline,globeOutline,planetOutline,createOutline,ellipseOutline});
   }
 
   async ngOnInit() {

@@ -140,6 +140,11 @@
   justify-content: flex-start;
   height: 100%;
   gap: 6px; /* Espacio entre icono y texto */
+
+  ion-icon {
+    font-size: 14px;
+    color: #ccc; /* Mantiene el tono tenue de las etiquetas del panel */
+  }
 }
 
 /* valores */

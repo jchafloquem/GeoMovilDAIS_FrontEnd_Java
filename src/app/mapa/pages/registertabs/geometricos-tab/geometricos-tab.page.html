@@ -17,8 +17,10 @@
       <ion-card-content>
         <ion-list lines="none">
           <ion-item>
+            <ion-icon name="shapes-outline" slot="start" color="primary"></ion-icon>
             <ion-select [label]="userRole === 'animal-crops' ? 'Tipo de Crianza' : 'Tipo de Cultivo'"
-                        label-placement="stacked" interface="action-sheet"
+                        label-placement="floating"
+                        interface="action-sheet"
                         [placeholder]="userRole === 'animal-crops' ? 'Seleccione la crianza' : 'Seleccione un cultivo'"
                         [ngModel]="formData.tipo_cultivo"
                         (ngModelChange)="formData.tipo_cultivo = $event"
@@ -44,76 +46,101 @@
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-input label="Oficina Zonal" label-placement="stacked"
+            <ion-icon name="business-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Oficina Zonal" 
+                       label-placement="floating"
+                       [readonly]="true"
                        [ngModel]="formData.oz_zonal"
                        (ngModelChange)="formData.oz_zonal = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Departamento" label-placement="stacked"
+            <ion-icon name="map-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Departamento" 
+                       label-placement="floating"
+                       [readonly]="true"
                        [ngModel]="formData.departamento_inei"
                        (ngModelChange)="formData.departamento_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Provincia" label-placement="stacked"
+            <ion-icon name="map-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Provincia" 
+                       label-placement="floating"
+                       [readonly]="true"
                        [ngModel]="formData.provincia_inei"
                        (ngModelChange)="formData.provincia_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Distrito" label-placement="stacked"
+            <ion-icon name="map-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Distrito" 
+                       label-placement="floating"
+                       [readonly]="true"
                        [ngModel]="formData.distrito_inei"
                        (ngModelChange)="formData.distrito_inei = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Caserío" label-placement="stacked"
+            <ion-icon name="home-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Caserío" 
+                       label-placement="floating"
+                       [placeholder]="formData.uploaded ? '' : 'Ingrese nombre del caserío'"
                        [ngModel]="formData.caserio"
                        (ngModelChange)="formData.caserio = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
+
           <ion-item>
-            <ion-input label="Fuente" label-placement="stacked" [readonly]="true"
-                       [ngModel]="formData.fuente"
-                       [disabled]="!!formData.uploaded"></ion-input>
+            <ion-icon name="analytics-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Perímetro" 
+                       label-placement="floating"
+                       [readonly]="true" 
+                       [value]="formData.perimetro || 'Calculando...'"></ion-input>
           </ion-item>
+
           <ion-item>
-            <ion-input label="Datum" label-placement="stacked" [readonly]="true"
+            <ion-icon name="shapes-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Área" 
+                       label-placement="floating"
+                       [readonly]="true" 
+                       [value]="formData.area || 'Calculando...'"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-icon name="planet-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Altitud Promedio" 
+                       label-placement="floating"
+                       [readonly]="true" 
+                       [value]="formData.altitud || 'Calculando...'"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-icon name="location-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Centroide (Lat, Lon)" 
+                       label-placement="floating"
+                       [readonly]="true" 
+                       [value]="formData.centroide || 'Calculando...'"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-icon name="globe-outline" slot="start" color="primary"></ion-icon>
+            <ion-input label="Datum" 
+                       label-placement="floating"
+                       [readonly]="true"
                        [ngModel]="formData.datum"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
-            <ion-label>
-              <h2>Perímetro</h2>
-              <p>{{ formData.perimetro || 'Calculando...' }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
-            <ion-label>
-              <h2>Área</h2>
-              <p>{{ formData.area || 'Calculando...' }}</p>
-            </ion-label>
-          </ion-item>
           <ion-item>
-            <ion-label>
-              <h2>Altitud Promedio</h2>
-              <p>{{ formData.altitud || 'Calculando...' }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label>
-              <h2>Centroide (Lat, Lon)</h2>
-              <p>{{ formData.centroide || 'Calculando...' }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
+            <ion-icon name="create-outline" slot="start" color="primary"></ion-icon>
+            <ion-textarea label="Observaciones" 
+                          label-placement="floating"
+                          [autoGrow]="true"
                           placeholder="Añada notas adicionales aquí..."
                           [ngModel]="formData.observaciones"
                           (ngModelChange)="formData.observaciones = $event"

@@ -38,3 +38,8 @@ ion-list[lines="none"] ion-item {
   text-transform: uppercase;
 }
 
+/* Alineación de iconos para que coincidan con productor-tab */
+ion-item ion-icon[slot="start"] {
+  margin-inline-end: 16px;
+  font-size: 24px;
+}
