@@ -1,5 +1,5 @@
 # GeoMovilPIRDAIS_FrontEnd
-Nombre del Repositorio GeoDAIS_DEVIDA
+Nombre del Repositorio GeoMovilDAIS_FrontEnd_Java
 # Developer
 Jorge Chafloque Millones
 
