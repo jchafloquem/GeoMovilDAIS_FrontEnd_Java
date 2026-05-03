@@ -33,6 +33,7 @@ import {
   addOutline,
   analyticsOutline,
   cellularOutline,
+  closeCircleOutline,
   checkmarkCircleOutline,
   cloudUploadOutline,
   createOutline,
@@ -53,6 +54,7 @@ import {
   shapesOutline,
   stopCircleOutline,
   trashOutline,
+  warningOutline,
   walkOutline,
   wifiOutline,
 
@@ -188,7 +190,7 @@ export class MapaPage implements OnDestroy {
     private loadingController: LoadingController,
     private legendDataService: LegendDataService
   ) {
-    addIcons({personAddOutline,listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
+    addIcons({personAddOutline,listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline,closeCircleOutline,warningOutline});
   }
 
   async ionViewWillEnter() {

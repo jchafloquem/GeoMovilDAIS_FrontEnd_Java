@@ -652,7 +652,8 @@ export class RegisterDataService {
 
     await this.showToast(
       isEditing ? 'Información actualizada con éxito' : 'Registro guardado con éxito',
-      'success', 'middle'
+      'success', 'middle', 3000,
+      'checkmark-circle-outline'
     );
 
     this.navCtrl.navigateBack('/mapa');
@@ -1809,15 +1810,18 @@ export class RegisterDataService {
     message: string,
     color: 'success' | 'danger' | 'warning' | 'tertiary' | 'primary' | 'medium' = 'tertiary',
     position: 'top' | 'bottom' | 'middle' = 'middle',
-    duration: number = 3000
+    duration: number = 3000,
+    icon?: string
   ) {
-    // Selección automática de icono para el diseño tipo Card
-    let iconName = '';
-    switch (color) {
-      case 'success': iconName = 'checkmark-circle'; break;
-      case 'danger':  iconName = 'close-circle'; break;
-      case 'warning': iconName = 'warning'; break;
-      case 'primary': iconName = 'information-circle'; break;
+    // Usa el icono proporcionado o selecciona uno automáticamente por color
+    let iconName = icon || '';
+    if (!iconName) {
+      switch (color) {
+        case 'success': iconName = 'checkmark-circle-outline'; break;
+        case 'danger':  iconName = 'close-circle-outline'; break;
+        case 'warning': iconName = 'warning-outline'; break;
+        case 'primary': iconName = 'information-circle-outline'; break;
+      }
     }
 
     const toast = await this.toastController.create({
